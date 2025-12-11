@@ -1,0 +1,2 @@
+export { BrandProfile } from './BrandProfile';
+

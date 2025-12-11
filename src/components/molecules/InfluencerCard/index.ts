@@ -1,0 +1,2 @@
+export { InfluencerCard } from './InfluencerCard';
+

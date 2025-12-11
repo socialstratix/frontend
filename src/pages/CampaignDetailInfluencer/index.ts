@@ -1,0 +1,2 @@
+export { CampaignDetailInfluencer } from './CampaignDetailInfluencer';
+

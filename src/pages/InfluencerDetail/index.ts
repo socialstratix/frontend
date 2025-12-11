@@ -1,0 +1,2 @@
+export { InfluencerDetail } from './InfluencerDetail';
+
