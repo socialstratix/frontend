@@ -10,7 +10,7 @@ const mockInfluencers = Array.from({ length: 10 }, (_, i) => ({
 }));
 
 export const CampaignCreate: React.FC = () => {
-  const handleSubmit = (data: any) => {
+  const handleSubmit = (_data: any) => {
     // Handle campaign creation
     alert('Campaign created successfully!');
   };

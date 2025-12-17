@@ -17,7 +17,7 @@ const mockCampaign = {
 };
 
 export const CampaignDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  useParams<{ id: string }>(); // id is available but not used yet
   const [selectedPlatforms, setSelectedPlatforms] = useState(
     mockCampaign.platforms
   );

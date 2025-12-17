@@ -1,5 +1,4 @@
 import { apiService } from './api';
-import type { ApiResponse } from '../types';
 
 export interface Campaign {
   _id: string;

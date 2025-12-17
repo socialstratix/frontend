@@ -25,7 +25,7 @@ interface Campaign {
   id: string;
   name: string;
   description: string;
-  status: 'draft' | 'active' | 'closed' | 'completed';
+  status: 'active' | 'draft' | 'completed' | 'paused';
 }
 
 export const BrandDashboard: React.FC = () => {

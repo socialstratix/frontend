@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Input, Textarea, Select, Button, Checkbox } from '../../atoms';
+import { Input, Textarea, Button, Checkbox } from '../../atoms';
 import { SearchBar } from '../../molecules';
 import { Card } from '../../molecules';
 

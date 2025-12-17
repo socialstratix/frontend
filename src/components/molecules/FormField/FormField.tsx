@@ -1,10 +1,11 @@
 import React from 'react';
 import { Input } from '../../atoms';
 
-interface FormFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface FormFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value'> {
   label: string;
   error?: string;
   helperText?: string;
+  value?: string;
 }
 
 export const FormField: React.FC<FormFieldProps> = ({

@@ -1,10 +1,5 @@
 import React from 'react';
 import {
-  XIcon,
-  YouTubeIcon,
-  FacebookIcon,
-  InstagramIcon,
-  TikTokIcon,
   LocationIcon,
   IosShareIcon,
 } from '../../../assets/icons';
@@ -24,56 +19,12 @@ interface InfluencerDetailFrameProps {
   };
 }
 
-const formatFollowers = (count?: number) => {
-  if (!count) return '0';
-  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
-  return count.toLocaleString();
-};
-
-const getPlatformColor = (platform: string) => {
-  switch (platform) {
-    case 'x':
-      return '#000000';
-    case 'youtube':
-      return '#FF0000';
-    case 'facebook':
-      return '#1877F2';
-    case 'instagram':
-      return '#E4405F';
-    case 'tiktok':
-      return '#000000';
-    default:
-      return '#000000';
-  }
-};
-
-const PlatformIcon = ({ platform, size = 16 }: { platform: string; size?: number }) => {
-  const iconStyle = { width: size, height: size };
-  
-  switch (platform) {
-    case 'x':
-      return <img src={XIcon} alt="X" style={iconStyle} />;
-    case 'youtube':
-      return <img src={YouTubeIcon} alt="YouTube" style={iconStyle} />;
-    case 'facebook':
-      return <img src={FacebookIcon} alt="Facebook" style={iconStyle} />;
-    case 'instagram':
-      return <img src={InstagramIcon} alt="Instagram" style={iconStyle} />;
-    case 'tiktok':
-      return <img src={TikTokIcon} alt="TikTok" style={iconStyle} />;
-    default:
-      return null;
-  }
-};
-
 export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
   backgroundImage,
   profileImage,
   name,
   location,
   description,
-  platformFollowers,
 }) => {
   return (
     <div
