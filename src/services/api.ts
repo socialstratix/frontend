@@ -22,6 +22,12 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
+    
+    // Log API calls in production for debugging
+    if (import.meta.env.PROD) {
+      console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+    }
+    
     const token = this.getToken();
     
     const headers: Record<string, string> = {
@@ -52,11 +58,28 @@ class ApiService {
       }
       
       if (!response.ok) {
+        // Log error details in production for debugging
+        if (import.meta.env.PROD) {
+          console.error(`❌ API Error: ${response.status} ${response.statusText}`, {
+            url,
+            method: options.method || 'GET',
+            error: data.message || 'Unknown error',
+          });
+        }
         throw new Error(data.message || 'An error occurred');
       }
       
       return data;
     } catch (error) {
+      // Enhanced error logging for network/CORS issues
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        console.error(`🌐 Network Error - Could not reach API:`, {
+          url,
+          baseURL: this.baseURL,
+          error: error.message,
+        });
+        throw new Error(`Cannot connect to API at ${this.baseURL}. Please check your network connection and API configuration.`);
+      }
       throw error;
     }
   }

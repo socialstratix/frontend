@@ -13,15 +13,15 @@ const API_VERSION = import.meta.env.VITE_API_VERSION || 'v1';
 
 export const API_BASE_URL = `${API_BASE}/api/${API_VERSION}`;
 
-// Debug log (remove in production if needed)
-if (import.meta.env.DEV) {
-  console.log('API Configuration:', {
-    VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
-    API_BASE,
-    API_VERSION,
-    API_BASE_URL,
-  });
-}
+// Debug log - Always log in production to help debug
+console.log('🔧 API Configuration:', {
+  VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'NOT SET',
+  API_BASE,
+  API_VERSION,
+  API_BASE_URL,
+  MODE: import.meta.env.MODE,
+  PROD: import.meta.env.PROD,
+});
 
 export const ROUTES = {
   HOME: '/',
