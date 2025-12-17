@@ -23,8 +23,8 @@ class ApiService {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     
-    // Log API calls in production for debugging
-    if (import.meta.env.PROD) {
+    // Log API calls for debugging
+    if (import.meta.env.DEV) {
       console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
     }
     
