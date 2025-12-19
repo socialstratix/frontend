@@ -33,9 +33,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user from localStorage on mount
+  // Load user from storage on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY);
+    const storedToken = sessionStorage.getItem(TOKEN_KEY);
     const storedUser = localStorage.getItem(USER_KEY);
 
     if (storedToken && storedUser) {
@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const { user: userData, token: authToken } = response.data;
         setUser(userData);
         setToken(authToken);
-        localStorage.setItem(TOKEN_KEY, authToken);
+        sessionStorage.setItem(TOKEN_KEY, authToken);
         localStorage.setItem(USER_KEY, JSON.stringify(userData));
       } else {
         throw new Error(response.message || 'Login failed');
@@ -96,7 +96,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const { user: userData, token: authToken } = response.data;
         setUser(userData);
         setToken(authToken);
-        localStorage.setItem(TOKEN_KEY, authToken);
+        sessionStorage.setItem(TOKEN_KEY, authToken);
         localStorage.setItem(USER_KEY, JSON.stringify(userData));
       } else {
         throw new Error(response.message || 'Signup failed');
@@ -110,8 +110,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = (): void => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    // Redirect to login page
+    window.location.href = '/login';
   };
 
   const refreshUser = async (): Promise<void> => {

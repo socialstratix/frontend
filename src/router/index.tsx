@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { BaseLayout } from '../components';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import {
@@ -20,11 +20,15 @@ import {
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <UserTypeSelection />,
+    element: <Navigate to="/login" replace />,
   },
   {
     path: '/login',
     element: <Login />,
+  },
+  {
+    path: '/user-type-selection',
+    element: <UserTypeSelection />,
   },
   {
     path: '/signup',

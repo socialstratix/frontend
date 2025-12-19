@@ -27,7 +27,7 @@ export const Login: React.FC = () => {
       } else if (user.userType === 'influencer') {
         navigate('/influencer');
       } else {
-        navigate('/');
+        navigate('/login');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
@@ -490,7 +490,7 @@ export const Login: React.FC = () => {
               </p>
                 <Button
                   type="button"
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate('/signup')}
                 style={{
                   width: '464px',
                   height: '41px',

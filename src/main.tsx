@@ -8,9 +8,9 @@ import { apiService } from './services/api'
 
 // Set up unauthorized handler for API service
 const handleUnauthorized = () => {
-  localStorage.removeItem('stratix_token');
+  sessionStorage.removeItem('stratix_token');
   localStorage.removeItem('stratix_user');
-  window.location.href = '/';
+  window.location.href = '/login';
 };
 
 apiService.setUnauthorizedHandler(handleUnauthorized);

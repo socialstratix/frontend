@@ -14,7 +14,7 @@ class ApiService {
   }
 
   private getToken(): string | null {
-    return localStorage.getItem('stratix_token');
+    return sessionStorage.getItem('stratix_token');
   }
 
   private async request<T>(

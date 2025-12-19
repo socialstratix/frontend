@@ -60,7 +60,7 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
       if (user?.userType === 'brand') {
         navigate('/brand');
       } else {
-        navigate('/');
+        navigate('/login');
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to complete onboarding. Please try again.');

@@ -69,7 +69,7 @@ export const Signup: React.FC = () => {
     } else if (userType === 'influencer') {
       navigate('/influencer');
     } else {
-      navigate('/');
+      navigate('/login');
     }
   };
 

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Avatar } from '../../atoms';
 import { NotificationsIcon } from '../../../assets/icons';
 import { useAuth } from '../../../contexts/AuthContext';
+import { Button } from '../../atoms/Button';
 
 interface HeaderProps {
   userAvatar?: string;
@@ -20,7 +21,7 @@ export const Header: React.FC<HeaderProps> = ({
   influencerId,
 }) => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const baseRoute = location.pathname.split('/')[1]; // Get 'home', 'brand', or 'influencer'
   
   // Get the actual user ID from auth context or props
@@ -185,6 +186,24 @@ export const Header: React.FC<HeaderProps> = ({
                 className="bg-green-700"
               />
             </Link>
+
+            {/* Logout Button */}
+            <Button
+              variant="outline"
+              onClick={logout}
+              className="ml-2 md:ml-3 px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm whitespace-nowrap"
+              style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 400,
+                lineHeight: '100%',
+                letterSpacing: '0%',
+                verticalAlign: 'middle',
+                color: '#1E002B',
+                borderColor: '#AA86B9',
+              }}
+            >
+              Logout
+            </Button>
           </div>
         </div>
       </div>
