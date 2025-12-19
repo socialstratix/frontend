@@ -1,0 +1,2 @@
+export { EditTags } from './EditTags';
+

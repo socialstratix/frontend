@@ -2,6 +2,10 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { colors } from '../../constants/colors';
 import { Button } from '../../components/atoms/Button/Button';
+import { EditButton } from '../../components/atoms/EditButton/EditButton';
+import { EditDescription } from '../../components/molecules/EditDescription/EditDescription';
+import { EditTags } from '../../components/molecules/EditTags/EditTags';
+import { EditProfilePhoto } from '../../components/molecules/EditProfilePhoto/EditProfilePhoto';
 import EditIcon from '../../assets/icons/ui/edit.svg';
 import MoreIcon from '../../assets/icons/ui/more.svg';
 import LocationIcon from '../../assets/icons/ui/Location.svg';
@@ -40,6 +44,11 @@ export const BrandProfile: React.FC = () => {
   const [brand, setBrand] = useState<Brand | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Edit modal states
+  const [showEditDescription, setShowEditDescription] = useState(false);
+  const [showEditTags, setShowEditTags] = useState(false);
+  const [showEditPhoto, setShowEditPhoto] = useState(false);
 
   // Use campaigns hook
   const statusFilter = activeTab === 'active' ? 'active' : 'previous';
@@ -355,31 +364,43 @@ export const BrandProfile: React.FC = () => {
                 fontWeight: 600,
                 fontFamily: 'Poppins',
                 position: 'relative',
-                overflow: 'hidden',
-                backgroundImage: brandInfo?.avatar ? `url(${brandInfo.avatar})` : 'none',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
+                overflow: 'visible',
               }}
             >
-              {!brandInfo?.avatar && brandInfo?.name && getInitial(brandInfo.name)}
-              {/* Edit Icon */}
+              {/* Avatar Image/Initial Container */}
               <div
                 style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  right: 0,
-                  width: '24px',
-                  height: '24px',
+                  width: '100%',
+                  height: '100%',
                   borderRadius: '50%',
-                  backgroundColor: colors.primary.white,
-                  border: `2px solid ${colors.primary.white}`,
+                  overflow: 'hidden',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer',
+                  backgroundImage: brandInfo?.avatar ? `url(${brandInfo.avatar})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
                 }}
               >
-                <img src={EditIcon} alt="Edit" style={{ width: '12px', height: '12px' }} />
+                {!brandInfo?.avatar && brandInfo?.name && getInitial(brandInfo.name)}
+              </div>
+              {/* Edit Icon - Floating button on avatar with slight overlap */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '-4px',
+                  right: '-4px',
+                  zIndex: 1,
+                }}
+              >
+                <EditButton 
+                  onClick={() => setShowEditPhoto(true)}
+                  style={{ 
+                    width: '28px', 
+                    height: '28px',
+                    borderRadius: '50%',
+                  }}
+                />
               </div>
             </div>
 
@@ -402,16 +423,12 @@ export const BrandProfile: React.FC = () => {
                 >
                   {brandInfo?.name || brand?.user?.name || ''}
                 </h1>
-                <img
-                  src={EditIcon}
-                  alt="Edit"
-                  style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-                />
+                <EditButton onClick={() => setShowEditDescription(true)} />
               </div>
 
               {/* Tags - Comma separated text */}
-              {brandInfo?.tags && brandInfo.tags.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                {brandInfo?.tags && brandInfo.tags.length > 0 ? (
                   <span
                     style={{
                       fontFamily: 'Poppins',
@@ -427,13 +444,25 @@ export const BrandProfile: React.FC = () => {
                   >
                     {brandInfo.tags.join(', ')}
                   </span>
-                  <img
-                    src={EditIcon}
-                    alt="Edit"
-                    style={{ width: '12px', height: '12px', cursor: 'pointer' }}
-                  />
-                </div>
-              )}
+                ) : (
+                  <span
+                    style={{
+                      fontFamily: 'Poppins',
+                      fontWeight: 400,
+                      fontStyle: 'normal',
+                      fontSize: '18px',
+                      lineHeight: '100%',
+                      letterSpacing: '0%',
+                      textAlign: 'center',
+                      verticalAlign: 'middle',
+                      color: colors.text.secondary,
+                    }}
+                  >
+                    No tags
+                  </span>
+                )}
+                <EditButton onClick={() => setShowEditTags(true)} />
+              </div>
             </div>
 
             {/* Action Buttons */}
@@ -469,11 +498,7 @@ export const BrandProfile: React.FC = () => {
               >
                 Description
               </h2>
-              <img
-                src={EditIcon}
-                alt="Edit"
-                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-              />
+              <EditButton onClick={() => setShowEditDescription(true)} />
             </div>
             <p
               style={{
@@ -1160,6 +1185,68 @@ export const BrandProfile: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Modals */}
+      <EditDescription
+        isOpen={showEditDescription}
+        onClose={() => setShowEditDescription(false)}
+        initialValue={brandInfo?.description || brand?.description || ''}
+        onSave={(description) => {
+          console.log('Saving description:', description);
+          // TODO: Implement API call to save description
+          // For now, just update local state
+          if (brand) {
+            setBrand({
+              ...brand,
+              description: description,
+            });
+          }
+        }}
+      />
+
+      <EditTags
+        isOpen={showEditTags}
+        onClose={() => setShowEditTags(false)}
+        initialTags={brandInfo?.tags || []}
+        suggestedTags={['Cooking', 'Unfiltered', 'Roastmaster', 'Gourmet', 'Placeholder']}
+        maxTags={6}
+        onSave={(tags) => {
+          console.log('Saving tags:', tags);
+          // TODO: Implement API call to save tags
+          // For now, just update local state
+          if (brand) {
+            setBrand({
+              ...brand,
+              tags: tags,
+            });
+          }
+        }}
+      />
+
+      <EditProfilePhoto
+        isOpen={showEditPhoto}
+        onClose={() => setShowEditPhoto(false)}
+        initialPhoto={brandInfo?.avatar || brand?.logo || ''}
+        maxSize={10}
+        maxDimensions="300x300"
+        onSave={(file) => {
+          console.log('Saving photo:', file);
+          // TODO: Implement API call to save photo
+          // For now, if file is provided, create a preview URL
+          if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              if (brand) {
+                setBrand({
+                  ...brand,
+                  logo: reader.result as string,
+                });
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        }}
+      />
     </div>
   );
 };

@@ -5,4 +5,7 @@ export { InfluencerCard } from './InfluencerCard';
 export { CampaignCard } from './CampaignCard';
 export { StatsCard } from './StatsCard';
 export { InfluencerDetailFrame } from './InfluencerDetailFrame';
+export { EditDescription } from './EditDescription';
+export { EditTags } from './EditTags';
+export { EditProfilePhoto } from './EditProfilePhoto';
 
