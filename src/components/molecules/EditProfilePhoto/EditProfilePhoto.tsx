@@ -1,4 +1,4 @@
-import React, { useState, useRef, DragEvent } from 'react';
+import React, { useState, useRef, type DragEvent } from 'react';
 import { colors } from '../../../constants/colors';
 import { Button } from '../../atoms/Button/Button';
 import { EditButton } from '../../atoms/EditButton/EditButton';
@@ -23,7 +23,7 @@ export const EditProfilePhoto: React.FC<EditProfilePhotoProps> = ({
   title = 'Edit Profile photo',
   maxSize = 10,
   maxDimensions = '200x200',
-  multiplePhotos = false,
+  multiplePhotos: _multiplePhotos = false,
 }) => {
   const [photo, setPhoto] = useState<string | null>(initialPhoto || null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);

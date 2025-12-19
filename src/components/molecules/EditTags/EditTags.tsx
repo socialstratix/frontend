@@ -1,4 +1,4 @@
-import React, { useState, KeyboardEvent } from 'react';
+import React, { useState, type KeyboardEvent } from 'react';
 import { colors } from '../../../constants/colors';
 import { Input } from '../../atoms/Input/Input';
 import { Button } from '../../atoms/Button/Button';
