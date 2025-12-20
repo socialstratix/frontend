@@ -1,18 +1,22 @@
 import { apiService } from './api';
 
-// Helper function to construct full URL for relative paths
+// Helper function to construct full URL for relative paths only
+// For Google Drive URLs, use them as-is
 const constructImageUrl = (url: string | undefined): string | undefined => {
   if (!url) return undefined;
+  
   // If it's already a full URL (starts with http:// or https://), return as is
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
+  
   // If it's a relative path starting with /, construct full URL using API base
   if (url.startsWith('/')) {
     // Get API base URL from environment or use default
     const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://backend-stratix.vercel.app';
     return `${apiBase}${url}`;
   }
+  
   return url;
 };
 
