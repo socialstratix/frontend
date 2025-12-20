@@ -1,18 +1,65 @@
 import { apiService } from './api';
 
 // Helper function to construct full URL for relative paths
+// Converts Google Drive URLs to uc?export=view format for better React compatibility
 const constructImageUrl = (url: string | undefined): string | undefined => {
   if (!url) return undefined;
+  
+  // If it's a Base64 data URL (from onboarding), return as is
+  if (url.startsWith('data:')) {
+    return url;
+  }
+  
+  // If it's already in uc?export=view format, return as is (don't modify working URLs)
+  if (url.includes('uc?export=view')) {
+    return url;
+  }
+  
+  // Handle Google Drive URLs - try multiple formats for better compatibility
+  if (url.includes('drive.google.com')) {
+    let fileId: string | null = null;
+    
+    // Extract file ID from various Google Drive URL formats
+    // Format 1: https://drive.google.com/file/d/FILE_ID/view or /edit
+    const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (fileMatch && fileMatch[1]) {
+      fileId = fileMatch[1];
+    }
+    // Format 2: https://drive.google.com/open?id=FILE_ID or uc?export=view&id=FILE_ID
+    else {
+      const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (idMatch && idMatch[1]) {
+        fileId = idMatch[1];
+      }
+    }
+    
+    // If we found a file ID, use uc?export=view format
+    // Note: This requires the file to be publicly accessible
+    if (fileId) {
+      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+    
+    // If we couldn't extract file ID but it's a Google Drive URL, return as is
+    return url;
+  }
+  
   // If it's already a full URL (starts with http:// or https://), return as is
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
+  
   // If it's a relative path starting with /, construct full URL using API base
   if (url.startsWith('/')) {
     // Get API base URL from environment or use default
     const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://backend-stratix.vercel.app';
     return `${apiBase}${url}`;
   }
+  
+  // If it looks like a file ID (24+ character alphanumeric), treat it as Google Drive file ID
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(url)) {
+    return `https://drive.google.com/uc?export=view&id=${url}`;
+  }
+  
   return url;
 };
 

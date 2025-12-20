@@ -21,6 +21,8 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string, userType: 'brand' | 'influencer', avatar?: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  updateAvatar: (avatarFile: File) => Promise<string>;
+  updateUser: (data: { name?: string; avatar?: string | File }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -129,6 +131,65 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateAvatar = async (avatarFile: File): Promise<string> => {
+    try {
+      const formData = new FormData();
+      formData.append('avatar', avatarFile);
+
+      const response = await apiService.post<{ avatarUrl: string }>('/auth/upload-avatar', formData);
+
+      if (response.success && response.data) {
+        const avatarUrl = response.data.avatarUrl;
+        
+        // Update user in state
+        if (user) {
+          const updatedUser = { ...user, avatar: avatarUrl };
+          setUser(updatedUser);
+          localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+        }
+        
+        return avatarUrl;
+      } else {
+        throw new Error(response.message || 'Failed to upload avatar');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload avatar';
+      throw new Error(errorMessage);
+    }
+  };
+
+  const updateUser = async (data: { name?: string; avatar?: string | File }): Promise<void> => {
+    try {
+      const formData = new FormData();
+      
+      if (data.name !== undefined) {
+        formData.append('name', data.name);
+      }
+      
+      // If avatar is a File, upload it; otherwise use it as URL string
+      if (data.avatar !== undefined) {
+        if (data.avatar instanceof File) {
+          formData.append('avatar', data.avatar);
+        } else {
+          formData.append('avatar', data.avatar);
+        }
+      }
+
+      const response = await apiService.put<{ user: User }>('/auth/me', formData);
+
+      if (response.success && response.data) {
+        const userData = response.data.user;
+        setUser(userData);
+        localStorage.setItem(USER_KEY, JSON.stringify(userData));
+      } else {
+        throw new Error(response.message || 'Failed to update user');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update user';
+      throw new Error(errorMessage);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
@@ -138,6 +199,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     signup,
     logout,
     refreshUser,
+    updateAvatar,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

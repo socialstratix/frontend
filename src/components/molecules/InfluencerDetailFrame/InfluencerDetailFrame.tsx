@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LocationIcon,
   IosShareIcon,
@@ -38,6 +38,26 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
   onEditDescription,
   onEditBackgroundImage,
 }) => {
+  const [backgroundImageError, setBackgroundImageError] = useState(false);
+  const [profileImageError, setProfileImageError] = useState(false);
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState(backgroundImage);
+  const [profileImageUrl, setProfileImageUrl] = useState(profileImage);
+  const [backgroundImageTriedThumbnail, setBackgroundImageTriedThumbnail] = useState(false);
+  const [profileImageTriedThumbnail, setProfileImageTriedThumbnail] = useState(false);
+
+  // Reset states when image URLs change
+  useEffect(() => {
+    setBackgroundImageError(false);
+    setBackgroundImageUrl(backgroundImage);
+    setBackgroundImageTriedThumbnail(false);
+  }, [backgroundImage]);
+
+  useEffect(() => {
+    setProfileImageError(false);
+    setProfileImageUrl(profileImage);
+    setProfileImageTriedThumbnail(false);
+  }, [profileImage]);
+
   return (
     <div
       style={{
@@ -61,10 +81,33 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
           position: 'relative'
         }}
       >
-        {backgroundImage ? (
+        {backgroundImageUrl && !backgroundImageError ? (
           <img
-            src={backgroundImage}
+            key={backgroundImageUrl}
+            src={backgroundImageUrl}
             alt="Influencer background"
+            loading="lazy"
+            onError={() => {
+              console.error('Failed to load background image:', backgroundImageUrl);
+              // Try alternative URL format if it's a Google Drive URL and we haven't tried thumbnail yet
+              if (backgroundImageUrl && backgroundImageUrl.includes('drive.google.com') && !backgroundImageTriedThumbnail) {
+                const fileIdMatch = backgroundImageUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                if (fileIdMatch && fileIdMatch[1]) {
+                  const fileId = fileIdMatch[1];
+                  // Try thumbnail format as fallback
+                  const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`;
+                  console.log('Trying thumbnail format as fallback:', thumbnailUrl);
+                  setBackgroundImageTriedThumbnail(true);
+                  setBackgroundImageUrl(thumbnailUrl);
+                  return; // Don't set error yet, let it try the thumbnail
+                }
+              }
+              console.error('All attempts failed, showing placeholder');
+              setBackgroundImageError(true);
+            }}
+            onLoad={() => {
+              console.log('Background image loaded successfully:', backgroundImageUrl);
+            }}
             style={{
               width: '100%',
               height: '100%',
@@ -111,18 +154,64 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
               width: '100%',
               height: '100%',
               borderRadius: '50%',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              backgroundColor: '#E0D5E5',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            <img
-              src={profileImage}
-              alt="Influencer profile"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
-              }}
-            />
+            {profileImageUrl && !profileImageError ? (
+              <img
+                key={profileImageUrl}
+                src={profileImageUrl}
+                alt="Influencer profile"
+                loading="lazy"
+                onError={() => {
+                  console.error('Failed to load profile image:', profileImageUrl);
+                  // Try alternative URL format if it's a Google Drive URL and we haven't tried thumbnail yet
+                  if (profileImageUrl && profileImageUrl.includes('drive.google.com') && !profileImageTriedThumbnail) {
+                    const fileIdMatch = profileImageUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                    if (fileIdMatch && fileIdMatch[1]) {
+                      const fileId = fileIdMatch[1];
+                      // Try thumbnail format as fallback
+                      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+                      console.log('Trying thumbnail format as fallback:', thumbnailUrl);
+                      setProfileImageTriedThumbnail(true);
+                      setProfileImageUrl(thumbnailUrl);
+                      return; // Don't set error yet, let it try the thumbnail
+                    }
+                  }
+                  console.error('All attempts failed, showing placeholder');
+                  setProfileImageError(true);
+                }}
+                onLoad={() => {
+                  console.log('Profile image loaded successfully:', profileImageUrl);
+                }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '50%',
+                  backgroundColor: '#E0D5E5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '48px',
+                  color: '#783C91',
+                  fontWeight: 600
+                }}
+              >
+                {name ? name.charAt(0).toUpperCase() : '?'}
+              </div>
+            )}
           </div>
           {/* Edit Button - Circular overlay on bottom-right corner */}
           <div

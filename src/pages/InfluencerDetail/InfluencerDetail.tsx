@@ -154,8 +154,8 @@ export const InfluencerDetail: React.FC = () => {
     return {
       id: influencer._id,
       name: influencer.user?.name || 'Influencer',
-      image: influencer.coverImage,
-      profileImage: influencer.profileImage || influencer.user?.avatar,
+      image: influencer.coverImage || undefined, // Use URL directly as-is
+      profileImage: influencer.profileImage || influencer.user?.avatar || undefined, // Use URL directly as-is
       rating: influencer.rating,
       description: influencer.description || influencer.bio || '',
       location: locationStr,
@@ -269,13 +269,24 @@ export const InfluencerDetail: React.FC = () => {
     try {
       setIsUpdatingProfileImage(true);
       
+      // Update influencer with new profile image
       await influencerService.updateInfluencer(
         user.id,
         {},
         profileImageFile
       );
       
-      await refreshInfluencerData();
+      // Small delay to ensure backend has processed the update
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Force refresh to get latest data from server with updated URLs
+      const isMongoId = isMongoObjectId(id || '');
+      if (isMongoId && id) {
+        await fetchInfluencerById(id);
+      } else if (user.id) {
+        await fetchInfluencer(user.id);
+      }
+      
       setShowEditProfileImage(false);
     } catch (err: any) {
       console.error('Error updating profile image:', err);
@@ -283,7 +294,7 @@ export const InfluencerDetail: React.FC = () => {
     } finally {
       setIsUpdatingProfileImage(false);
     }
-  }, [user, refreshInfluencerData]);
+  }, [user, id, fetchInfluencerById, fetchInfluencer]);
 
   // Handler for saving background image
   const handleSaveBackgroundImage = useCallback(async (coverImageFile: File | null) => {
@@ -300,6 +311,7 @@ export const InfluencerDetail: React.FC = () => {
     try {
       setIsUpdatingBackgroundImage(true);
       
+      // Update influencer with new cover image
       await influencerService.updateInfluencer(
         user.id,
         {},
@@ -307,7 +319,17 @@ export const InfluencerDetail: React.FC = () => {
         coverImageFile
       );
       
-      await refreshInfluencerData();
+      // Small delay to ensure backend has processed the update
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Force refresh to get latest data from server with updated URLs
+      const isMongoId = isMongoObjectId(id || '');
+      if (isMongoId && id) {
+        await fetchInfluencerById(id);
+      } else if (user.id) {
+        await fetchInfluencer(user.id);
+      }
+      
       setShowEditBackgroundImage(false);
     } catch (err: any) {
       console.error('Error updating background image:', err);
@@ -315,7 +337,7 @@ export const InfluencerDetail: React.FC = () => {
     } finally {
       setIsUpdatingBackgroundImage(false);
     }
-  }, [user, refreshInfluencerData]);
+  }, [user, id, fetchInfluencerById, fetchInfluencer]);
 
   const scrollVideos = (direction: 'left' | 'right') => {
     if (isAnimating) return; // Prevent rapid clicking during animation
