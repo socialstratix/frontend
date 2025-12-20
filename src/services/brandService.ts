@@ -1,5 +1,21 @@
 import { apiService } from './api';
 
+// Helper function to construct full URL for relative paths
+const constructImageUrl = (url: string | undefined): string | undefined => {
+  if (!url) return undefined;
+  // If it's already a full URL (starts with http:// or https://), return as is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // If it's a relative path starting with /, construct full URL using API base
+  if (url.startsWith('/')) {
+    // Get API base URL from environment or use default
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://backend-stratix.vercel.app';
+    return `${apiBase}${url}`;
+  }
+  return url;
+};
+
 export interface Brand {
   _id: string;
   userId: string;
@@ -62,7 +78,13 @@ class BrandService {
       throw new Error(response.message || 'Failed to fetch brand');
     }
     
-    return response.data.brand;
+    // Construct full URL for logo if it's a relative path
+    const brand = response.data.brand;
+    if (brand.logo) {
+      brand.logo = constructImageUrl(brand.logo) || brand.logo;
+    }
+    
+    return brand;
   }
 
   /**
@@ -75,7 +97,13 @@ class BrandService {
       throw new Error(response.message || 'Failed to fetch brand');
     }
     
-    return response.data.brand;
+    // Construct full URL for logo if it's a relative path
+    const brand = response.data.brand;
+    if (brand.logo) {
+      brand.logo = constructImageUrl(brand.logo) || brand.logo;
+    }
+    
+    return brand;
   }
 
   /**
@@ -124,15 +152,59 @@ class BrandService {
 
   /**
    * Update brand profile
+   * @param userId - User ID of the brand owner
+   * @param data - Brand data to update
+   * @param logoFile - Optional logo file to upload
    */
-  async updateBrand(userId: string, data: UpdateBrandData): Promise<Brand> {
-    const response = await apiService.put<{ brand: Brand }>(`/brand/${userId}`, data);
+  async updateBrand(userId: string, data: UpdateBrandData, logoFile?: File): Promise<Brand> {
+    let requestData: UpdateBrandData | FormData;
+    
+    // If logo file is provided, use FormData
+    if (logoFile) {
+      const formData = new FormData();
+      formData.append('logo', logoFile);
+      
+      // Append other fields to FormData
+      if (data.description !== undefined) {
+        formData.append('description', data.description);
+      }
+      if (data.website !== undefined) {
+        formData.append('website', data.website);
+      }
+      if (data.location !== undefined) {
+        // Location might be an object, so stringify it
+        formData.append('location', typeof data.location === 'string' 
+          ? data.location 
+          : JSON.stringify(data.location));
+      }
+      if (data.tags !== undefined) {
+        // Send tags as JSON string - backend will need to parse it
+        // Alternatively, send each tag individually for multer to parse as array
+        if (Array.isArray(data.tags)) {
+          // Send tags as JSON string since multer doesn't automatically parse arrays from FormData
+          formData.append('tags', JSON.stringify(data.tags));
+        }
+      }
+      
+      requestData = formData;
+    } else {
+      // No file, use regular JSON
+      requestData = data;
+    }
+    
+    const response = await apiService.put<{ brand: Brand }>(`/brand/${userId}`, requestData);
     
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to update brand');
     }
     
-    return response.data.brand;
+    // Construct full URL for logo if it's a relative path
+    const brand = response.data.brand;
+    if (brand.logo) {
+      brand.logo = constructImageUrl(brand.logo) || brand.logo;
+    }
+    
+    return brand;
   }
 
   /**

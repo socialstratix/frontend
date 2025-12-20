@@ -24,8 +24,11 @@ export const Signup: React.FC = () => {
     const typeFromUrl = searchParams.get('userType');
     if (typeFromUrl === 'brand' || typeFromUrl === 'influencer') {
       setUserType(typeFromUrl);
+    } else {
+      // If no userType is provided in URL, redirect to user type selection
+      navigate('/user-type-selection', { replace: true });
     }
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();

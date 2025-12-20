@@ -61,12 +61,21 @@
 **IMPORTANT:** Set these in Vercel Dashboard after deployment:
 
 1. Go to your project → Settings → Environment Variables
-2. Add:
+2. Add the following variables:
+
    - **Name:** `VITE_API_BASE_URL`
-   - **Value:** Your production API URL (e.g., `https://api.yourdomain.com/api/v1`)
-   - **Environment:** Production, Preview, Development (select all)
+     - **Value:** Your backend API base URL (without `/api/v1`)
+     - **Example:** `https://backend-stratix.vercel.app`
+     - **Environment:** Production, Preview, Development (select all)
+   
+   - **Name:** `VITE_API_VERSION`
+     - **Value:** API version (usually `v1`)
+     - **Example:** `v1`
+     - **Environment:** Production, Preview, Development (select all)
 
 3. **Redeploy** after adding environment variables
+
+**Note:** The full API URL will be constructed as: `${VITE_API_BASE_URL}/api/${VITE_API_VERSION}`
 
 ## Project Structure
 

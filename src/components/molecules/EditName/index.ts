@@ -1,0 +1,2 @@
+export { EditName } from './EditName';
+

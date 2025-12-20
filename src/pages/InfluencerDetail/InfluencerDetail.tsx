@@ -1,7 +1,14 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { InfluencerDetailFrame } from '../../components';
+import { EditName } from '../../components/molecules/EditName/EditName';
+import { EditDescription } from '../../components/molecules/EditDescription/EditDescription';
+import { EditLocation } from '../../components/molecules/EditLocation/EditLocation';
+import { EditProfilePhoto } from '../../components/molecules/EditProfilePhoto/EditProfilePhoto';
 import { useInfluencer } from '../../hooks';
+import { useAuth } from '../../contexts/AuthContext';
+import { influencerService } from '../../services/influencerService';
+import { apiService } from '../../services/api';
 import { 
   XIcon, 
   YouTubeIcon, 
@@ -38,6 +45,9 @@ export const InfluencerDetail: React.FC = () => {
     return /^[0-9a-fA-F]{24}$/.test(id);
   };
 
+  // Get authenticated user
+  const { user } = useAuth();
+
   // Fetch influencer data using the hook
   const { influencer, isLoading, error, fetchInfluencerById, fetchInfluencer } = useInfluencer();
 
@@ -68,6 +78,20 @@ export const InfluencerDetail: React.FC = () => {
   const [animationPhase, setAnimationPhase] = useState<'initial' | 'animating'>('initial');
   const [isAutoPlayPaused, setIsAutoPlayPaused] = useState(false);
   const prevSlideRef = useRef(0);
+
+  // Edit modal states
+  const [showEditName, setShowEditName] = useState(false);
+  const [showEditDescription, setShowEditDescription] = useState(false);
+  const [showEditLocation, setShowEditLocation] = useState(false);
+  const [showEditProfileImage, setShowEditProfileImage] = useState(false);
+  const [showEditBackgroundImage, setShowEditBackgroundImage] = useState(false);
+  
+  // Edit operation loading states
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [isUpdatingDescription, setIsUpdatingDescription] = useState(false);
+  const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
+  const [isUpdatingProfileImage, setIsUpdatingProfileImage] = useState(false);
+  const [isUpdatingBackgroundImage, setIsUpdatingBackgroundImage] = useState(false);
   
   // Handle animation phases
   useEffect(() => {
@@ -141,6 +165,157 @@ export const InfluencerDetail: React.FC = () => {
       platforms,
     };
   }, [influencer]);
+
+  // Handler to refresh influencer data
+  const refreshInfluencerData = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      if (isMongoObjectId(id)) {
+        await fetchInfluencerById(id);
+      } else {
+        await fetchInfluencer(id);
+      }
+    } catch (err: any) {
+      console.error('Failed to refresh influencer data:', err);
+    }
+  }, [id, fetchInfluencerById, fetchInfluencer]);
+
+  // Handler for saving name
+  const handleSaveName = useCallback(async (name: string) => {
+    try {
+      setIsUpdatingName(true);
+      
+      // Update user name via auth API
+      await apiService.put('/auth/me', { name });
+      
+      // Refresh influencer data
+      await refreshInfluencerData();
+      setShowEditName(false);
+    } catch (err: any) {
+      console.error('Error updating name:', err);
+      alert(err.message || 'Failed to update name');
+    } finally {
+      setIsUpdatingName(false);
+    }
+  }, [refreshInfluencerData]);
+
+  // Handler for saving description
+  const handleSaveDescription = useCallback(async (description: string) => {
+    if (!user?.id) {
+      alert('You must be logged in to update your profile');
+      return;
+    }
+
+    try {
+      setIsUpdatingDescription(true);
+      
+      await influencerService.updateInfluencer(user.id, {
+        description,
+      });
+      
+      await refreshInfluencerData();
+      setShowEditDescription(false);
+    } catch (err: any) {
+      console.error('Error updating description:', err);
+      alert(err.message || 'Failed to update description');
+    } finally {
+      setIsUpdatingDescription(false);
+    }
+  }, [user, refreshInfluencerData]);
+
+  // Handler for saving location
+  const handleSaveLocation = useCallback(async (location: {
+    city?: string;
+    country?: string;
+    state?: string;
+    address?: string;
+    pincode?: string;
+  }) => {
+    if (!user?.id) {
+      alert('You must be logged in to update your profile');
+      return;
+    }
+
+    try {
+      setIsUpdatingLocation(true);
+      
+      await influencerService.updateInfluencer(user.id, {
+        location,
+      });
+      
+      await refreshInfluencerData();
+      setShowEditLocation(false);
+    } catch (err: any) {
+      console.error('Error updating location:', err);
+      alert(err.message || 'Failed to update location');
+    } finally {
+      setIsUpdatingLocation(false);
+    }
+  }, [user, refreshInfluencerData]);
+
+  // Handler for saving profile image
+  const handleSaveProfileImage = useCallback(async (profileImageFile: File | null) => {
+    if (!user?.id) {
+      alert('You must be logged in to update your profile');
+      return;
+    }
+
+    if (!profileImageFile) {
+      setShowEditProfileImage(false);
+      return;
+    }
+
+    try {
+      setIsUpdatingProfileImage(true);
+      
+      await influencerService.updateInfluencer(
+        user.id,
+        {},
+        profileImageFile
+      );
+      
+      await refreshInfluencerData();
+      setShowEditProfileImage(false);
+    } catch (err: any) {
+      console.error('Error updating profile image:', err);
+      alert(err.message || 'Failed to update profile image');
+    } finally {
+      setIsUpdatingProfileImage(false);
+    }
+  }, [user, refreshInfluencerData]);
+
+  // Handler for saving background image
+  const handleSaveBackgroundImage = useCallback(async (coverImageFile: File | null) => {
+    if (!user?.id) {
+      alert('You must be logged in to update your profile');
+      return;
+    }
+
+    if (!coverImageFile) {
+      setShowEditBackgroundImage(false);
+      return;
+    }
+
+    try {
+      setIsUpdatingBackgroundImage(true);
+      
+      await influencerService.updateInfluencer(
+        user.id,
+        {},
+        undefined,
+        coverImageFile
+      );
+      
+      await refreshInfluencerData();
+      setShowEditBackgroundImage(false);
+    } catch (err: any) {
+      console.error('Error updating background image:', err);
+      alert(err.message || 'Failed to update background image');
+    } finally {
+      setIsUpdatingBackgroundImage(false);
+    }
+  }, [user, refreshInfluencerData]);
 
   const scrollVideos = (direction: 'left' | 'right') => {
     if (isAnimating) return; // Prevent rapid clicking during animation
@@ -372,6 +547,11 @@ export const InfluencerDetail: React.FC = () => {
             location={influencerData.location}
             description={influencerData.description}
             platformFollowers={influencerData.platformFollowers}
+            onEditProfileImage={() => setShowEditProfileImage(true)}
+            onEditName={() => setShowEditName(true)}
+            onEditLocation={() => setShowEditLocation(true)}
+            onEditDescription={() => setShowEditDescription(true)}
+            onEditBackgroundImage={() => setShowEditBackgroundImage(true)}
           />
 
          
@@ -1787,6 +1967,74 @@ export const InfluencerDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Modals */}
+      <EditName
+        isOpen={showEditName}
+        onClose={() => {
+          if (!isUpdatingName) {
+            setShowEditName(false);
+          }
+        }}
+        initialValue={influencerData?.name || ''}
+        onSave={handleSaveName}
+        title="Edit Name"
+        instruction="Update your display name."
+      />
+
+      <EditDescription
+        isOpen={showEditDescription}
+        onClose={() => {
+          if (!isUpdatingDescription) {
+            setShowEditDescription(false);
+          }
+        }}
+        initialValue={influencerData?.description || ''}
+        onSave={handleSaveDescription}
+        title="Edit Description"
+        instruction="Share a brief overview of what you do and experiences that set you apart."
+      />
+
+      <EditLocation
+        isOpen={showEditLocation}
+        onClose={() => {
+          if (!isUpdatingLocation) {
+            setShowEditLocation(false);
+          }
+        }}
+        initialValue={influencer?.location || {}}
+        onSave={handleSaveLocation}
+        title="Edit Location"
+        instruction="Update your location information."
+      />
+
+      <EditProfilePhoto
+        isOpen={showEditProfileImage}
+        onClose={() => {
+          if (!isUpdatingProfileImage) {
+            setShowEditProfileImage(false);
+          }
+        }}
+        initialPhoto={influencerData?.profileImage || ''}
+        maxSize={10}
+        maxDimensions="300x300"
+        onSave={handleSaveProfileImage}
+        title="Edit Profile Photo"
+      />
+
+      <EditProfilePhoto
+        isOpen={showEditBackgroundImage}
+        onClose={() => {
+          if (!isUpdatingBackgroundImage) {
+            setShowEditBackgroundImage(false);
+          }
+        }}
+        initialPhoto={influencerData?.image || ''}
+        maxSize={10}
+        maxDimensions="1408x504"
+        onSave={handleSaveBackgroundImage}
+        title="Edit Background Image"
+      />
     </div>
   );
 };

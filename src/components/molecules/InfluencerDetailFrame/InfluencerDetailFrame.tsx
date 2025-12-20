@@ -2,7 +2,9 @@ import React from 'react';
 import {
   LocationIcon,
   IosShareIcon,
+  EditIcon,
 } from '../../../assets/icons';
+import { EditButton } from '../../atoms/EditButton/EditButton';
 
 interface InfluencerDetailFrameProps {
   backgroundImage?: string;
@@ -17,6 +19,11 @@ interface InfluencerDetailFrameProps {
     instagram?: number;
     tiktok?: number;
   };
+  onEditProfileImage?: () => void;
+  onEditName?: () => void;
+  onEditLocation?: () => void;
+  onEditDescription?: () => void;
+  onEditBackgroundImage?: () => void;
 }
 
 export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
@@ -25,6 +32,11 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
   name,
   location,
   description,
+  onEditProfileImage,
+  onEditName,
+  onEditLocation,
+  onEditDescription,
+  onEditBackgroundImage,
 }) => {
   return (
     <div
@@ -62,6 +74,19 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
         ) : (
           <div style={{ width: '100%', height: '100%', background: 'linear-gradient(to bottom right, #667eea, #764ba2)' }} />
         )}
+        {/* Edit Button - Top Right Corner */}
+        {onEditBackgroundImage && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              zIndex: 22
+            }}
+          >
+            <EditButton onClick={onEditBackgroundImage} />
+          </div>
+        )}
       </div>
 
       {/* Profile Image - 50% overlapping on background image */}
@@ -72,7 +97,7 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
             width: '200px',
             height: '200px',
             borderRadius: '50%',
-            overflow: 'hidden',
+            overflow: 'visible',
             border: '6px solid white',
             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             zIndex: 20,
@@ -81,15 +106,63 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
             top: '404px' // 504px (background height) - 100px (half of profile image)
           }}
         >
-          <img
-            src={profileImage}
-            alt="Influencer profile"
+          <div
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'cover'
+              borderRadius: '50%',
+              overflow: 'hidden'
             }}
-          />
+          >
+            <img
+              src={profileImage}
+              alt="Influencer profile"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+          </div>
+          {/* Edit Button - Circular overlay on bottom-right corner */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '8px',
+              right: '8px',
+              zIndex: 21,
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+              border: '2px solid rgba(120, 60, 145, 1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+              transition: 'all 0.2s ease'
+            }}
+            onClick={onEditProfileImage}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+            }}
+          >
+            <img 
+              src={EditIcon} 
+              alt="Edit" 
+              style={{ 
+                width: '16px', 
+                height: '16px',
+                display: 'block'
+              }} 
+            />
+          </div>
         </div>
       )}
 
@@ -129,18 +202,27 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
             {/* Name */}
             <div
               style={{
-                fontFamily: 'Poppins, sans-serif',
-                fontSize: '24px',
-                fontWeight: 600,
-                fontStyle: 'normal',
-                lineHeight: '100%',
-                letterSpacing: '0%',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                color: '#1E002B'
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}
             >
-              {name}
+              <div
+                style={{
+                  fontFamily: 'Poppins, sans-serif',
+                  fontSize: '24px',
+                  fontWeight: 600,
+                  fontStyle: 'normal',
+                  lineHeight: '100%',
+                  letterSpacing: '0%',
+                  textAlign: 'center',
+                  verticalAlign: 'middle',
+                  color: '#1E002B'
+                }}
+              >
+                {name}
+              </div>
+              <EditButton onClick={onEditName} />
             </div>
             
             {/* Separator */}
@@ -165,26 +247,35 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    width: '106px',
-                    height: '24px',
                     opacity: 1
                   }}
                 >
-                  <img src={LocationIcon} alt="Location" style={{ width: '16px', height: '16px' }} />
-                  <span
+                  <div
                     style={{
-                      fontFamily: 'Poppins, sans-serif',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      fontStyle: 'normal',
-                      lineHeight: '100%',
-                      letterSpacing: '0%',
-                      verticalAlign: 'middle',
-                      color: '#1E002B'
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      width: '106px',
+                      height: '24px'
                     }}
                   >
-                    {location}
-                  </span>
+                    <img src={LocationIcon} alt="Location" style={{ width: '16px', height: '16px' }} />
+                    <span
+                      style={{
+                        fontFamily: 'Poppins, sans-serif',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        fontStyle: 'normal',
+                        lineHeight: '100%',
+                        letterSpacing: '0%',
+                        verticalAlign: 'middle',
+                        color: '#1E002B'
+                      }}
+                    >
+                      {location}
+                    </span>
+                  </div>
+                  <EditButton onClick={onEditLocation} />
                 </div>
               </>
             )}
@@ -194,18 +285,29 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
           {description && (
             <div
               style={{
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: 400,
-                fontStyle: 'normal',
-                fontSize: '18px',
-                lineHeight: '100%',
-                letterSpacing: '0%',
-                textAlign: 'left',
-                verticalAlign: 'middle',
-                color: '#666'
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px'
               }}
             >
-              {description}
+              <div
+                style={{
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: 400,
+                  fontStyle: 'normal',
+                  fontSize: '18px',
+                  lineHeight: '100%',
+                  letterSpacing: '0%',
+                  textAlign: 'left',
+                  verticalAlign: 'middle',
+                  color: '#666',
+                  flex: '0 1 auto',
+                  maxWidth: '100%'
+                }}
+              >
+                {description}
+              </div>
+              <EditButton onClick={onEditDescription} />
             </div>
           )}
         </div>
