@@ -1,5 +1,21 @@
 import { apiService } from './api';
 
+// Helper function to construct full URL for relative paths
+const constructImageUrl = (url: string | undefined): string | undefined => {
+  if (!url) return undefined;
+  // If it's already a full URL (starts with http:// or https://), return as is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // If it's a relative path starting with /, construct full URL using API base
+  if (url.startsWith('/')) {
+    // Get API base URL from environment or use default
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://backend-stratix.vercel.app';
+    return `${apiBase}${url}`;
+  }
+  return url;
+};
+
 export interface PlatformFollowers {
   x?: number;
   youtube?: number;
@@ -66,7 +82,16 @@ class InfluencerService {
       throw new Error(response.message || 'Failed to fetch influencer');
     }
     
-    return response.data.influencer;
+    // Construct full URLs for images if they're relative paths
+    const influencer = response.data.influencer;
+    if (influencer.profileImage) {
+      influencer.profileImage = constructImageUrl(influencer.profileImage) || influencer.profileImage;
+    }
+    if (influencer.coverImage) {
+      influencer.coverImage = constructImageUrl(influencer.coverImage) || influencer.coverImage;
+    }
+    
+    return influencer;
   }
 
   /**
@@ -79,7 +104,16 @@ class InfluencerService {
       throw new Error(response.message || 'Failed to fetch influencer');
     }
     
-    return response.data.influencer;
+    // Construct full URLs for images if they're relative paths
+    const influencer = response.data.influencer;
+    if (influencer.profileImage) {
+      influencer.profileImage = constructImageUrl(influencer.profileImage) || influencer.profileImage;
+    }
+    if (influencer.coverImage) {
+      influencer.coverImage = constructImageUrl(influencer.coverImage) || influencer.coverImage;
+    }
+    
+    return influencer;
   }
 
   /**
@@ -112,6 +146,75 @@ class InfluencerService {
       influencers: response.data.influencers,
       pagination: response.data.pagination,
     };
+  }
+
+  /**
+   * Update influencer profile
+   * @param userId - User ID of the influencer
+   * @param data - Influencer data to update
+   * @param profileImageFile - Optional profile image file to upload
+   * @param coverImageFile - Optional cover/background image file to upload
+   */
+  async updateInfluencer(
+    userId: string,
+    data: {
+      name?: string;
+      description?: string;
+      location?: {
+        address?: string;
+        city?: string;
+        state?: string;
+        country?: string;
+        pincode?: string;
+      };
+    },
+    profileImageFile?: File,
+    coverImageFile?: File
+  ): Promise<Influencer> {
+    let requestData: any | FormData;
+    
+    // If any file is provided, use FormData
+    if (profileImageFile || coverImageFile) {
+      const formData = new FormData();
+      
+      if (profileImageFile) {
+        formData.append('profileImage', profileImageFile);
+      }
+      
+      if (coverImageFile) {
+        formData.append('coverImage', coverImageFile);
+      }
+      
+      // Append other fields to FormData
+      if (data.description !== undefined) {
+        formData.append('description', data.description);
+      }
+      if (data.location !== undefined) {
+        formData.append('location', JSON.stringify(data.location));
+      }
+      
+      requestData = formData;
+    } else {
+      // No file, use regular JSON
+      requestData = data;
+    }
+    
+    const response = await apiService.put<{ influencer: Influencer }>(`/influencer/${userId}`, requestData);
+    
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to update influencer');
+    }
+    
+    // Construct full URLs for images if they're relative paths
+    const influencer = response.data.influencer;
+    if (influencer.profileImage) {
+      influencer.profileImage = constructImageUrl(influencer.profileImage) || influencer.profileImage;
+    }
+    if (influencer.coverImage) {
+      influencer.coverImage = constructImageUrl(influencer.coverImage) || influencer.coverImage;
+    }
+    
+    return influencer;
   }
 }
 

@@ -30,10 +30,17 @@ class ApiService {
     
     const token = this.getToken();
     
+    // Check if body is FormData - if so, don't set Content-Type (browser will set it with boundary)
+    const isFormData = options.body instanceof FormData;
+    
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),
     };
+
+    // Only set Content-Type for non-FormData requests
+    if (!isFormData && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     // Add Authorization header if token exists
     if (token) {
@@ -89,16 +96,20 @@ class ApiService {
   }
 
   async post<T>(endpoint: string, data: unknown): Promise<ApiResponse<T>> {
+    // If data is FormData, send it directly; otherwise stringify JSON
+    const body = data instanceof FormData ? data : JSON.stringify(data);
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body,
     });
   }
 
   async put<T>(endpoint: string, data: unknown): Promise<ApiResponse<T>> {
+    // If data is FormData, send it directly; otherwise stringify JSON
+    const body = data instanceof FormData ? data : JSON.stringify(data);
     return this.request<T>(endpoint, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body,
     });
   }
 

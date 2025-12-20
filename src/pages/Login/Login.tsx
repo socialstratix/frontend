@@ -490,7 +490,7 @@ export const Login: React.FC = () => {
               </p>
                 <Button
                   type="button"
-                  onClick={() => navigate('/signup')}
+                  onClick={() => navigate('/user-type-selection')}
                 style={{
                   width: '464px',
                   height: '41px',

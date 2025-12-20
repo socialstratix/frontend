@@ -4,6 +4,7 @@ import { colors } from '../../constants/colors';
 import { Button } from '../../components/atoms/Button/Button';
 import { EditButton } from '../../components/atoms/EditButton/EditButton';
 import { EditDescription } from '../../components/molecules/EditDescription/EditDescription';
+import { EditName } from '../../components/molecules/EditName/EditName';
 import { EditTags } from '../../components/molecules/EditTags/EditTags';
 import { EditProfilePhoto } from '../../components/molecules/EditProfilePhoto/EditProfilePhoto';
 import EditIcon from '../../assets/icons/ui/edit.svg';
@@ -17,6 +18,7 @@ import XIcon from '../../assets/icons/social/Icon=X.svg';
 import YoutubeIcon from '../../assets/icons/social/Icon=Youtube.svg';
 import TiktokIcon from '../../assets/icons/social/Icon=Tiktok.svg';
 import { brandService, type Brand as BrandServiceType } from '../../services/brandService';
+import { apiService } from '../../services/api';
 import { useCampaigns, useCampaign } from '../../hooks/useCampaign';
 import type { Campaign as CampaignServiceType } from '../../services/campaignService';
 
@@ -46,9 +48,16 @@ export const BrandProfile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   // Edit modal states
+  const [showEditName, setShowEditName] = useState(false);
   const [showEditDescription, setShowEditDescription] = useState(false);
   const [showEditTags, setShowEditTags] = useState(false);
   const [showEditPhoto, setShowEditPhoto] = useState(false);
+  
+  // Edit operation loading states
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [isUpdatingDescription, setIsUpdatingDescription] = useState(false);
+  const [isUpdatingTags, setIsUpdatingTags] = useState(false);
+  const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
 
   // Use campaigns hook
   const statusFilter = activeTab === 'active' ? 'active' : 'previous';
@@ -107,6 +116,128 @@ export const BrandProfile: React.FC = () => {
 
     fetchBrandData();
   }, [id]);
+
+  // Handler to refresh brand data
+  const refreshBrandData = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      let brandData: Brand;
+      if (isMongoObjectId(id)) {
+        brandData = await brandService.getBrandById(id);
+      } else {
+        brandData = await brandService.getBrandByUserId(id);
+      }
+      setBrand(brandData);
+    } catch (err: any) {
+      console.error('Failed to refresh brand data:', err);
+      setError(err.message || 'Failed to refresh brand data');
+    }
+  }, [id]);
+
+  // Handler for saving name
+  const handleSaveName = useCallback(async (name: string) => {
+    try {
+      setIsUpdatingName(true);
+      setError(null);
+      
+      // Update user name via auth API
+      await apiService.put('/auth/me', { name });
+      
+      // Refresh brand data to get the latest complete data
+      await refreshBrandData();
+      setShowEditName(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update name');
+      console.error('Error updating name:', err);
+    } finally {
+      setIsUpdatingName(false);
+    }
+  }, [refreshBrandData]);
+
+  // Handler for saving description
+  const handleSaveDescription = useCallback(async (description: string) => {
+    if (!brand?.userId) {
+      setError('Brand user ID is required');
+      return;
+    }
+
+    try {
+      setIsUpdatingDescription(true);
+      setError(null);
+      
+      // Update the brand
+      await brandService.updateBrand(brand.userId, {
+        description,
+      });
+      
+      // Refresh brand data to get the latest complete data
+      await refreshBrandData();
+      setShowEditDescription(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update description');
+      console.error('Error updating description:', err);
+    } finally {
+      setIsUpdatingDescription(false);
+    }
+  }, [brand, refreshBrandData]);
+
+  // Handler for saving tags
+  const handleSaveTags = useCallback(async (tags: string[]) => {
+    if (!brand?.userId) {
+      setError('Brand user ID is required');
+      return;
+    }
+
+    try {
+      setIsUpdatingTags(true);
+      setError(null);
+      
+      // Update the brand
+      await brandService.updateBrand(brand.userId, {
+        tags,
+      });
+      
+      // Refresh brand data to get the latest complete data
+      await refreshBrandData();
+      setShowEditTags(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update tags');
+      console.error('Error updating tags:', err);
+    } finally {
+      setIsUpdatingTags(false);
+    }
+  }, [brand, refreshBrandData]);
+
+  // Handler for saving photo/logo
+  const handleSavePhoto = useCallback(async (file: File | null) => {
+    if (!brand?.userId) {
+      setError('Brand user ID is required');
+      return;
+    }
+
+    if (!file) {
+      setError('No file selected');
+      return;
+    }
+
+    try {
+      setIsUpdatingPhoto(true);
+      setError(null);
+      
+      // Update the brand
+      await brandService.updateBrand(brand.userId, {}, file);
+      
+      // Refresh brand data to get the latest complete data
+      await refreshBrandData();
+      setShowEditPhoto(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update photo');
+      console.error('Error updating photo:', err);
+    } finally {
+      setIsUpdatingPhoto(false);
+    }
+  }, [brand, refreshBrandData]);
 
   // Format time ago helper function
   const formatTimeAgo = useCallback((date: string | Date): string => {
@@ -423,7 +554,7 @@ export const BrandProfile: React.FC = () => {
                 >
                   {brandInfo?.name || brand?.user?.name || ''}
                 </h1>
-                <EditButton onClick={() => setShowEditDescription(true)} />
+                <EditButton onClick={() => setShowEditName(true)} />
               </div>
 
               {/* Tags - Comma separated text */}
@@ -1187,65 +1318,52 @@ export const BrandProfile: React.FC = () => {
       </div>
 
       {/* Edit Modals */}
-      <EditDescription
-        isOpen={showEditDescription}
-        onClose={() => setShowEditDescription(false)}
-        initialValue={brandInfo?.description || brand?.description || ''}
-        onSave={(description) => {
-          console.log('Saving description:', description);
-          // TODO: Implement API call to save description
-          // For now, just update local state
-          if (brand) {
-            setBrand({
-              ...brand,
-              description: description,
-            });
+      <EditName
+        isOpen={showEditName}
+        onClose={() => {
+          if (!isUpdatingName) {
+            setShowEditName(false);
           }
         }}
+        initialValue={brandInfo?.name || brand?.user?.name || ''}
+        onSave={handleSaveName}
+      />
+
+      <EditDescription
+        isOpen={showEditDescription}
+        onClose={() => {
+          if (!isUpdatingDescription) {
+            setShowEditDescription(false);
+          }
+        }}
+        initialValue={brandInfo?.description || brand?.description || ''}
+        onSave={handleSaveDescription}
       />
 
       <EditTags
         isOpen={showEditTags}
-        onClose={() => setShowEditTags(false)}
-        initialTags={brandInfo?.tags || []}
-        suggestedTags={['Cooking', 'Unfiltered', 'Roastmaster', 'Gourmet', 'Placeholder']}
-        maxTags={6}
-        onSave={(tags) => {
-          console.log('Saving tags:', tags);
-          // TODO: Implement API call to save tags
-          // For now, just update local state
-          if (brand) {
-            setBrand({
-              ...brand,
-              tags: tags,
-            });
+        onClose={() => {
+          if (!isUpdatingTags) {
+            setShowEditTags(false);
           }
         }}
+        initialTags={brandInfo?.tags || brand?.tags || []}
+        suggestedTags={['Cooking', 'Unfiltered', 'Roastmaster', 'Gourmet', 'Placeholder']}
+        maxTags={6}
+        onSave={handleSaveTags}
       />
 
       <EditProfilePhoto
         isOpen={showEditPhoto}
-        onClose={() => setShowEditPhoto(false)}
+        onClose={() => {
+          if (!isUpdatingPhoto) {
+            setShowEditPhoto(false);
+          }
+        }}
         initialPhoto={brandInfo?.avatar || brand?.logo || ''}
         maxSize={10}
         maxDimensions="300x300"
-        onSave={(file) => {
-          console.log('Saving photo:', file);
-          // TODO: Implement API call to save photo
-          // For now, if file is provided, create a preview URL
-          if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              if (brand) {
-                setBrand({
-                  ...brand,
-                  logo: reader.result as string,
-                });
-              }
-            };
-            reader.readAsDataURL(file);
-          }
-        }}
+        onSave={handleSavePhoto}
       />
     </div>
   );

@@ -6,6 +6,8 @@ export { CampaignCard } from './CampaignCard';
 export { StatsCard } from './StatsCard';
 export { InfluencerDetailFrame } from './InfluencerDetailFrame';
 export { EditDescription } from './EditDescription';
+export { EditName } from './EditName';
 export { EditTags } from './EditTags';
 export { EditProfilePhoto } from './EditProfilePhoto';
+export { EditLocation } from './EditLocation';
 
