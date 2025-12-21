@@ -93,9 +93,6 @@ export const EditProfilePhoto: React.FC<EditProfilePhotoProps> = ({
     onClose();
   };
 
-  const handleChange = () => {
-    fileInputRef.current?.click();
-  };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
@@ -172,6 +169,7 @@ export const EditProfilePhoto: React.FC<EditProfilePhotoProps> = ({
             {photo ? (
               <div style={{ position: 'relative', display: 'inline-block' }}>
                 <div
+                  onClick={() => fileInputRef.current?.click()}
                   style={{
                     width: '200px',
                     height: '200px',
@@ -182,6 +180,14 @@ export const EditProfilePhoto: React.FC<EditProfilePhotoProps> = ({
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     border: `2px solid ${colors.border.light}`,
+                    cursor: 'pointer',
+                    transition: 'opacity 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '0.8';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '1';
                   }}
                 >
                   {/* Edit Button on Avatar */}
@@ -194,7 +200,10 @@ export const EditProfilePhoto: React.FC<EditProfilePhotoProps> = ({
                     }}
                   >
                     <EditButton
-                      onClick={handleEditButtonClick}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
                       style={{
                         width: '28px',
                         height: '28px',
@@ -387,35 +396,20 @@ export const EditProfilePhoto: React.FC<EditProfilePhotoProps> = ({
             CANCEL
           </Button>
           {photo ? (
-            <>
-              <Button
-                variant="outline"
-                onClick={handleChange}
-                style={{
-                  padding: '8px 24px',
-                  fontFamily: 'Poppins',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                }}
-              >
-                CHANGE
-              </Button>
-              <Button
-                variant="filled"
-                onClick={handleSave}
-                style={{
-                  padding: '8px 24px',
-                  fontFamily: 'Poppins',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  backgroundColor: colors.primary.main,
-                }}
-              >
-                SAVE PHOTO
-              </Button>
-            </>
+            <Button
+              variant="filled"
+              onClick={handleSave}
+              style={{
+                padding: '8px 24px',
+                fontFamily: 'Poppins',
+                fontSize: '14px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                backgroundColor: colors.primary.main,
+              }}
+            >
+              SAVE PHOTO
+            </Button>
           ) : (
             <Button
               variant="filled"
