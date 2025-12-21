@@ -436,7 +436,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             {/* Navigation Links */}
             <Link
-              to={baseRoute === 'influencer' ? `/${baseRoute}` : 'campaigns/create'}
+              to={baseRoute === 'influencer' ? `/${baseRoute}` : `/${baseRoute || 'brand'}/campaigns/create`}
               className="px-2 md:px-4 py-2 hover:opacity-80 transition-colors text-xs md:text-sm whitespace-nowrap"
               style={{
                 fontFamily: 'Poppins, sans-serif',
@@ -450,7 +450,7 @@ export const Header: React.FC<HeaderProps> = ({
               {baseRoute === 'influencer' ? 'Find Work' : 'Post Campaign'}
             </Link>
             <Link
-              to="messages"
+              to={`/${baseRoute || 'brand'}/messages`}
               className="px-2 md:px-4 py-2 hover:opacity-80 transition-colors text-xs md:text-sm whitespace-nowrap"
               style={{
                 fontFamily: 'Poppins, sans-serif',

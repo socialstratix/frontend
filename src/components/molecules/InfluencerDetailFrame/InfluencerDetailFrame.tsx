@@ -214,44 +214,46 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
             )}
           </div>
           {/* Edit Button - Circular overlay on bottom-right corner */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '8px',
-              right: '8px',
-              zIndex: 21,
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(255, 255, 255, 1)',
-              border: '2px solid rgba(120, 60, 145, 1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-              transition: 'all 0.2s ease'
-            }}
-            onClick={onEditProfileImage}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.1)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-            }}
-          >
-            <img 
-              src={EditIcon} 
-              alt="Edit" 
-              style={{ 
-                width: '16px', 
-                height: '16px',
-                display: 'block'
-              }} 
-            />
-          </div>
+          {onEditProfileImage && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '8px',
+                right: '8px',
+                zIndex: 21,
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 1)',
+                border: '2px solid rgba(120, 60, 145, 1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                transition: 'all 0.2s ease'
+              }}
+              onClick={onEditProfileImage}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.1)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+              }}
+            >
+              <img 
+                src={EditIcon} 
+                alt="Edit" 
+                style={{ 
+                  width: '16px', 
+                  height: '16px',
+                  display: 'block'
+                }} 
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -311,7 +313,7 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
               >
                 {name}
               </div>
-              <EditButton onClick={onEditName} />
+              {onEditName && <EditButton onClick={onEditName} />}
             </div>
             
             {/* Separator */}
@@ -364,7 +366,7 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
                       {location}
                     </span>
                   </div>
-                  <EditButton onClick={onEditLocation} />
+                  {onEditLocation && <EditButton onClick={onEditLocation} />}
                 </div>
               </>
             )}
@@ -396,7 +398,7 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
               >
                 {description}
               </div>
-              <EditButton onClick={onEditDescription} />
+              {onEditDescription && <EditButton onClick={onEditDescription} />}
             </div>
           )}
         </div>

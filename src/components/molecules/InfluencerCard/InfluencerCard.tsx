@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { XIcon, YouTubeIcon, FacebookIcon, InstagramIcon, TikTokIcon, StarIcon, BadgeIcon } from '../../../assets/icons';
 import { PLACEHOLDER_IMAGE } from '../../../constants';
+import { influencerService, type FollowersResponse } from '../../../services/influencerService';
 
 interface InfluencerCardProps {
   name: string;
@@ -9,7 +10,8 @@ interface InfluencerCardProps {
   rating?: number;  // Rating (e.g., 4.9)
   description?: string;  // Description
   isTopCreator?: boolean;  // Top Creator badge
-  platformFollowers?: {  // Followers per platform
+  influencerId?: string;  // MongoDB ObjectId for fetching followers from API
+  platformFollowers?: {  // Followers per platform (fallback if API not available)
     x?: number;
     youtube?: number;
     facebook?: number;
@@ -26,11 +28,33 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
   rating,
   description,
   isTopCreator,
-  platformFollowers,
+  influencerId,
+  platformFollowers: propPlatformFollowers,
   onClick,
 }) => {
   const [profileImageError, setProfileImageError] = useState(false);
   const [backgroundImageError, setBackgroundImageError] = useState(false);
+  const [apiFollowers, setApiFollowers] = useState<FollowersResponse | null>(null);
+
+  // Fetch followers from API if influencerId is provided
+  useEffect(() => {
+    if (!influencerId || !/^[0-9a-fA-F]{24}$/.test(influencerId)) return;
+
+    const fetchFollowers = async () => {
+      try {
+        const followersData = await influencerService.getInfluencerFollowers(influencerId, '7d');
+        setApiFollowers(followersData);
+      } catch (error) {
+        console.error('Failed to fetch followers for card:', error);
+        // Keep apiFollowers as null to use prop data as fallback
+      }
+    };
+
+    fetchFollowers();
+  }, [influencerId]);
+
+  // Use API followers if available, otherwise fallback to prop data
+  const platformFollowers = apiFollowers?.platformFollowers || propPlatformFollowers;
 
   const formatFollowers = (count?: number) => {
     if (!count) return '0';
@@ -344,7 +368,7 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
                   <PlatformIcon platform="instagram" size={16} />
                 </div>
                 <span style={{ fontFamily: 'Poppins, sans-serif', color: '#333' }}>
-                  {formatFollowers(platformFollowers.instagram)}
+                  {formatFollowers(platformFollowers.instagram)} 
                 </span>
               </div>
             )}

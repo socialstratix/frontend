@@ -118,6 +118,37 @@ export interface InfluencerListResponse {
   };
 }
 
+export interface ContentItem {
+  id: string;
+  thumbnail: string;
+  title: string;
+  views: number;
+  date: string;
+  duration: string;
+  platform: 'youtube' | 'instagram' | 'tiktok';
+}
+
+export interface FollowersResponse {
+  influencerId: string;
+  period: '7d' | '30d';
+  platformFollowers: {
+    youtube?: number;
+    instagram?: number;
+    tiktok?: number;
+    facebook?: number;
+    x?: number;
+  };
+  totalFollowers: number;
+  periodLabel: string;
+}
+
+export interface ContentResponse {
+  influencerId: string;
+  period: '7d' | '30d';
+  periodLabel: string;
+  items: ContentItem[];
+}
+
 class InfluencerService {
   /**
    * Get influencer profile by influencer ID (MongoDB _id)
@@ -262,6 +293,51 @@ class InfluencerService {
     }
     
     return influencer;
+  }
+
+  /**
+   * Get influencer followers data
+   * @param influencerId - MongoDB ObjectId of the influencer
+   * @param period - Time period: '7d' or '30d' (default: '7d')
+   */
+  async getInfluencerFollowers(influencerId: string, period: '7d' | '30d' = '7d'): Promise<FollowersResponse> {
+    const response = await apiService.get<FollowersResponse>(`/influencer/${influencerId}/followers?period=${period}`);
+    
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch influencer followers');
+    }
+    
+    return response.data;
+  }
+
+  /**
+   * Get influencer shorts data
+   * @param influencerId - MongoDB ObjectId of the influencer
+   * @param period - Time period: '7d' or '30d' (default: '7d')
+   */
+  async getInfluencerShorts(influencerId: string, period: '7d' | '30d' = '7d'): Promise<ContentResponse> {
+    const response = await apiService.get<ContentResponse>(`/influencer/${influencerId}/shorts?period=${period}`);
+    
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch influencer shorts');
+    }
+    
+    return response.data;
+  }
+
+  /**
+   * Get influencer videos data
+   * @param influencerId - MongoDB ObjectId of the influencer
+   * @param period - Time period: '7d' or '30d' (default: '7d')
+   */
+  async getInfluencerVideos(influencerId: string, period: '7d' | '30d' = '7d'): Promise<ContentResponse> {
+    const response = await apiService.get<ContentResponse>(`/influencer/${influencerId}/videos?period=${period}`);
+    
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch influencer videos');
+    }
+    
+    return response.data;
   }
 }
 
