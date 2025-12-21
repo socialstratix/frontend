@@ -40,16 +40,14 @@ export const InfluencerGrid: React.FC<InfluencerGridProps> = ({
       )}
       <div
         style={{
-          width: '1586px',
-          maxWidth: '100%',
-          height: '1620px',
+          width: '100%',
           gap: '8px',
           paddingTop: '24px',
           paddingRight: '16px',
           paddingLeft: '16px',
+          paddingBottom: '24px',
           backgroundColor: '#FFFFFF',
-          borderRadius: '4px',
-          overflowY: 'auto'
+          borderRadius: '4px'
         }}
       >
         <div 
@@ -69,6 +67,7 @@ export const InfluencerGrid: React.FC<InfluencerGridProps> = ({
               rating={influencer.rating}
               description={influencer.description}
               isTopCreator={influencer.isTopCreator}
+              influencerId={influencer.id}
               platformFollowers={influencer.platformFollowers}
               onClick={() => onInfluencerClick?.(influencer)}
             />

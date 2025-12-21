@@ -7,7 +7,7 @@ import { EditLocation } from '../../components/molecules/EditLocation/EditLocati
 import { EditProfilePhoto } from '../../components/molecules/EditProfilePhoto/EditProfilePhoto';
 import { useInfluencer } from '../../hooks';
 import { useAuth } from '../../contexts/AuthContext';
-import { influencerService } from '../../services/influencerService';
+import { influencerService, type ContentItem, type FollowersResponse } from '../../services/influencerService';
 import { apiService } from '../../services/api';
 import { 
   XIcon, 
@@ -22,18 +22,6 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon
 } from '../../assets/icons';
-
-// Placeholder data for shorts and videos (can be replaced with API later)
-const mockShorts = Array.from({ length: 6 }, (_, i) => ({
-  id: `short-${i + 1}`,
-  thumbnail: `https://picsum.photos/200/300?random=${i + 10}`,
-}));
-
-const mockVideos = [
-  { id: 'video-1', thumbnail: 'https://picsum.photos/400/300?random=20' },
-  { id: 'video-2', thumbnail: 'https://picsum.photos/400/300?random=21' },
-  { id: 'video-4', thumbnail: 'https://picsum.photos/400/300?random=23' },
-];
 
 export const InfluencerDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -54,10 +42,64 @@ export const InfluencerDetail: React.FC = () => {
     ? false 
     : (userType === 'brand' || location.pathname.startsWith('/brand'));
   
-  // Debug logging
-  console.log('InfluencerDetail - userType:', user?.userType, 'isBrand:', isBrand, 'pathname:', location.pathname);
   // Fetch influencer data using the hook
   const { influencer, isLoading, error, fetchInfluencerById, fetchInfluencer } = useInfluencer();
+  
+  // Check if the current user is viewing their own profile
+  // Only allow editing if user is an influencer viewing their own profile
+  // Brands should NEVER see edit buttons
+  const isOwnProfile = useMemo(() => {
+    if (!user || !influencer) {
+      console.log('isOwnProfile check: missing user or influencer', { user: !!user, influencer: !!influencer });
+      return false;
+    }
+    // If user is a brand, never allow editing
+    if (isBrand || userType === 'brand') {
+      console.log('isOwnProfile check: user is brand', { isBrand, userType });
+      return false;
+    }
+    // Only allow editing if user is an influencer viewing their own profile
+    // User object has 'id' field (not '_id')
+    const influencerUserId = typeof influencer.userId === 'object' 
+      ? (influencer.userId as any)?._id?.toString() 
+      : influencer.userId?.toString();
+    const currentUserId = user.id?.toString();
+    
+    // Also check if accessing by influencer _id and it matches
+    const influencerId = influencer._id?.toString();
+    const urlId = id;
+    
+    // Check if the influencer's userId matches the current user's id
+    // OR if the URL id (influencer _id) matches and the user owns this influencer profile
+    const matchesByUserId = influencerUserId === currentUserId;
+    const matchesByInfluencerId = urlId && influencerId === urlId && influencerUserId === currentUserId;
+    
+    const result = (matchesByUserId || matchesByInfluencerId) && userType === 'influencer';
+    
+    console.log('isOwnProfile check:', {
+      userType,
+      currentUserId,
+      influencerUserId,
+      influencerId,
+      urlId,
+      matchesByUserId,
+      matchesByInfluencerId,
+      result
+    });
+    
+    return result;
+  }, [user, influencer, userType, isBrand, id]);
+
+  // State for shorts, videos, and followers
+  const [shorts, setShorts] = useState<ContentItem[]>([]);
+  const [videos, setVideos] = useState<ContentItem[]>([]);
+  const [followers, setFollowers] = useState<FollowersResponse | null>(null);
+  const [shortsPeriod, setShortsPeriod] = useState<'7d' | '30d'>('7d');
+  const [videosPeriod, setVideosPeriod] = useState<'7d' | '30d'>('7d');
+  const [followersPeriod, setFollowersPeriod] = useState<'7d' | '30d'>('7d');
+  const [isLoadingShorts, setIsLoadingShorts] = useState(false);
+  const [isLoadingVideos, setIsLoadingVideos] = useState(false);
+  const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -68,7 +110,56 @@ export const InfluencerDetail: React.FC = () => {
     } else {
       fetchInfluencer(id);
     }
-  }, [id, fetchInfluencerById, fetchInfluencer]);
+    // fetchInfluencerById and fetchInfluencer are stable from useCallback, safe to omit from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  // Fetch shorts, videos, and followers when influencer ID or period changes
+  useEffect(() => {
+    if (!id || !isMongoObjectId(id)) return;
+
+    const fetchContentData = async () => {
+      try {
+        // Fetch shorts
+        setIsLoadingShorts(true);
+        const shortsData = await influencerService.getInfluencerShorts(id, shortsPeriod);
+        setShorts(shortsData.items || []);
+        setIsLoadingShorts(false);
+      } catch (error) {
+        console.error('Failed to fetch shorts:', error);
+        setIsLoadingShorts(false);
+        setShorts([]);
+      }
+
+      try {
+        // Fetch videos
+        setIsLoadingVideos(true);
+        const videosData = await influencerService.getInfluencerVideos(id, videosPeriod);
+        setVideos(videosData.items || []);
+        setIsLoadingVideos(false);
+        // Reset video slide to 0 when videos change
+        setCurrentVideoSlide(0);
+      } catch (error) {
+        console.error('Failed to fetch videos:', error);
+        setIsLoadingVideos(false);
+        setVideos([]);
+      }
+
+      try {
+        // Fetch followers
+        setIsLoadingFollowers(true);
+        const followersData = await influencerService.getInfluencerFollowers(id, followersPeriod);
+        setFollowers(followersData);
+        setIsLoadingFollowers(false);
+      } catch (error) {
+        console.error('Failed to fetch followers:', error);
+        setIsLoadingFollowers(false);
+        setFollowers(null);
+      }
+    };
+
+    fetchContentData();
+  }, [id, shortsPeriod, videosPeriod, followersPeriod]);
 
   // Determine the base path and discover route based on current route
   const getDiscoverPath = () => {
@@ -117,7 +208,7 @@ export const InfluencerDetail: React.FC = () => {
   // Auto-play functionality - change slide every 2 seconds
   useEffect(() => {
     // Don't auto-play if paused, animating, or no videos
-    if (isAutoPlayPaused || isAnimating || mockVideos.length === 0) return;
+    if (isAutoPlayPaused || isAnimating || videos.length === 0) return;
 
     const autoPlayInterval = setInterval(() => {
       // Auto-advance to next slide (right direction)
@@ -125,7 +216,7 @@ export const InfluencerDetail: React.FC = () => {
       setSlideDirection('right');
       setIsAnimating(true);
       
-      const newSlideIndex = currentVideoSlide === mockVideos.length - 1 ? 0 : currentVideoSlide + 1;
+      const newSlideIndex = currentVideoSlide === videos.length - 1 ? 0 : currentVideoSlide + 1;
       
       requestAnimationFrame(() => {
         setCurrentVideoSlide(newSlideIndex);
@@ -140,7 +231,7 @@ export const InfluencerDetail: React.FC = () => {
     }, 2000); // Change slide every 2 seconds
 
     return () => clearInterval(autoPlayInterval);
-  }, [isAutoPlayPaused, isAnimating, currentVideoSlide, mockVideos.length]);
+  }, [isAutoPlayPaused, isAnimating, currentVideoSlide, videos.length]);
 
   // Map API data to component format
   const influencerData = useMemo(() => {
@@ -348,7 +439,7 @@ export const InfluencerDetail: React.FC = () => {
   }, [user, id, fetchInfluencerById, fetchInfluencer]);
 
   const scrollVideos = (direction: 'left' | 'right') => {
-    if (isAnimating) return; // Prevent rapid clicking during animation
+    if (isAnimating || videos.length === 0) return; // Prevent rapid clicking during animation
     
     // Pause auto-play when user manually navigates
     setIsAutoPlayPaused(true);
@@ -361,8 +452,8 @@ export const InfluencerDetail: React.FC = () => {
     
     // Calculate new slide index
     const newSlideIndex = direction === 'left' 
-      ? (currentVideoSlide === 0 ? mockVideos.length - 1 : currentVideoSlide - 1)
-      : (currentVideoSlide === mockVideos.length - 1 ? 0 : currentVideoSlide + 1);
+      ? (currentVideoSlide === 0 ? videos.length - 1 : currentVideoSlide - 1)
+      : (currentVideoSlide === videos.length - 1 ? 0 : currentVideoSlide + 1);
     
     // First, set the initial animation state (slides at offset positions)
     // Then after a tiny delay, update the slide index to trigger the animation
@@ -385,7 +476,8 @@ export const InfluencerDetail: React.FC = () => {
 
   // Helper function to get video index with wrapping
   const getVideoIndex = (baseIndex: number, offset: number): number => {
-    const total = mockVideos.length;
+    const total = videos.length;
+    if (total === 0) return 0;
     let newIndex = baseIndex + offset;
     if (newIndex < 0) {
       newIndex = total + newIndex; // Wrap to end
@@ -578,19 +670,67 @@ export const InfluencerDetail: React.FC = () => {
             location={influencerData.location}
             description={influencerData.description}
             platformFollowers={influencerData.platformFollowers}
-            onEditProfileImage={() => setShowEditProfileImage(true)}
-            onEditName={() => setShowEditName(true)}
-            onEditLocation={() => setShowEditLocation(true)}
-            onEditDescription={() => setShowEditDescription(true)}
-            onEditBackgroundImage={() => setShowEditBackgroundImage(true)}
+            onEditProfileImage={isOwnProfile ? () => setShowEditProfileImage(true) : undefined}
+            onEditName={isOwnProfile ? () => setShowEditName(true) : undefined}
+            onEditLocation={isOwnProfile ? () => setShowEditLocation(true) : undefined}
+            onEditDescription={isOwnProfile ? () => setShowEditDescription(true) : undefined}
+            onEditBackgroundImage={isOwnProfile ? () => setShowEditBackgroundImage(true) : undefined}
           />
 
          
 
             {/* Platform Followers Section - Left Aligned */}
-            {influencerData.platformFollowers && (
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', flexWrap: 'wrap' }}>
-                {influencerData.platformFollowers.x !== undefined && (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                <h3 style={{ fontFamily: 'Poppins, sans-serif', fontSize: '20px', fontWeight: 600, color: '#1E002B', margin: 0 }}>
+                  Followers
+                </h3>
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <select
+                    style={{
+                      padding: '8px 32px 8px 12px',
+                      fontFamily: 'Poppins, sans-serif',
+                      fontSize: '14px',
+                      fontWeight: 400,
+                      color: '#1E002B',
+                      backgroundColor: '#FFFFFF',
+                      border: 'none',
+                      outline: 'none',
+                      appearance: 'none',
+                      cursor: 'pointer'
+                    }}
+                    value={followersPeriod === '7d' ? '7days' : '30days'}
+                    onChange={(e) => {
+                      const newPeriod = e.target.value === '7days' ? '7d' : '30d';
+                      setFollowersPeriod(newPeriod);
+                    }}
+                  >
+                    <option value="7days">Last 7 days</option>
+                    <option value="30days">Last 30 days</option>
+                  </select>
+                  <img
+                    src={ArrowDropDownIcon}
+                    alt="Dropdown"
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: '16px',
+                      height: '16px',
+                      pointerEvents: 'none',
+                      zIndex: 1
+                    }}
+                  />
+                </div>
+              </div>
+              {isLoadingFollowers ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                  <span style={{ color: '#1E002B' }}>Loading followers...</span>
+                </div>
+              ) : followers ? (
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  {followers.platformFollowers.x !== undefined && (
                   <div
                     style={{
                       display: 'flex',
@@ -608,11 +748,11 @@ export const InfluencerDetail: React.FC = () => {
                       <PlatformIcon platform="x" size={20} />
                     </div>
                     <span style={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 600 }}>
-                      {formatFollowers(influencerData.platformFollowers.x)} Followers
+                      {formatFollowers(followers.platformFollowers.x)} Followers
                     </span>
                   </div>
-                )}
-                {influencerData.platformFollowers.youtube !== undefined && (
+                  )}
+                  {followers.platformFollowers.youtube !== undefined && (
                   <div
                     style={{
                       display: 'flex',
@@ -630,11 +770,11 @@ export const InfluencerDetail: React.FC = () => {
                       <PlatformIcon platform="youtube" size={20} />
                     </div>
                     <span style={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 600 }}>
-                      {formatFollowers(influencerData.platformFollowers.youtube)} Followers
+                      {formatFollowers(followers.platformFollowers.youtube)} Followers
                     </span>
                   </div>
-                )}
-                {influencerData.platformFollowers.facebook !== undefined && (
+                  )}
+                  {followers.platformFollowers.facebook !== undefined && (
                   <div
                     style={{
                       display: 'flex',
@@ -652,11 +792,11 @@ export const InfluencerDetail: React.FC = () => {
                       <PlatformIcon platform="facebook" size={20} />
                     </div>
                     <span style={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 600 }}>
-                      {formatFollowers(influencerData.platformFollowers.facebook)} Followers
+                      {formatFollowers(followers.platformFollowers.facebook)} Followers
                     </span>
                   </div>
-                )}
-                {influencerData.platformFollowers.instagram !== undefined && (
+                  )}
+                  {followers.platformFollowers.instagram !== undefined && (
                   <div
                     style={{
                       display: 'flex',
@@ -674,11 +814,11 @@ export const InfluencerDetail: React.FC = () => {
                       <PlatformIcon platform="instagram" size={20} />
                     </div>
                     <span style={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 600 }}>
-                      {formatFollowers(influencerData.platformFollowers.instagram)} Followers
+                      {formatFollowers(followers.platformFollowers.instagram)} Followers
                     </span>
                   </div>
-                )}
-                {influencerData.platformFollowers.tiktok !== undefined && (
+                  )}
+                  {followers.platformFollowers.tiktok !== undefined && (
                   <div
                     style={{
                       display: 'flex',
@@ -696,12 +836,17 @@ export const InfluencerDetail: React.FC = () => {
                       <PlatformIcon platform="tiktok" size={20} />
                     </div>
                     <span style={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 600 }}>
-                      {formatFollowers(influencerData.platformFollowers.tiktok)} Followers
+                      {formatFollowers(followers.platformFollowers.tiktok)} Followers
                     </span>
                   </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                  <span style={{ color: '#1E002B' }}>No followers data available</span>
+                </div>
+              )}
+            </div>
 
           {/* Verified Payment and Top Creator Badges - Left Aligned */}
           <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
@@ -947,11 +1092,14 @@ export const InfluencerDetail: React.FC = () => {
                       appearance: 'none',
                       cursor: 'pointer'
                     }}
-                    defaultValue="7days"
+                    value={shortsPeriod === '7d' ? '7days' : '30days'}
+                    onChange={(e) => {
+                      const newPeriod = e.target.value === '7days' ? '7d' : '30d';
+                      setShortsPeriod(newPeriod);
+                    }}
                   >
                     <option value="7days">Last 7 days</option>
                     <option value="30days">Last 30 days</option>
-                    <option value="90days">Last 90 days</option>
                   </select>
                   <img
                     src={ArrowDropDownIcon}
@@ -986,35 +1134,45 @@ export const InfluencerDetail: React.FC = () => {
                   WebkitOverflowScrolling: 'touch'
                 }}
               >
-                {mockShorts.map((short) => (
-                  <div
-                    key={short.id}
-                    style={{
-                      width: '245px',
-                      height: '400px',
-                      flexShrink: 0,
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      transition: 'opacity 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.opacity = '0.8';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = '1';
-                    }}
-                  >
-                    <img
-                      src={short.thumbnail}
-                      alt={short.id}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                    />
+                {isLoadingShorts ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '400px' }}>
+                    <span style={{ color: '#1E002B' }}>Loading shorts...</span>
                   </div>
-                ))}
+                ) : shorts.length === 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '400px' }}>
+                    <span style={{ color: '#1E002B' }}>No shorts available</span>
+                  </div>
+                ) : (
+                  shorts.map((short) => (
+                    <div
+                      key={short.id}
+                      style={{
+                        width: '245px',
+                        height: '400px',
+                        flexShrink: 0,
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        transition: 'opacity 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '0.8';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                      }}
+                    >
+                      <img
+                        src={short.thumbnail}
+                        alt={short.title || short.id}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -1068,13 +1226,16 @@ export const InfluencerDetail: React.FC = () => {
                       appearance: 'none',
                       cursor: 'pointer'
                     }}
-                    defaultValue="7days"
+                    value={videosPeriod === '7d' ? '7days' : '30days'}
+                    onChange={(e) => {
+                      const newPeriod = e.target.value === '7days' ? '7d' : '30d';
+                      setVideosPeriod(newPeriod);
+                    }}
                   >
                     <option value="7days">Last 7 days</option>
                     <option value="30days">Last 30 days</option>
-                    <option value="90days">Last 90 days</option>
                   </select>
-                  <img
+                    <img
                     src={ArrowDropDownIcon}
                     alt="Dropdown"
                     style={{
@@ -1105,7 +1266,15 @@ export const InfluencerDetail: React.FC = () => {
                 onMouseEnter={() => setIsAutoPlayPaused(true)}
                 onMouseLeave={() => setIsAutoPlayPaused(false)}
               >
-                {(() => {
+                {isLoadingVideos ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '400px' }}>
+                    <span style={{ color: '#1E002B' }}>Loading videos...</span>
+                  </div>
+                ) : videos.length === 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '400px' }}>
+                    <span style={{ color: '#1E002B' }}>No videos available</span>
+                  </div>
+                ) : (() => {
                   // Get all videos to display (active + 2 left + 2 right for 3 layers, with wrapping)
                   const videosToShow: Array<{ index: number; position: 'far-left' | 'left' | 'center' | 'right' | 'far-right'; distance: number }> = [];
                   
@@ -1133,7 +1302,8 @@ export const InfluencerDetail: React.FC = () => {
                   }
                   
                   return videosToShow.map(({ index, position, distance }) => {
-                    const video = mockVideos[index];
+                    const video = videos[index];
+                    if (!video) return null;
                     const isActive = position === 'center';
                     
                     // Calculate position and size based on distance from active slide
@@ -1365,7 +1535,7 @@ export const InfluencerDetail: React.FC = () => {
                     alignItems: 'center'
                   }}
                 >
-                  {mockVideos.map((_, index) => (
+                  {videos.map((_, index) => (
                     <div
                       key={index}
                       onClick={() => {
@@ -2041,73 +2211,77 @@ export const InfluencerDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Edit Modals */}
-      <EditName
-        isOpen={showEditName}
-        onClose={() => {
-          if (!isUpdatingName) {
-            setShowEditName(false);
-          }
-        }}
-        initialValue={influencerData?.name || ''}
-        onSave={handleSaveName}
-        title="Edit Name"
-        instruction="Update your display name."
-      />
+      {/* Edit Modals - Only show if user is viewing their own profile */}
+      {isOwnProfile && (
+        <>
+          <EditName
+            isOpen={showEditName}
+            onClose={() => {
+              if (!isUpdatingName) {
+                setShowEditName(false);
+              }
+            }}
+            initialValue={influencerData?.name || ''}
+            onSave={handleSaveName}
+            title="Edit Name"
+            instruction="Update your display name."
+          />
 
-      <EditDescription
-        isOpen={showEditDescription}
-        onClose={() => {
-          if (!isUpdatingDescription) {
-            setShowEditDescription(false);
-          }
-        }}
-        initialValue={influencerData?.description || ''}
-        onSave={handleSaveDescription}
-        title="Edit Description"
-        instruction="Share a brief overview of what you do and experiences that set you apart."
-      />
+          <EditDescription
+            isOpen={showEditDescription}
+            onClose={() => {
+              if (!isUpdatingDescription) {
+                setShowEditDescription(false);
+              }
+            }}
+            initialValue={influencerData?.description || ''}
+            onSave={handleSaveDescription}
+            title="Edit Description"
+            instruction="Share a brief overview of what you do and experiences that set you apart."
+          />
 
-      <EditLocation
-        isOpen={showEditLocation}
-        onClose={() => {
-          if (!isUpdatingLocation) {
-            setShowEditLocation(false);
-          }
-        }}
-        initialValue={influencer?.location || {}}
-        onSave={handleSaveLocation}
-        title="Edit Location"
-        instruction="Update your location information."
-      />
+          <EditLocation
+            isOpen={showEditLocation}
+            onClose={() => {
+              if (!isUpdatingLocation) {
+                setShowEditLocation(false);
+              }
+            }}
+            initialValue={influencer?.location || {}}
+            onSave={handleSaveLocation}
+            title="Edit Location"
+            instruction="Update your location information."
+          />
 
-      <EditProfilePhoto
-        isOpen={showEditProfileImage}
-        onClose={() => {
-          if (!isUpdatingProfileImage) {
-            setShowEditProfileImage(false);
-          }
-        }}
-        initialPhoto={influencerData?.profileImage || ''}
-        maxSize={10}
-        maxDimensions="300x300"
-        onSave={handleSaveProfileImage}
-        title="Edit Profile Photo"
-      />
+          <EditProfilePhoto
+            isOpen={showEditProfileImage}
+            onClose={() => {
+              if (!isUpdatingProfileImage) {
+                setShowEditProfileImage(false);
+              }
+            }}
+            initialPhoto={influencerData?.profileImage || ''}
+            maxSize={10}
+            maxDimensions="300x300"
+            onSave={handleSaveProfileImage}
+            title="Edit Profile Photo"
+          />
 
-      <EditProfilePhoto
-        isOpen={showEditBackgroundImage}
-        onClose={() => {
-          if (!isUpdatingBackgroundImage) {
-            setShowEditBackgroundImage(false);
-          }
-        }}
-        initialPhoto={influencerData?.image || ''}
-        maxSize={10}
-        maxDimensions="1408x504"
-        onSave={handleSaveBackgroundImage}
-        title="Edit Background Image"
-      />
+          <EditProfilePhoto
+            isOpen={showEditBackgroundImage}
+            onClose={() => {
+              if (!isUpdatingBackgroundImage) {
+                setShowEditBackgroundImage(false);
+              }
+            }}
+            initialPhoto={influencerData?.image || ''}
+            maxSize={10}
+            maxDimensions="1408x504"
+            onSave={handleSaveBackgroundImage}
+            title="Edit Background Image"
+          />
+        </>
+      )}
     </div>
   );
 };

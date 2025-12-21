@@ -51,16 +51,13 @@ export const InfluencerDiscovery: React.FC = () => {
 
   return (
     <div 
-      className="min-h-screen py-8"
+      className="w-full py-4 sm:py-6 md:py-8"
       style={{
-        background: `
-          linear-gradient(0deg, #FFFFFF, #FFFFFF),
-          linear-gradient(106.35deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%),
-          linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7))
-        `
+        background: 'linear-gradient(135deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%)',
+        minHeight: 'calc(100vh - 200px)', // Dynamic height: viewport minus header/footer
       }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="mb-8 text-center">
           <h1
             className="mb-2 font-bold mx-auto"
