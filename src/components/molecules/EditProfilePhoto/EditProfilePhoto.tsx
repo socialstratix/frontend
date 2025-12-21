@@ -84,10 +84,6 @@ export const EditProfilePhoto: React.FC<EditProfilePhotoProps> = ({
     }
   };
 
-  const handleEditButtonClick = () => {
-    fileInputRef.current?.click();
-  };
-
   const handleSave = () => {
     onSave(photoFile);
     onClose();
