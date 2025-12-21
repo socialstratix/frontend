@@ -126,6 +126,33 @@ class CampaignService {
   }
 
   /**
+   * Get similar campaigns by matching tags
+   */
+  async getSimilarCampaigns(
+    campaignId: string,
+    limit: number = 3
+  ): Promise<CampaignListResponse> {
+    const queryParams = new URLSearchParams();
+    if (limit) {
+      queryParams.append('limit', limit.toString());
+    }
+    
+    const queryString = queryParams.toString();
+    const endpoint = `/campaign/similar/${campaignId}${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await apiService.get<{ campaigns: Campaign[]; count: number }>(endpoint);
+    
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch similar campaigns');
+    }
+    
+    return {
+      campaigns: response.data.campaigns,
+      count: response.data.count,
+    };
+  }
+
+  /**
    * Create a new campaign
    */
   async createCampaign(data: CreateCampaignData): Promise<Campaign> {

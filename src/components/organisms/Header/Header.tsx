@@ -1,9 +1,12 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Avatar } from '../../atoms';
 import { NotificationsIcon } from '../../../assets/icons';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Button } from '../../atoms/Button';
+import { useDebounce } from '../../../hooks/useDebounce';
+import { influencerService } from '../../../services/influencerService';
+import type { Influencer } from '../../../services/influencerService';
 
 interface HeaderProps {
   userAvatar?: string;
@@ -21,8 +24,17 @@ export const Header: React.FC<HeaderProps> = ({
   influencerId,
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const baseRoute = location.pathname.split('/')[1]; // Get 'home', 'brand', or 'influencer'
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Influencer[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
   
   // Get the actual user ID from auth context or props
   const actualUserId = userId || user?.id || '';
@@ -53,6 +65,64 @@ export const Header: React.FC<HeaderProps> = ({
       profilePath = brandId ? `/${baseRoute}/brand/${brandId}` : (influencerId ? `/${baseRoute}/influencer/${influencerId}` : (actualUserId ? `/${baseRoute}/brand/${actualUserId}` : `/${baseRoute}`));
     }
   }
+
+  // Search functionality
+  useEffect(() => {
+    const performSearch = async () => {
+      if (!debouncedSearchQuery.trim()) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const response = await influencerService.getAllInfluencers({
+          search: debouncedSearchQuery,
+          limit: 5, // Limit to 5 results for dropdown
+        });
+        setSearchResults(response.influencers);
+      } catch (error) {
+        console.error('Error searching influencers:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    performSearch();
+  }, [debouncedSearchQuery]);
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Get influencer detail path based on base route
+  const getInfluencerPath = (influencerId: string) => {
+    if (baseRoute === 'brand') {
+      return `/brand/influencer/${influencerId}`;
+    } else if (baseRoute === 'influencer') {
+      return `/influencer/influencer/${influencerId}`;
+    } else {
+      return `/home/influencer/${influencerId}`;
+    }
+  };
+
+  const handleInfluencerClick = (influencerId: string) => {
+    navigate(getInfluencerPath(influencerId));
+    setShowSearchResults(false);
+    setSearchQuery('');
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white w-full h-16 md:h-20 border-b border-gray-200" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -96,10 +166,24 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Right Section - Search Bar, Navigation and User Controls */}
           <div className="flex items-center gap-1 md:gap-2.5">
             {/* Search Bar */}
-            <div className="relative hidden md:block" style={{ width: 'clamp(200px, 20vw, 272px)' }}>
+            <div 
+              ref={searchRef}
+              className="relative hidden md:block" 
+              style={{ width: 'clamp(200px, 20vw, 272px)' }}
+            >
               <input
                 type="text"
                 placeholder="Search influencers"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchResults(true);
+                }}
+                onFocus={() => {
+                  if (searchResults.length > 0 || isSearching) {
+                    setShowSearchResults(true);
+                  }
+                }}
                 className="w-full focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-custom"
                 style={{
                   fontFamily: 'Poppins, sans-serif',
@@ -134,6 +218,221 @@ export const Header: React.FC<HeaderProps> = ({
                   />
                 </svg>
               </div>
+
+              {/* Search Results Dropdown */}
+              {showSearchResults && (searchResults.length > 0 || isSearching || (debouncedSearchQuery && !isSearching)) && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    marginTop: '4px',
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '8px',
+                    border: '1px solid #AA86B9',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    zIndex: 1000,
+                    maxHeight: '400px',
+                    overflowY: 'auto',
+                    fontFamily: 'Poppins, sans-serif',
+                  }}
+                >
+                  {isSearching ? (
+                    <div style={{ padding: '16px', textAlign: 'center', color: '#666' }}>
+                      Searching...
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <>
+                      {searchResults.map((influencer) => (
+                        <div
+                          key={influencer._id}
+                          onClick={() => handleInfluencerClick(influencer._id)}
+                          style={{
+                            padding: '12px 16px',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid #F0F0F0',
+                            transition: 'background-color 0.2s',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#F8F8F8';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = '#FFFFFF';
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: '14px',
+                              fontWeight: 600,
+                              color: '#1E002B',
+                              marginBottom: '4px',
+                            }}
+                          >
+                            {influencer.user?.name || 'Influencer'}
+                          </div>
+                          {(influencer.description || influencer.bio) && (
+                            <div
+                              style={{
+                                fontSize: '12px',
+                                color: '#666',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {influencer.description || influencer.bio}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {debouncedSearchQuery && (
+                        <div
+                          style={{
+                            padding: '12px 16px',
+                            borderTop: '1px solid #F0F0F0',
+                            fontSize: '12px',
+                            color: '#666',
+                          }}
+                        >
+                          <div style={{ marginBottom: '8px', fontWeight: 600, color: '#1E002B' }}>
+                            Try searching for
+                          </div>
+                          <div
+                            onClick={() => {
+                              setSearchQuery('Fashion influencers');
+                              setShowSearchResults(true);
+                            }}
+                            style={{
+                              padding: '4px 0',
+                              cursor: 'pointer',
+                              color: '#783C91',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.textDecoration = 'underline';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.textDecoration = 'none';
+                            }}
+                          >
+                            Fashion influencers
+                          </div>
+                          <div
+                            onClick={() => {
+                              setSearchQuery('Travel Influencers');
+                              setShowSearchResults(true);
+                            }}
+                            style={{
+                              padding: '4px 0',
+                              cursor: 'pointer',
+                              color: '#783C91',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.textDecoration = 'underline';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.textDecoration = 'none';
+                            }}
+                          >
+                            Travel Influencers
+                          </div>
+                          <div
+                            onClick={() => {
+                              setSearchQuery('Fitness Influencers');
+                              setShowSearchResults(true);
+                            }}
+                            style={{
+                              padding: '4px 0',
+                              cursor: 'pointer',
+                              color: '#783C91',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.textDecoration = 'underline';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.textDecoration = 'none';
+                            }}
+                          >
+                            Fitness Influencers
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : debouncedSearchQuery ? (
+                    <div style={{ padding: '16px', textAlign: 'center', color: '#666' }}>
+                      No influencers found
+                      <div
+                        style={{
+                          marginTop: '12px',
+                          fontSize: '12px',
+                          color: '#666',
+                        }}
+                      >
+                        <div style={{ marginBottom: '8px', fontWeight: 600, color: '#1E002B' }}>
+                          Try searching for
+                        </div>
+                        <div
+                          onClick={() => {
+                            setSearchQuery('Fashion influencers');
+                            setShowSearchResults(true);
+                          }}
+                          style={{
+                            padding: '4px 0',
+                            cursor: 'pointer',
+                            color: '#783C91',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.textDecoration = 'underline';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.textDecoration = 'none';
+                          }}
+                        >
+                          Fashion influencers
+                        </div>
+                        <div
+                          onClick={() => {
+                            setSearchQuery('Travel Influencers');
+                            setShowSearchResults(true);
+                          }}
+                          style={{
+                            padding: '4px 0',
+                            cursor: 'pointer',
+                            color: '#783C91',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.textDecoration = 'underline';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.textDecoration = 'none';
+                          }}
+                        >
+                          Travel Influencers
+                        </div>
+                        <div
+                          onClick={() => {
+                            setSearchQuery('Fitness Influencers');
+                            setShowSearchResults(true);
+                          }}
+                          style={{
+                            padding: '4px 0',
+                            cursor: 'pointer',
+                            color: '#783C91',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.textDecoration = 'underline';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.textDecoration = 'none';
+                          }}
+                        >
+                          Fitness Influencers
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </div>
             {/* Navigation Links */}
             <Link

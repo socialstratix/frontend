@@ -47,7 +47,15 @@ export const InfluencerDetail: React.FC = () => {
 
   // Get authenticated user
   const { user } = useAuth();
-
+  // Check if viewer is a brand (not an influencer) - Campaign Stats should only be visible to brands
+  // Hide for influencers regardless of route - if userType is 'influencer', never show
+  const userType = user?.userType?.toLowerCase();
+  const isBrand = userType === 'influencer' 
+    ? false 
+    : (userType === 'brand' || location.pathname.startsWith('/brand'));
+  
+  // Debug logging
+  console.log('InfluencerDetail - userType:', user?.userType, 'isBrand:', isBrand, 'pathname:', location.pathname);
   // Fetch influencer data using the hook
   const { influencer, isLoading, error, fetchInfluencerById, fetchInfluencer } = useInfluencer();
 
@@ -551,7 +559,8 @@ export const InfluencerDetail: React.FC = () => {
           style={{
             width: '1440px',
             maxWidth: '100%',
-            height: '3510px',
+            minHeight: 'auto',
+            height: 'auto',
             gap: '16px',
             borderRadius: '8px',
             padding: '16px',
@@ -1097,24 +1106,30 @@ export const InfluencerDetail: React.FC = () => {
                 onMouseLeave={() => setIsAutoPlayPaused(false)}
               >
                 {(() => {
-                  // Get all videos to display (active + 1 left + 1 right, with wrapping)
-                  const videosToShow: Array<{ index: number; position: 'left' | 'center' | 'right'; distance: number }> = [];
+                  // Get all videos to display (active + 2 left + 2 right for 3 layers, with wrapping)
+                  const videosToShow: Array<{ index: number; position: 'far-left' | 'left' | 'center' | 'right' | 'far-right'; distance: number }> = [];
                   
                   // Add active video
                   videosToShow.push({ index: currentVideoSlide, position: 'center', distance: 0 });
                   
-                  // Add 1 video to the left (with wrapping)
-                  const leftIndex = getVideoIndex(currentVideoSlide, -1);
-                  // Ensure left video is different from active video
-                  if (leftIndex !== currentVideoSlide) {
-                    videosToShow.push({ index: leftIndex, position: 'left', distance: 1 });
+                  // Add 2 videos to the left (with wrapping) for 3-layer effect
+                  const leftIndex1 = getVideoIndex(currentVideoSlide, -1);
+                  const leftIndex2 = getVideoIndex(currentVideoSlide, -2);
+                  if (leftIndex1 !== currentVideoSlide) {
+                    videosToShow.push({ index: leftIndex1, position: 'left', distance: 1 });
+                  }
+                  if (leftIndex2 !== currentVideoSlide && leftIndex2 !== leftIndex1) {
+                    videosToShow.push({ index: leftIndex2, position: 'far-left', distance: 2 });
                   }
                   
-                  // Add 1 video to the right (with wrapping)
-                  const rightIndex = getVideoIndex(currentVideoSlide, 1);
-                  // Ensure right video is different from active video
-                  if (rightIndex !== currentVideoSlide) {
-                    videosToShow.push({ index: rightIndex, position: 'right', distance: 1 });
+                  // Add 2 videos to the right (with wrapping) for 3-layer effect
+                  const rightIndex1 = getVideoIndex(currentVideoSlide, 1);
+                  const rightIndex2 = getVideoIndex(currentVideoSlide, 2);
+                  if (rightIndex1 !== currentVideoSlide) {
+                    videosToShow.push({ index: rightIndex1, position: 'right', distance: 1 });
+                  }
+                  if (rightIndex2 !== currentVideoSlide && rightIndex2 !== rightIndex1) {
+                    videosToShow.push({ index: rightIndex2, position: 'far-right', distance: 2 });
                   }
                   
                   return videosToShow.map(({ index, position, distance }) => {
@@ -1126,9 +1141,9 @@ export const InfluencerDetail: React.FC = () => {
                     let width = '300px';
                     let height = '300px';
                     let borderRadius = '20px';
-                    let opacity = 0.6;
+                    let opacity = 0.4; // Base opacity for background layers
                     let zIndex = distance; // Closer videos have higher z-index
-                    let transform = 'scale(0.85)';
+                    let transform = 'scale(0.75)'; // Base scale for background layers
                     
                     // Calculate animation offset based on slide direction
                     let translateX = 0;
@@ -1161,23 +1176,23 @@ export const InfluencerDetail: React.FC = () => {
                           // Active slide that's not animating - keep full opacity
                           animationOpacity = 1;
                         }
-                      } else if (position === 'left') {
-                        // Left slide: when sliding right, it moves further left and fades
+                      } else if (position === 'left' || position === 'far-left') {
+                        // Left slides: when sliding right, they move further left and fade
                         if (slideDirection === 'right') {
-                          translateX = -100;
-                          animationOpacity = Math.max(0.2, opacity - 0.4);
+                          translateX = position === 'far-left' ? -150 : -100;
+                          animationOpacity = Math.max(0.1, opacity - 0.3);
                         }
-                      } else if (position === 'right') {
-                        // Right slide: when sliding left, it moves further right and fades
+                      } else if (position === 'right' || position === 'far-right') {
+                        // Right slides: when sliding left, they move further right and fade
                         if (slideDirection === 'left') {
-                          translateX = 100;
-                          animationOpacity = Math.max(0.2, opacity - 0.4);
+                          translateX = position === 'far-right' ? 150 : 100;
+                          animationOpacity = Math.max(0.1, opacity - 0.3);
                         }
                       }
                     }
                     
                     if (isActive) {
-                      // Center video - prominent
+                      // Center video - prominent (Layer 1)
                       // Always ensure full opacity for active video, never transparent
                       left = '200px';
                       width = '748px';
@@ -1187,26 +1202,56 @@ export const InfluencerDetail: React.FC = () => {
                       zIndex = 10;
                       transform = `scale(1) translateX(${translateX}px)`;
                     } else if (position === 'left') {
-                      // Background video - 588px wide, 320px tall, 80% overlapped (20% visible)
+                      // Left video - Layer 2 (closer to center)
                       width = '588px';
                       height = '320px';
-                      opacity = animationOpacity;
+                      borderRadius = '30px';
+                      opacity = animationOpacity || 0.6;
+                      zIndex = 5;
                       // Active video starts at 200px
                       // 80% overlapped means right edge should be at 200 + (588 * 0.8) = 670.4px
                       // So left = 670.4 - 588 = 82.4px
                       const overlappedWidth = 588 * 0.8; // 80% overlapped
                       left = `${200 + overlappedWidth - 588}px`;
                       transform = `scale(0.85) translateX(${translateX}px)`;
-                    } else {
-                      // Background video - 588px wide, 320px tall, 80% overlapped (20% visible)
+                    } else if (position === 'right') {
+                      // Right video - Layer 2 (closer to center)
                       width = '588px';
                       height = '320px';
-                      opacity = animationOpacity;
+                      borderRadius = '30px';
+                      opacity = animationOpacity || 0.6;
+                      zIndex = 5;
                       // Active video ends at 200 + 748 = 948px
                       // 80% overlapped means left edge should be at 948 - (588 * 0.8) = 477.6px
                       const overlappedWidth = 588 * 0.8; // 80% overlapped
                       left = `${948 - overlappedWidth}px`;
                       transform = `scale(0.85) translateX(${translateX}px)`;
+                    } else if (position === 'far-left') {
+                      // Far-left video - Layer 3 (furthest back)
+                      width = '500px';
+                      height = '280px';
+                      borderRadius = '25px';
+                      opacity = animationOpacity || 0.4;
+                      zIndex = 2;
+                      // Position further left than the left video
+                      const leftVideoOverlappedWidth = 588 * 0.8;
+                      const leftVideoLeft = 200 + leftVideoOverlappedWidth - 588;
+                      // Position this one further left, with more overlap
+                      left = `${leftVideoLeft - 200}px`;
+                      transform = `scale(0.75) translateX(${translateX}px)`;
+                    } else if (position === 'far-right') {
+                      // Far-right video - Layer 3 (furthest back)
+                      width = '500px';
+                      height = '280px';
+                      borderRadius = '25px';
+                      opacity = animationOpacity || 0.4;
+                      zIndex = 2;
+                      // Position further right than the right video
+                      const rightVideoOverlappedWidth = 588 * 0.8;
+                      const rightVideoLeft = 948 - rightVideoOverlappedWidth;
+                      // Position this one further right, with more overlap
+                      left = `${rightVideoLeft + 200}px`;
+                      transform = `scale(0.75) translateX(${translateX}px)`;
                     }
                   
                   return (
@@ -1679,76 +1724,79 @@ export const InfluencerDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* Campaign Stats Badges */}
-          <div style={{ marginBottom: '32px' }}>
-            <h3
-              style={{
-                fontFamily: 'Poppins, sans-serif',
-                fontSize: '24px',
-                fontWeight: 600,
-                color: '#1E002B',
-                marginBottom: '16px'
-              }}
-            >
-              Campaign Stats
-            </h3>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <span
+          {/* Campaign Stats Badges - Only visible for brands, hidden for influencers */}
+          {isBrand === true && userType !== 'influencer' && (
+            <div style={{ marginBottom: '32px' }}>
+              <h3
                 style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#FFF9E6',
-                  borderRadius: '20px',
                   fontFamily: 'Poppins, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#1E002B'
+                  fontSize: '24px',
+                  fontWeight: 600,
+                  color: '#1E002B',
+                  marginBottom: '16px'
                 }}
               >
-                Level 1
-              </span>
-              <span
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#FFF9E6',
-                  borderRadius: '20px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#1E002B'
-                }}
-              >
-                Level 2
-              </span>
-              <span
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#FFF9E6',
-                  borderRadius: '20px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#1E002B'
-                }}
-              >
-                Rising 31
-              </span>
-              <span
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#FFF9E6',
-                  borderRadius: '20px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#1E002B'
-                }}
-              >
-                Rising 21
-              </span>
+                Campaign Stats
+              </h3>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <span
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#FFF9E6',
+                    borderRadius: '20px',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#1E002B'
+                  }}
+                >
+                  Level 1
+                </span>
+                <span
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#FFF9E6',
+                    borderRadius: '20px',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#1E002B'
+                  }}
+                >
+                  Level 2
+                </span>
+                <span
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#FFF9E6',
+                    borderRadius: '20px',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#1E002B'
+                  }}
+                >
+                  Rising 31
+                </span>
+                <span
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#FFF9E6',
+                    borderRadius: '20px',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#1E002B'
+                  }}
+                >
+                  Rising 21
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Reviews Section */}
+          {/* Reviews Section - Only visible for brands, hidden for influencers */}
+          {isBrand === true && userType !== 'influencer' && (
           <div style={{ marginBottom: '32px' }}>
             <h3
               style={{
@@ -1847,8 +1895,10 @@ export const InfluencerDetail: React.FC = () => {
               See more reviews →
             </button>
           </div>
+          )}
 
-          {/* Similar Influencers Section */}
+          {/* Similar Influencers Section - Only visible for brands, hidden for influencers */}
+          {isBrand === true && userType !== 'influencer' && (
           <div style={{ marginBottom: '32px' }}>
             <div
               style={{
@@ -1987,6 +2037,7 @@ export const InfluencerDetail: React.FC = () => {
               ))}
             </div>
           </div>
+          )}
         </div>
       </div>
 

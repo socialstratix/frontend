@@ -34,6 +34,28 @@ export const router = createBrowserRouter([
     path: '/signup',
     element: <Signup />,
   },
+  // Shared brand profile route - accessible to all authenticated users
+  {
+    path: '/brand/brand/:id',
+    element: (
+      <ProtectedRoute>
+        <BaseLayout
+          headerProps={{
+            userAvatar: undefined,
+            userName: 'User',
+            userId: '1',
+          }}
+          footerProps={{}}
+        />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <BrandProfile />,
+      },
+    ],
+  },
   {
     path: '/home',
     element: (

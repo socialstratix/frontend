@@ -32,5 +32,8 @@ export * from './colors';
 // Export typography
 export * from './typography';
 
+// Placeholder/Dummy image URL
+export const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/400x400/783C91/FFFFFF?text=No+Image';
+
 
 
