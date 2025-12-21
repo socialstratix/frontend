@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { colors } from '../../constants/colors';
+import { colors, PLACEHOLDER_IMAGE } from '../../constants';
 import { Button } from '../../components/atoms/Button/Button';
 import { EditButton } from '../../components/atoms/EditButton/EditButton';
 import { EditDescription } from '../../components/molecules/EditDescription/EditDescription';
@@ -21,6 +21,7 @@ import { brandService, type Brand as BrandServiceType } from '../../services/bra
 import { apiService } from '../../services/api';
 import { useCampaigns, useCampaign } from '../../hooks/useCampaign';
 import type { Campaign as CampaignServiceType } from '../../services/campaignService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Campaign {
   id: string;
@@ -41,11 +42,15 @@ export const BrandProfile: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const isInfluencer = user?.userType === 'influencer';
   const [activeTab, setActiveTab] = useState<'active' | 'previous'>('active');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [brand, setBrand] = useState<Brand | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [brandAvatarError, setBrandAvatarError] = useState(false);
   
   // Edit modal states
   const [showEditName, setShowEditName] = useState(false);
@@ -466,7 +471,7 @@ export const BrandProfile: React.FC = () => {
           }}
         >
           <img src={ArrowLeftIcon} alt="Back" style={{ width: '20px', height: '20px' }} />
-          Back to Influencers listing
+          {isInfluencer ? 'Back to campaign listing' : 'Back to Influencers listing'}
         </button>
 
         {/* Brand Profile Section */}
@@ -508,31 +513,47 @@ export const BrandProfile: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundImage: brandInfo?.avatar ? `url(${brandInfo.avatar})` : 'none',
+                  backgroundImage: (brandInfo?.avatar && !brandAvatarError) ? `url(${brandInfo.avatar})` : (brandAvatarError ? `url(${PLACEHOLDER_IMAGE})` : 'none'),
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                 }}
               >
-                {!brandInfo?.avatar && brandInfo?.name && getInitial(brandInfo.name)}
+                {brandInfo?.avatar && !brandAvatarError ? (
+                  <img
+                    src={brandInfo.avatar}
+                    alt={brandInfo.name || 'Brand'}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '50%',
+                      display: 'none', // Hidden, using backgroundImage instead
+                    }}
+                    onError={() => setBrandAvatarError(true)}
+                  />
+                ) : null}
+                {(!brandInfo?.avatar || brandAvatarError) && brandInfo?.name && getInitial(brandInfo.name)}
               </div>
               {/* Edit Icon - Floating button on avatar with slight overlap */}
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: '-4px',
-                  right: '-4px',
-                  zIndex: 1,
-                }}
-              >
-                <EditButton 
-                  onClick={() => setShowEditPhoto(true)}
-                  style={{ 
-                    width: '28px', 
-                    height: '28px',
-                    borderRadius: '50%',
+              {!isInfluencer && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '-4px',
+                    right: '-4px',
+                    zIndex: 1,
                   }}
-                />
-              </div>
+                >
+                  <EditButton 
+                    onClick={() => setShowEditPhoto(true)}
+                    style={{ 
+                      width: '28px', 
+                      height: '28px',
+                      borderRadius: '50%',
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Brand Info */}
@@ -554,7 +575,7 @@ export const BrandProfile: React.FC = () => {
                 >
                   {brandInfo?.name || brand?.user?.name || ''}
                 </h1>
-                <EditButton onClick={() => setShowEditName(true)} />
+                {!isInfluencer && <EditButton onClick={() => setShowEditName(true)} />}
               </div>
 
               {/* Tags - Comma separated text */}
@@ -592,7 +613,7 @@ export const BrandProfile: React.FC = () => {
                     No tags
                   </span>
                 )}
-                <EditButton onClick={() => setShowEditTags(true)} />
+                {!isInfluencer && <EditButton onClick={() => setShowEditTags(true)} />}
               </div>
             </div>
 
@@ -602,16 +623,31 @@ export const BrandProfile: React.FC = () => {
                 <img src={ShareIcon} alt="Share" style={{ width: '16px', height: '16px' }} />
                 SHARE
               </Button>
-              <Button
-                variant="filled"
-                style={{
-                  height: '40px',
-                  padding: '0 24px',
-                  backgroundColor: colors.primary.main,
-                }}
-              >
-                POST CAMPAIGN
-              </Button>
+              {isInfluencer ? (
+                <Button
+                  onClick={() => setIsFollowing(!isFollowing)}
+                  variant="filled"
+                  style={{
+                    height: '40px',
+                    padding: '0 24px',
+                    backgroundColor: isFollowing ? colors.text.secondary : colors.primary.main,
+                  }}
+                >
+                  {isFollowing ? 'FOLLOWING' : 'FOLLOW'}
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => navigate('/brand/campaigns/create')}
+                  variant="filled"
+                  style={{
+                    height: '40px',
+                    padding: '0 24px',
+                    backgroundColor: colors.primary.main,
+                  }}
+                >
+                  POST CAMPAIGN
+                </Button>
+              )}
             </div>
           </div>
 
@@ -629,7 +665,7 @@ export const BrandProfile: React.FC = () => {
               >
                 Description
               </h2>
-              <EditButton onClick={() => setShowEditDescription(true)} />
+              {!isInfluencer && <EditButton onClick={() => setShowEditDescription(true)} />}
             </div>
             <p
               style={{
@@ -1037,66 +1073,67 @@ export const BrandProfile: React.FC = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <button
-                      onClick={() => navigate(`/brand/campaigns/create?edit=${campaign.id}`)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        width: '96px',
-                        height: '40px',
-                        backgroundColor: 'rgba(232, 226, 235, 1)',
-                        border: 'none',
-                        borderRadius: '100px',
-                        cursor: 'pointer',
-                        fontFamily: 'Poppins',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        fontStyle: 'normal',
-                        lineHeight: '100%',
-                        letterSpacing: '0%',
-                        textAlign: 'center',
-                        textTransform: 'uppercase',
-                        color: colors.primary.main3,
-                        opacity: 1,
-                      }}
-                    >
-                      <img src={EditIcon} alt="Edit" style={{ width: '16px', height: '16px' }} />
-                      <span style={{
-                        width: '30px',
-                        height: '21px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                        EDIT
-                      </span>
-                    </button>
-
-                    <div style={{ position: 'relative' }}>
+                  {!isInfluencer && (
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                       <button
-                        onClick={() => toggleMenu(campaign.id)}
+                        onClick={() => navigate(`/brand/campaigns/create?edit=${campaign.id}`)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '8px',
-                          width: '50px',
+                          width: '96px',
                           height: '40px',
-                          backgroundColor: colors.primary.white,
-                          border: '1px solid rgba(120, 60, 145, 1)',
+                          backgroundColor: 'rgba(232, 226, 235, 1)',
+                          border: 'none',
                           borderRadius: '100px',
                           cursor: 'pointer',
+                          fontFamily: 'Poppins',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          fontStyle: 'normal',
+                          lineHeight: '100%',
+                          letterSpacing: '0%',
+                          textAlign: 'center',
+                          textTransform: 'uppercase',
+                          color: colors.primary.main3,
                           opacity: 1,
                         }}
                       >
-                        <img src={MoreIcon} alt="More" style={{ width: '20px', height: '20px' }} />
+                        <img src={EditIcon} alt="Edit" style={{ width: '16px', height: '16px' }} />
+                        <span style={{
+                          width: '30px',
+                          height: '21px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}>
+                          EDIT
+                        </span>
                       </button>
 
-                      {/* Dropdown Menu */}
-                      {openMenuId === campaign.id && (
+                      <div style={{ position: 'relative' }}>
+                        <button
+                          onClick={() => toggleMenu(campaign.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            width: '50px',
+                            height: '40px',
+                            backgroundColor: colors.primary.white,
+                            border: '1px solid rgba(120, 60, 145, 1)',
+                            borderRadius: '100px',
+                            cursor: 'pointer',
+                            opacity: 1,
+                          }}
+                        >
+                          <img src={MoreIcon} alt="More" style={{ width: '20px', height: '20px' }} />
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {openMenuId === campaign.id && (
                         <div
                           style={{
                             position: 'absolute',
@@ -1165,6 +1202,7 @@ export const BrandProfile: React.FC = () => {
                       )}
                     </div>
                   </div>
+                  )}
                 </div>
 
                 {/* Campaign Name */}

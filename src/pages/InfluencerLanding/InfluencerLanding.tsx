@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { colors } from '../../constants/colors';
+import { colors, PLACEHOLDER_IMAGE } from '../../constants';
 import { Button } from '../../components/atoms/Button/Button';
 import LocationIcon from '../../assets/icons/ui/Location.svg';
 import FavoriteIcon from '../../assets/icons/ui/favorite.svg';
@@ -13,6 +13,7 @@ import { campaignService, type Campaign as CampaignServiceType } from '../../ser
 
 interface Campaign {
   id: string;
+  brandId: string;
   brandName: string;
   brandAvatar: string;
   campaignName: string;
@@ -33,6 +34,7 @@ export const InfluencerLanding: React.FC = () => {
   const [apiCampaigns, setApiCampaigns] = useState<CampaignServiceType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [brandAvatarErrors, setBrandAvatarErrors] = useState<{ [key: string]: boolean }>({});
 
   // Fetch campaigns from API
   useEffect(() => {
@@ -88,6 +90,7 @@ export const InfluencerLanding: React.FC = () => {
     
     return apiCampaigns.map((campaign: CampaignServiceType) => ({
       id: campaign._id,
+      brandId: campaign.brandId,
       brandName: campaign.brandName || 'Brand',
       brandAvatar: campaign.brandAvatar || '',
       campaignName: campaign.name,
@@ -391,7 +394,7 @@ export const InfluencerLanding: React.FC = () => {
                     width: '48px',
                     height: '48px',
                     borderRadius: '50%',
-                    backgroundColor: campaign.brandAvatar ? 'transparent' : colors.text.primary,
+                    backgroundColor: (campaign.brandAvatar && !brandAvatarErrors[campaign.id]) ? 'transparent' : colors.text.primary,
                     color: colors.primary.white,
                     display: 'flex',
                     alignItems: 'center',
@@ -400,12 +403,28 @@ export const InfluencerLanding: React.FC = () => {
                     fontSize: '20px',
                     fontWeight: 600,
                     flexShrink: 0,
-                    backgroundImage: campaign.brandAvatar ? `url(${campaign.brandAvatar})` : 'none',
+                    backgroundImage: (campaign.brandAvatar && !brandAvatarErrors[campaign.id]) ? `url(${campaign.brandAvatar})` : (brandAvatarErrors[campaign.id] ? `url(${PLACEHOLDER_IMAGE})` : 'none'),
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }}
                 >
-                  {!campaign.brandAvatar && getInitial(campaign.brandName)}
+                  {campaign.brandAvatar && !brandAvatarErrors[campaign.id] ? (
+                    <img
+                      src={campaign.brandAvatar}
+                      alt={campaign.brandName || 'Brand'}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        borderRadius: '50%',
+                        display: 'none', // Hidden, using backgroundImage instead
+                      }}
+                      onError={() => {
+                        setBrandAvatarErrors(prev => ({ ...prev, [campaign.id]: true }));
+                      }}
+                    />
+                  ) : null}
+                  {(!campaign.brandAvatar || brandAvatarErrors[campaign.id]) && getInitial(campaign.brandName)}
                 </div>
 
                 {/* Campaign Content */}
@@ -424,7 +443,7 @@ export const InfluencerLanding: React.FC = () => {
 
                   {/* Brand Name */}
                   <button
-                    onClick={() => navigate(`brand/${campaign.id}`)}
+                    onClick={() => navigate(`/brand/brand/${campaign.brandId}`)}
                     style={{
                       fontFamily: 'Poppins',
                       fontSize: '14px',

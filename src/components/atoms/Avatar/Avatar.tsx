@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { PLACEHOLDER_IMAGE } from '../../../constants';
 
 interface AvatarProps {
   src?: string;
@@ -15,6 +16,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   className = '',
   fallback,
 }) => {
+  const [imageError, setImageError] = useState(false);
   const sizes = {
     sm: 'w-8 h-8 text-xs',
     md: 'w-10 h-10 text-sm',
@@ -22,10 +24,17 @@ export const Avatar: React.FC<AvatarProps> = ({
     xl: 'w-24 h-24 text-xl',
   };
 
+  const displaySrc = imageError ? PLACEHOLDER_IMAGE : src;
+
   return (
     <div className={`${sizes[size]} rounded-full overflow-hidden bg-gray-200 flex items-center justify-center ${className}`}>
-      {src ? (
-        <img src={src} alt={alt} className="w-full h-full object-cover" />
+      {displaySrc ? (
+        <img 
+          src={displaySrc} 
+          alt={alt} 
+          className="w-full h-full object-cover"
+          onError={() => setImageError(true)}
+        />
       ) : (
         <span className="text-gray-600 font-semibold">
           {fallback || alt.charAt(0).toUpperCase()}

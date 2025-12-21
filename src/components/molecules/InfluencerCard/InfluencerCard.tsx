@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { XIcon, YouTubeIcon, FacebookIcon, InstagramIcon, TikTokIcon, StarIcon, BadgeIcon } from '../../../assets/icons';
+import { PLACEHOLDER_IMAGE } from '../../../constants';
 
 interface InfluencerCardProps {
   name: string;
@@ -28,6 +29,8 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
   platformFollowers,
   onClick,
 }) => {
+  const [profileImageError, setProfileImageError] = useState(false);
+  const [backgroundImageError, setBackgroundImageError] = useState(false);
 
   const formatFollowers = (count?: number) => {
     if (!count) return '0';
@@ -109,12 +112,13 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
       >
         {image ? (
           <img
-            src={image}
+            src={backgroundImageError ? PLACEHOLDER_IMAGE : image}
             alt={`${name} background`}
             className="w-full h-full object-cover"
             style={{
               borderRadius: '4px'
             }}
+            onError={() => setBackgroundImageError(true)}
           />
         ) : (
           <div 
@@ -214,9 +218,10 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
               }}
             >
               <img
-                src={profileImage}
+                src={profileImageError ? PLACEHOLDER_IMAGE : profileImage}
                 alt={name}
                 className="w-full h-full object-cover"
+                onError={() => setProfileImageError(true)}
               />
             </div>
           )}
