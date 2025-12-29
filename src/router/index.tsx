@@ -90,7 +90,7 @@ export const router = createBrowserRouter([
      
       {
         path: 'campaigns/:id',
-        element: <CampaignDetail />,
+        element: <CampaignDetailInfluencer />,
       },
       {
         path: 'campaigns/create',
@@ -182,7 +182,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'campaigns/:id',
-        element: <CampaignDetail />,
+        element: <CampaignDetailInfluencer />,
       },
       {
         path: 'profile/:id',

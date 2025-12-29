@@ -1,25 +1,35 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../../components/atoms/Input';
 import { Button } from '../../components/atoms/Button';
 import { colors } from '../../constants/colors';
 import { useAuth } from '../../contexts/AuthContext';
+import { loginSchema } from '../../utils/validationSchemas';
+import type { LoginFormData } from '../../utils/validationSchemas';
 
 export const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onBlur',
+  });
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: LoginFormData) => {
     setError('');
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      await login(data.email, data.password);
       // Redirect based on user type - will be handled by ProtectedRoute
       const user = JSON.parse(localStorage.getItem('stratix_user') || '{}');
       if (user.userType === 'brand') {
@@ -322,7 +332,7 @@ export const Login: React.FC = () => {
               </div>
             )}
 
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
+            <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
             {/* Email and Password Inputs Container */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {/* Email Input */}
@@ -330,11 +340,10 @@ export const Login: React.FC = () => {
                 <Input
                   type="email"
                   label="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  required
                   variant="login"
+                  error={errors.email?.message}
+                  {...register('email')}
                 />
               </div>
 
@@ -343,11 +352,10 @@ export const Login: React.FC = () => {
                 <Input
                   type="password"
                   label="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  required
                   variant="login"
+                  error={errors.password?.message}
+                  {...register('password')}
                 />
                 <div className="mt-2" style={{ width: '464px', textAlign: 'right' }}>
                   <a 

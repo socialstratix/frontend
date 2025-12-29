@@ -6,6 +6,8 @@ import { colors } from '../../constants/colors';
 import { BackwardIcon } from '../../assets/icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiService } from '../../services/api';
+import OnboardingBrandStep2 from '../../assets/images/illustrations/OnbiardingBrandstep2.png';
+import TagsInfluencerImg from '../../assets/images/illustrations/TagsInfuencer.png';
 
 interface BrandOnboardingFormProps {
   onComplete?: () => void;
@@ -115,12 +117,17 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
           <>
             <h2 
               style={{
-                fontFamily: 'Poppins, sans-serif',
+                width: '394px',
+                height: '36px',
+                fontFamily: 'Poppins',
                 fontWeight: 600,
-                fontSize: '20px',
-                lineHeight: '130%',
-                color: colors.text.primary,
-                marginBottom: '8px'
+                fontSize: '24px',
+                lineHeight: '100%',
+                letterSpacing: '0%',
+                verticalAlign: 'middle',
+                color: 'rgba(30, 0, 43, 1)',
+                marginBottom: '8px',
+                opacity: 1
               }}
             >
               Describe about your Brand
@@ -158,8 +165,12 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
             />
 
             {/* Illustration */}
-            <div style={{ textAlign: 'center', opacity: 0.3 }}>
-              <p style={{ fontSize: '100px', margin: 0 }}>🏢</p>
+            <div style={{ textAlign: 'center' }}>
+              <img 
+                src={OnboardingBrandStep2} 
+                alt="Brand onboarding illustration" 
+                style={{ maxWidth: '100%', height: 'auto' }}
+              />
             </div>
           </>
         );
@@ -169,12 +180,17 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
           <>
             <h2 
               style={{
-                fontFamily: 'Poppins, sans-serif',
+                width: '394px',
+                height: '36px',
+                fontFamily: 'Poppins',
                 fontWeight: 600,
-                fontSize: '20px',
-                lineHeight: '130%',
-                color: colors.text.primary,
-                marginBottom: '24px'
+                fontSize: '24px',
+                lineHeight: '100%',
+                letterSpacing: '0%',
+                verticalAlign: 'middle',
+                color: 'rgba(30, 0, 43, 1)',
+                marginBottom: '24px',
+                opacity: 1
               }}
             >
               Add your company logo
@@ -193,7 +209,7 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
                     width: '200px',
                     height: '200px',
                     border: `2px dashed ${colors.border.light}`,
-                    borderRadius: '8px',
+                    borderRadius: '50%',
                     cursor: 'pointer',
                     backgroundColor: logoPreview ? 'transparent' : colors.primary.white,
                     position: 'relative',
@@ -307,12 +323,17 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
           <>
             <h2 
               style={{
-                fontFamily: 'Poppins, sans-serif',
+                width: '394px',
+                height: 'auto',
+                fontFamily: 'Poppins',
                 fontWeight: 600,
-                fontSize: '20px',
-                lineHeight: '130%',
-                color: colors.text.primary,
-                marginBottom: '8px'
+                fontSize: '24px',
+                lineHeight: '100%',
+                letterSpacing: '0%',
+                verticalAlign: 'middle',
+                color: 'rgba(30, 0, 43, 1)',
+                marginBottom: '8px',
+                opacity: 1
               }}
             >
               Add tags that clearly highlight your skills and expertise, making it easy for brands to understand you.
@@ -412,10 +433,6 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
               )}
             </div>
 
-            {/* Illustration */}
-            <div style={{ textAlign: 'center', opacity: 0.3, marginTop: '40px' }}>
-              <p style={{ fontSize: '80px', margin: 0 }}>💼🔍🚀</p>
-            </div>
           </>
         );
 
@@ -435,35 +452,38 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `
-          linear-gradient(0deg, #FFFFFF, #FFFFFF),
-          linear-gradient(106.35deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%),
-          linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7))
-        `,
-        zIndex: 1000
+        background: `background: linear-gradient(0deg, #FFFFFF, #FFFFFF),
+linear-gradient(106.35deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%),
+linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7));`,
+
+        zIndex: 1000,
+        backdropFilter: 'blur(10px)'
       }}
     >
       <div 
         style={{
-          width: '522px',
-          height: '690px',
+          width: '550px',
+          height: '700px',
           borderRadius: '8px',
           borderWidth: '1px',
           opacity: 1,
-          gap: '10px',
-          paddingTop: '20px',
-          paddingRight: '40px',
-          paddingBottom: '40px',
-          paddingLeft: '40px',
+          gap: '8px',
+          paddingTop: '16px',
+          paddingRight: '32px',
+          paddingBottom: '24px',
+          paddingLeft: '32px',
           background: '#FFFFFF',
+          backgroundColor: '#FFFFFF',
           border: `1px solid ${colors.border.light}`,
           display: 'flex',
           flexDirection: 'column',
-          position: 'relative'
+          position: 'relative',
+          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+          zIndex: 10
         }}
       >
         {/* Back Button and Question Counter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
           {currentStep > 1 && (
             <button
               onClick={handleBack}
@@ -492,7 +512,7 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
         </div>
 
         {/* Form Content */}
-        <div style={{ flex: 1, overflow: 'auto' }}>
+        <div style={{ flex: 1, overflow: 'visible' }}>
           {renderStep()}
         </div>
 
@@ -515,14 +535,14 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
         )}
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
           <Button
             variant="filled"
             onClick={handleNext}
             disabled={isLoading}
             style={{
               width: '100%',
-              height: '48px'
+              height: '44px'
             }}
           >
             {isLoading ? 'Submitting...' : currentStep === 3 ? 'COMPLETE' : 'NEXT'}
@@ -544,6 +564,17 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
             SKIP
           </button>
         </div>
+
+        {/* Illustration - Show only in step 3 */}
+        {currentStep === 3 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '16px' }}>
+            <img 
+              src={TagsInfluencerImg} 
+              alt="Tags illustration" 
+              style={{ maxWidth: '100%', height: 'auto', maxHeight: '120px' }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

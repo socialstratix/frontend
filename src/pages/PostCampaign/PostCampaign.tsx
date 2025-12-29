@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { colors } from '../../constants/colors';
 import { typography } from '../../constants/typography';
 import { Input } from '../../components/atoms/Input';
@@ -17,6 +19,8 @@ import {
     AttachFileIcon,
     CheckSelectedIcon,
 } from '../../assets/icons';
+import { postCampaignSchema } from '../../utils/validationSchemas';
+import type { PostCampaignFormData } from '../../utils/validationSchemas';
 
 export const PostCampaign: React.FC = () => {
     const navigate = useNavigate();
@@ -34,24 +38,43 @@ export const PostCampaign: React.FC = () => {
         autoFetch: isEditMode && !!editCampaignId,
     });
     
-    const [campaignName, setCampaignName] = useState('');
-    const [campaignDescription, setCampaignDescription] = useState('');
-    const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['youtube', 'facebook']);
     const [tags, setTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState('');
-    const [campaignBudget, setCampaignBudget] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [attachments, setAttachments] = useState<File[]>([]);
+    
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        setValue,
+        watch,
+        trigger,
+    } = useForm<PostCampaignFormData>({
+        resolver: zodResolver(postCampaignSchema),
+        mode: 'onBlur',
+        defaultValues: {
+            campaignName: '',
+            campaignDescription: '',
+            selectedPlatforms: ['youtube', 'facebook'],
+            tags: [],
+            campaignBudget: '',
+        },
+    });
+    
+    const selectedPlatforms = watch('selectedPlatforms') || [];
 
     // Populate form fields when campaign data is loaded (edit mode)
     useEffect(() => {
         if (campaign && isEditMode) {
-            setCampaignName(campaign.name || '');
-            setCampaignDescription(campaign.description || '');
-            setSelectedPlatforms(campaign.platforms || []);
+            setValue('campaignName', campaign.name || '');
+            setValue('campaignDescription', campaign.description || '');
+            setValue('selectedPlatforms', campaign.platforms || []);
             setTags(campaign.tags || []);
-            setCampaignBudget(campaign.budget?.toString() || '');
+            setValue('tags', campaign.tags || []);
+            setValue('campaignBudget', campaign.budget?.toString() || '');
         }
-    }, [campaign, isEditMode]);
+    }, [campaign, isEditMode, setValue]);
 
     const platforms = [
         { id: 'youtube', name: 'YouTube', icon: YouTubeIcon, color: '#FF0000' },
@@ -62,55 +85,92 @@ export const PostCampaign: React.FC = () => {
     ];
 
     const togglePlatform = (platformId: string) => {
-        setSelectedPlatforms((prev) =>
-            prev.includes(platformId)
-                ? prev.filter((p) => p !== platformId)
-                : [...prev, platformId]
-        );
+        const currentPlatforms = watch('selectedPlatforms') || [];
+        const newPlatforms = currentPlatforms.includes(platformId)
+            ? currentPlatforms.filter((p) => p !== platformId)
+            : [...currentPlatforms, platformId];
+        setValue('selectedPlatforms', newPlatforms);
+        trigger('selectedPlatforms');
     };
 
     const handleAddTag = (e?: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e && e.key !== 'Enter') return;
         if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-            setTags([...tags, tagInput.trim()]);
+            const newTags = [...tags, tagInput.trim()];
+            setTags(newTags);
+            setValue('tags', newTags);
             setTagInput('');
         }
     };
 
     const handleRemoveTag = (tagToRemove: string) => {
-        setTags(tags.filter((tag) => tag !== tagToRemove));
+        const newTags = tags.filter((tag) => tag !== tagToRemove);
+        setTags(newTags);
+        setValue('tags', newTags);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files) return;
+
+        const validFiles: File[] = [];
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        const allowedTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+        ];
+
+        Array.from(files).forEach((file) => {
+            // Check file type
+            if (!allowedTypes.includes(file.type)) {
+                setError(`File "${file.name}" is not a valid format. Please upload PDF, Word, or Image files.`);
+                return;
+            }
+
+            // Check file size
+            if (file.size > maxSize) {
+                setError(`File "${file.name}" exceeds 5MB. Please upload a smaller file.`);
+                return;
+            }
+
+            validFiles.push(file);
+        });
+
+        if (validFiles.length > 0) {
+            setAttachments((prev) => [...prev, ...validFiles]);
+            setError(null);
+        }
+
+        // Reset input
+        e.target.value = '';
+    };
+
+    const handleRemoveAttachment = (index: number) => {
+        setAttachments((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const getFileIcon = (file: File) => {
+        if (file.type.startsWith('image/')) return '🖼️';
+        if (file.type === 'application/pdf') return '📄';
+        if (file.type.includes('word')) return '📝';
+        return '📎';
+    };
+
+    const formatFileSize = (bytes: number) => {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     };
 
 
-    const handlePostCampaign = async () => {
+    const onSubmit = async (data: PostCampaignFormData) => {
         setError(null);
-
-        // Validate form
-        if (!campaignName.trim()) {
-            setError('Campaign name is required');
-            return;
-        }
-
-        if (!campaignDescription.trim()) {
-            setError('Campaign description is required');
-            return;
-        }
-
-        if (selectedPlatforms.length === 0) {
-            setError('Please select at least one platform');
-            return;
-        }
-
-        if (!campaignBudget.trim()) {
-            setError('Campaign budget is required');
-            return;
-        }
-
-        const budgetNum = Number(campaignBudget);
-        if (isNaN(budgetNum) || budgetNum < 0) {
-            setError('Budget must be a valid number greater than or equal to 0');
-            return;
-        }
 
         // Check if brand exists
         if (!brand || !brand._id) {
@@ -118,14 +178,16 @@ export const PostCampaign: React.FC = () => {
             return;
         }
 
+        const budgetNum = Number(data.campaignBudget);
+
         try {
             if (isEditMode && editCampaignId) {
                 // Update existing campaign
                 const updateData = {
-                    name: campaignName.trim(),
-                    description: campaignDescription.trim(),
+                    name: data.campaignName.trim(),
+                    description: data.campaignDescription.trim(),
                     budget: budgetNum,
-                    platforms: selectedPlatforms,
+                    platforms: data.selectedPlatforms,
                     tags: tags.filter(tag => tag.trim() !== ''),
                 };
 
@@ -143,10 +205,10 @@ export const PostCampaign: React.FC = () => {
                 // Create new campaign
                 const campaignData = {
                     brandId: brand._id,
-                    name: campaignName.trim(),
-                    description: campaignDescription.trim(),
+                    name: data.campaignName.trim(),
+                    description: data.campaignDescription.trim(),
                     budget: budgetNum,
-                    platforms: selectedPlatforms,
+                    platforms: data.selectedPlatforms,
                     tags: tags.filter(tag => tag.trim() !== ''),
                 };
 
@@ -166,6 +228,10 @@ export const PostCampaign: React.FC = () => {
         }
     };
 
+    const campaignName = watch('campaignName') || '';
+    const campaignDescription = watch('campaignDescription') || '';
+    const campaignBudget = watch('campaignBudget') || '';
+    
     const isStep1Valid = campaignName.trim() !== '' && campaignDescription.trim() !== '' && selectedPlatforms.length > 0;
     const isStep2Valid = campaignBudget.trim() !== '' && !isNaN(Number(campaignBudget)) && Number(campaignBudget) >= 0;
     const isLoading = isCampaignLoading || isLoadingBrand;
@@ -295,10 +361,9 @@ export const PostCampaign: React.FC = () => {
                         <Input
                             label="Campaign name"
                             placeholder="Campaign name"
-                            value={campaignName}
-                            onChange={(e) => setCampaignName(e.target.value)}
-
                             variant="floating"
+                            error={errors.campaignName?.message}
+                            {...register('campaignName')}
                         />
                     </div>
 
@@ -316,11 +381,10 @@ export const PostCampaign: React.FC = () => {
                             <span style={{ color: colors.red.main, marginLeft: '4px' }}>*</span>
                         </h3>
                         <Textarea
-
                             placeholder="Description"
-                            value={campaignDescription}
-                            onChange={(e) => setCampaignDescription(e.target.value)}
                             variant="custom"
+                            error={errors.campaignDescription?.message}
+                            {...register('campaignDescription')}
                         />
                     </div>
 
@@ -388,6 +452,11 @@ export const PostCampaign: React.FC = () => {
                                 );
                             })}
                         </div>
+                        {errors.selectedPlatforms && (
+                            <p style={{ color: colors.red.main, fontSize: '12px', marginTop: '8px', fontFamily: 'Poppins, sans-serif' }}>
+                                {errors.selectedPlatforms.message}
+                            </p>
+                        )}
                     </div>
 
                     {/* Tags */}
@@ -474,33 +543,43 @@ export const PostCampaign: React.FC = () => {
                             }}
                         >
                             {[1, 2, 3].map((index) => (
-                                <button
-                                    key={index}
-                                    style={{
-                                        width: '261.33px',
-                                        height: '56px',
-                                        borderWidth: '1px',
-                                        border: '1px solid rgba(117, 80, 2, 1)',
-                                        borderRadius: '4px',
-                                        opacity: 1,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '10px',
-                                        padding: '0 16px',
-                                        backgroundColor: colors.primary.white,
-                                        cursor: 'pointer',
-                                        fontFamily: 'Poppins, sans-serif',
-                                        fontSize: '14px',
-                                        color: colors.text.primary,
-                                    }}
-                                >
-                                    <img
-                                        src={AttachFileIcon}
-                                        alt="Attach"
-                                        style={{ width: '20px', height: '20px' }}
+                                <React.Fragment key={index}>
+                                    <input
+                                        type="file"
+                                        id={`file-upload-${index}`}
+                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp"
+                                        onChange={handleFileChange}
+                                        style={{ display: 'none' }}
                                     />
-                                    Attach files
-                                </button>
+                                    <label htmlFor={`file-upload-${index}`}>
+                                        <div
+                                            style={{
+                                                width: '261.33px',
+                                                height: '56px',
+                                                borderWidth: '1px',
+                                                border: '1px solid rgba(117, 80, 2, 1)',
+                                                borderRadius: '4px',
+                                                opacity: 1,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '10px',
+                                                padding: '0 16px',
+                                                backgroundColor: colors.primary.white,
+                                                cursor: 'pointer',
+                                                fontFamily: 'Poppins, sans-serif',
+                                                fontSize: '14px',
+                                                color: colors.text.primary,
+                                            }}
+                                        >
+                                            <img
+                                                src={AttachFileIcon}
+                                                alt="Attach"
+                                                style={{ width: '20px', height: '20px' }}
+                                            />
+                                            {attachments[index - 1] ? attachments[index - 1].name.substring(0, 15) + (attachments[index - 1].name.length > 15 ? '...' : '') : 'Attach files'}
+                                        </div>
+                                    </label>
+                                </React.Fragment>
                             ))}
                         </div>
                     </div>
@@ -633,10 +712,9 @@ export const PostCampaign: React.FC = () => {
                         <Input
                             label="Campaign budget"
                             placeholder="Campaign budget"
-                            value={campaignBudget}
-                            onChange={(e) => setCampaignBudget(e.target.value)}
-                            required
                             variant="floating"
+                            error={errors.campaignBudget?.message}
+                            {...register('campaignBudget')}
                         />
                     </div>
 
@@ -664,7 +742,7 @@ export const PostCampaign: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
                     <Button
                         variant="filled"
-                        onClick={handlePostCampaign}
+                        onClick={handleSubmit(onSubmit)}
                         disabled={(!isStep1Valid || !isStep2Valid) || isLoading}
                         style={{
                             minWidth: '160px',

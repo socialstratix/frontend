@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '../../components/atoms/Button';
 import { Input } from '../../components/atoms/Input';
 import { colors } from '../../constants/colors';
@@ -13,6 +15,20 @@ import {
 } from '../../assets/icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiService } from '../../services/api';
+import {
+  onboardingStep1Schema,
+  onboardingStep2Schema,
+  onboardingStep3Schema,
+  onboardingStep4Schema,
+} from '../../utils/validationSchemas';
+import type {
+  OnboardingStep1Data,
+  OnboardingStep2Data,
+  OnboardingStep3Data,
+  OnboardingStep4Data,
+} from '../../utils/validationSchemas';
+import InfluencerDescriptionImg from '../../assets/images/illustrations/InfluenerDes.png';
+import TagsInfluencerImg from '../../assets/images/illustrations/TagsInfuencer.png';
 
 interface OnboardingFormProps {
   onComplete?: () => void;
@@ -25,36 +41,78 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   
-  // Form state
-  const [country, setCountry] = useState('');
-  const [mobile, setMobile] = useState('');
-  const [state, setState] = useState('');
-  const [pincode, setPincode] = useState('');
-  const [city, setCity] = useState('');
-  const [address, setAddress] = useState('');
-  
-  // Question 2 - Influencer description
-  const [influencerDescription, setInfluencerDescription] = useState('');
-  
-  // Question 3 - Tags
+  // Question 3 - Tags (kept as state since it's a dynamic array)
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   
-  // Question 4 - Social media
-  const [socialLinks, setSocialLinks] = useState({
-    instagram: '',
-    facebook: '',
-    tiktok: '',
-    x: '',
-    youtube: ''
-  });
-  
   // Question 5 - Profile pic
-  // Note: profilePic stored for future file upload implementation
   const [, setProfilePic] = useState<File | null>(null);
   const [profilePicPreview, setProfilePicPreview] = useState<string>('');
+  
+  // Form hooks for each step
+  const step1Form = useForm<OnboardingStep1Data>({
+    resolver: zodResolver(onboardingStep1Schema),
+    mode: 'onBlur',
+    defaultValues: {
+      country: '',
+      mobile: '',
+      state: '',
+      pincode: '',
+      city: '',
+      address: '',
+    },
+  });
+  
+  const step2Form = useForm<OnboardingStep2Data>({
+    resolver: zodResolver(onboardingStep2Schema),
+    mode: 'onBlur',
+    defaultValues: {
+      influencerDescription: '',
+    },
+  });
+  
+  const step3Form = useForm<OnboardingStep3Data>({
+    resolver: zodResolver(onboardingStep3Schema),
+    mode: 'onBlur',
+    defaultValues: {
+      tags: [],
+    },
+  });
+  
+  const step4Form = useForm<OnboardingStep4Data>({
+    resolver: zodResolver(onboardingStep4Schema),
+    mode: 'onBlur',
+    defaultValues: {
+      instagram: '',
+      facebook: '',
+      tiktok: '',
+      x: '',
+      youtube: '',
+    },
+  });
 
   const handleNext = async () => {
+    let isValid = false;
+
+    // Validate current step before proceeding
+    if (currentStep === 1) {
+      isValid = await step1Form.trigger();
+    } else if (currentStep === 2) {
+      isValid = await step2Form.trigger();
+    } else if (currentStep === 3) {
+      step3Form.setValue('tags', tags);
+      isValid = await step3Form.trigger();
+    } else if (currentStep === 4) {
+      isValid = await step4Form.trigger();
+    } else if (currentStep === 5) {
+      // Step 5 is optional (profile pic)
+      isValid = true;
+    }
+
+    if (!isValid) {
+      return;
+    }
+
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -68,55 +126,60 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
       setIsLoading(true);
       setError('');
 
+      // Get data from all steps
+      const step1Data = step1Form.getValues();
+      const step2Data = step2Form.getValues();
+      const step4Data = step4Form.getValues();
+
       // Prepare social media data
       const socialMedia = [];
-      if (socialLinks.instagram) {
+      if (step4Data.instagram) {
         socialMedia.push({
           platform: 'instagram' as const,
-          username: socialLinks.instagram,
-          profileUrl: `https://instagram.com/${socialLinks.instagram}`,
+          username: step4Data.instagram,
+          profileUrl: `https://instagram.com/${step4Data.instagram}`,
         });
       }
-      if (socialLinks.facebook) {
+      if (step4Data.facebook) {
         socialMedia.push({
           platform: 'facebook' as const,
-          username: socialLinks.facebook,
-          profileUrl: `https://facebook.com/${socialLinks.facebook}`,
+          username: step4Data.facebook,
+          profileUrl: `https://facebook.com/${step4Data.facebook}`,
         });
       }
-      if (socialLinks.tiktok) {
+      if (step4Data.tiktok) {
         socialMedia.push({
           platform: 'tiktok' as const,
-          username: socialLinks.tiktok,
-          profileUrl: `https://tiktok.com/@${socialLinks.tiktok}`,
+          username: step4Data.tiktok,
+          profileUrl: `https://tiktok.com/@${step4Data.tiktok}`,
         });
       }
-      if (socialLinks.x) {
+      if (step4Data.x) {
         socialMedia.push({
           platform: 'x' as const,
-          username: socialLinks.x,
-          profileUrl: `https://x.com/${socialLinks.x}`,
+          username: step4Data.x,
+          profileUrl: `https://x.com/${step4Data.x}`,
         });
       }
-      if (socialLinks.youtube) {
+      if (step4Data.youtube) {
         socialMedia.push({
           platform: 'youtube' as const,
-          username: socialLinks.youtube,
-          profileUrl: `https://youtube.com/@${socialLinks.youtube}`,
+          username: step4Data.youtube,
+          profileUrl: `https://youtube.com/@${step4Data.youtube}`,
         });
       }
 
       // Prepare onboarding data
       const onboardingData = {
         location: {
-          country,
-          mobile,
-          state,
-          pincode,
-          city,
-          address,
+          country: step1Data.country,
+          mobile: step1Data.mobile,
+          state: step1Data.state,
+          pincode: step1Data.pincode,
+          city: step1Data.city,
+          address: step1Data.address,
         },
-        description: influencerDescription,
+        description: step2Data.influencerDescription,
         tags,
         socialMedia,
         profileImage: profilePicPreview, // Base64 encoded image
@@ -224,13 +287,13 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                   <Input
                     type="tel"
                     placeholder="10 digit mobile"
-                    value={mobile}
-                    onChange={(e) => setMobile(e.target.value)}
                     variant="default"
                     style={{
                       fontFamily: 'Poppins, sans-serif',
                       fontSize: '14px'
                     }}
+                    error={step1Form.formState.errors.mobile?.message}
+                    {...step1Form.register('mobile')}
                   />
                 </div>
               </div>
@@ -239,17 +302,16 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
             {/* Select Country Dropdown */}
             <div style={{ marginBottom: '16px' }}>
               <select
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                {...step1Form.register('country')}
                 style={{
                   width: '100%',
                   height: '48px',
                   padding: '12px',
-                  border: `1px solid ${colors.border.light}`,
+                  border: `1px solid ${step1Form.formState.errors.country ? colors.red.main : colors.border.light}`,
                   borderRadius: '4px',
                   fontFamily: 'Poppins, sans-serif',
                   fontSize: '14px',
-                  color: country ? colors.text.primary : colors.text.secondary,
+                  color: step1Form.watch('country') ? colors.text.primary : colors.text.secondary,
                   backgroundColor: colors.primary.white,
                   cursor: 'pointer'
                 }}
@@ -259,6 +321,11 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 <option value="usa">United States</option>
                 <option value="uk">United Kingdom</option>
               </select>
+              {step1Form.formState.errors.country && (
+                <p style={{ color: colors.red.main, fontSize: '12px', marginTop: '4px', fontFamily: 'Poppins, sans-serif' }}>
+                  {step1Form.formState.errors.country.message}
+                </p>
+              )}
             </div>
 
             {/* State Input */}
@@ -266,13 +333,13 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
               <Input
                 type="text"
                 placeholder="State"
-                value={state}
-                onChange={(e) => setState(e.target.value)}
                 variant="default"
                 style={{
                   fontFamily: 'Poppins, sans-serif',
                   fontSize: '14px'
                 }}
+                error={step1Form.formState.errors.state?.message}
+                {...step1Form.register('state')}
               />
             </div>
 
@@ -281,13 +348,13 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
               <Input
                 type="text"
                 placeholder="Pincode"
-                value={pincode}
-                onChange={(e) => setPincode(e.target.value)}
                 variant="default"
                 style={{
                   fontFamily: 'Poppins, sans-serif',
                   fontSize: '14px'
                 }}
+                error={step1Form.formState.errors.pincode?.message}
+                {...step1Form.register('pincode')}
               />
             </div>
 
@@ -296,13 +363,13 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
               <Input
                 type="text"
                 placeholder="City"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
                 variant="default"
                 style={{
                   fontFamily: 'Poppins, sans-serif',
                   fontSize: '14px'
                 }}
+                error={step1Form.formState.errors.city?.message}
+                {...step1Form.register('city')}
               />
             </div>
 
@@ -310,13 +377,12 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
             <div style={{ marginBottom: '24px' }}>
               <textarea
                 placeholder="Address(optional)"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                {...step1Form.register('address')}
                 style={{
                   width: '100%',
                   height: '80px',
                   padding: '12px',
-                  border: `1px solid ${colors.border.light}`,
+                  border: `1px solid ${step1Form.formState.errors.address ? colors.red.main : colors.border.light}`,
                   borderRadius: '4px',
                   fontFamily: 'Poppins, sans-serif',
                   fontSize: '14px',
@@ -324,6 +390,11 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                   outline: 'none'
                 }}
               />
+              {step1Form.formState.errors.address && (
+                <p style={{ color: colors.red.main, fontSize: '12px', marginTop: '4px', fontFamily: 'Poppins, sans-serif' }}>
+                  {step1Form.formState.errors.address.message}
+                </p>
+              )}
             </div>
           </>
         );
@@ -358,27 +429,26 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
 
             {/* Description Input */}
             <textarea
-              placeholder="Describe the kind of influencer you are"
-              value={influencerDescription}
-              onChange={(e) => setInfluencerDescription(e.target.value)}
+              placeholder="Describe the kind of influencer you are (min 50 characters)"
+              {...step2Form.register('influencerDescription')}
               style={{
                 width: '100%',
                 height: '56px',
                 padding: '16px',
-                border: `1px solid ${colors.border.light}`,
+                border: `1px solid ${step2Form.formState.errors.influencerDescription ? colors.red.main : colors.border.light}`,
                 borderRadius: '8px',
                 fontFamily: 'Poppins, sans-serif',
                 fontSize: '14px',
                 resize: 'none',
                 outline: 'none',
-                marginBottom: '24px'
+                marginBottom: step2Form.formState.errors.influencerDescription ? '8px' : '24px'
               }}
             />
-
-            {/* Illustration */}
-            <div style={{ textAlign: 'center', opacity: 0.3 }}>
-              <p style={{ fontSize: '100px', margin: 0 }}>👥</p>
-            </div>
+            {step2Form.formState.errors.influencerDescription && (
+              <p style={{ color: colors.red.main, fontSize: '12px', marginBottom: '24px', fontFamily: 'Poppins, sans-serif' }}>
+                {step2Form.formState.errors.influencerDescription.message}
+              </p>
+            )}
           </>
         );
 
@@ -491,11 +561,6 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 </>
               )}
             </div>
-
-            {/* Illustration */}
-            <div style={{ textAlign: 'center', opacity: 0.3, marginTop: '40px' }}>
-              <p style={{ fontSize: '80px', margin: 0 }}>💼🔍🚀</p>
-            </div>
           </>
         );
 
@@ -537,14 +602,14 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 <Input
                   type="text"
                   placeholder="Enter your Instagram username"
-                  value={socialLinks.instagram}
-                  onChange={(e) => setSocialLinks({ ...socialLinks, instagram: e.target.value })}
                   variant="default"
                   style={{
                     fontFamily: 'Poppins, sans-serif',
                     fontSize: '14px',
                     width: '100%'
                   }}
+                  error={step4Form.formState.errors.instagram?.message}
+                  {...step4Form.register('instagram')}
                 />
               </div>
 
@@ -568,14 +633,14 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 <Input
                   type="text"
                   placeholder="Enter your Facebook username"
-                  value={socialLinks.facebook}
-                  onChange={(e) => setSocialLinks({ ...socialLinks, facebook: e.target.value })}
                   variant="default"
                   style={{
                     fontFamily: 'Poppins, sans-serif',
                     fontSize: '14px',
                     width: '100%'
                   }}
+                  error={step4Form.formState.errors.facebook?.message}
+                  {...step4Form.register('facebook')}
                 />
               </div>
 
@@ -599,14 +664,14 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 <Input
                   type="text"
                   placeholder="Enter your TikTok username"
-                  value={socialLinks.tiktok}
-                  onChange={(e) => setSocialLinks({ ...socialLinks, tiktok: e.target.value })}
                   variant="default"
                   style={{
                     fontFamily: 'Poppins, sans-serif',
                     fontSize: '14px',
                     width: '100%'
                   }}
+                  error={step4Form.formState.errors.tiktok?.message}
+                  {...step4Form.register('tiktok')}
                 />
               </div>
 
@@ -630,14 +695,14 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 <Input
                   type="text"
                   placeholder="Enter your X (Twitter) username"
-                  value={socialLinks.x}
-                  onChange={(e) => setSocialLinks({ ...socialLinks, x: e.target.value })}
                   variant="default"
                   style={{
                     fontFamily: 'Poppins, sans-serif',
                     fontSize: '14px',
                     width: '100%'
                   }}
+                  error={step4Form.formState.errors.x?.message}
+                  {...step4Form.register('x')}
                 />
               </div>
 
@@ -661,14 +726,14 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 <Input
                   type="text"
                   placeholder="Enter your YouTube channel name"
-                  value={socialLinks.youtube}
-                  onChange={(e) => setSocialLinks({ ...socialLinks, youtube: e.target.value })}
                   variant="default"
                   style={{
                     fontFamily: 'Poppins, sans-serif',
                     fontSize: '14px',
                     width: '100%'
                   }}
+                  error={step4Form.formState.errors.youtube?.message}
+                  {...step4Form.register('youtube')}
                 />
               </div>
             </div>
@@ -847,35 +912,35 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `
-          linear-gradient(0deg, #FFFFFF, #FFFFFF),
-          linear-gradient(106.35deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%),
-          linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7))
-        `,
-        zIndex: 1000
+        background: 'linear-gradient(135deg, rgba(235, 188, 254, 1) 0%, rgba(240, 196, 105, 1) 100%)',
+        zIndex: 1000,
+        backdropFilter: 'blur(10px)'
       }}
     >
       <div 
         style={{
-          width: '522px',
-          height: '690px',
+          width: '550px',
+          height: '700px',
           borderRadius: '8px',
           borderWidth: '1px',
           opacity: 1,
-          gap: '10px',
-          paddingTop: '20px',
-          paddingRight: '40px',
-          paddingBottom: '40px',
-          paddingLeft: '40px',
+          gap: '8px',
+          paddingTop: '16px',
+          paddingRight: '32px',
+          paddingBottom: '24px',
+          paddingLeft: '32px',
           background: '#FFFFFF',
+          backgroundColor: '#FAF9F6',
           border: `1px solid ${colors.border.light}`,
           display: 'flex',
           flexDirection: 'column',
-          position: 'relative'
+          position: 'relative',
+          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+          zIndex: 10
         }}
       >
         {/* Back Button and Question Counter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
           {currentStep > 1 && (
             <button
               onClick={handleBack}
@@ -904,7 +969,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
         </div>
 
         {/* Form Content */}
-        <div style={{ flex: 1, overflow: 'auto' }}>
+        <div style={{ flex: 1, overflow: 'visible' }}>
           {renderStep()}
         </div>
 
@@ -927,14 +992,14 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
         )}
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
           <Button
             variant="filled"
             onClick={handleNext}
             disabled={isLoading}
             style={{
               width: '100%',
-              height: '48px'
+              height: '44px'
             }}
           >
             {isLoading ? 'Submitting...' : currentStep === 5 ? 'COMPLETE' : 'NEXT'}
@@ -956,6 +1021,28 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
             SKIP
           </button>
         </div>
+
+        {/* Illustration - Show only in step 2 */}
+        {currentStep === 2 && (
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <img 
+              src={InfluencerDescriptionImg} 
+              alt="Influencer description illustration" 
+              style={{ maxWidth: '100%', height: 'auto', maxHeight: '120px' }}
+            />
+          </div>
+        )}
+
+        {/* Illustration - Show only in step 3 */}
+        {currentStep === 3 && (
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <img 
+              src={TagsInfluencerImg} 
+              alt="Tags illustration" 
+              style={{ maxWidth: '100%', height: 'auto', maxHeight: '120px' }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
