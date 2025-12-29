@@ -53,6 +53,7 @@ export const BrandProfile: React.FC = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [brandAvatarError, setBrandAvatarError] = useState(false);
   const [showAllCampaigns, setShowAllCampaigns] = useState(false);
+  const [sortBy, setSortBy] = useState<'date' | 'budget' | 'name'>('date');
   
   // Edit modal states
   const [showEditName, setShowEditName] = useState(false);
@@ -78,6 +79,7 @@ export const BrandProfile: React.FC = () => {
   } = useCampaigns({
     brandId: brand?._id || undefined,
     status: statusFilter as 'active' | 'previous' | 'closed' | 'completed',
+    sortBy: sortBy,
     autoFetch: !!brand?._id,
   });
 
@@ -1029,6 +1031,8 @@ export const BrandProfile: React.FC = () => {
                 Sort by:
               </span>
               <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'date' | 'budget' | 'name')}
                 style={{
                   fontFamily: 'Poppins',
                   fontSize: '14px',
@@ -1040,9 +1044,9 @@ export const BrandProfile: React.FC = () => {
                   outline: 'none',
                 }}
               >
-                <option>Date Posted</option>
-                <option>Budget</option>
-                <option>Name</option>
+                <option value="date">Date Posted</option>
+                <option value="budget">Budget</option>
+                <option value="name">Name</option>
               </select>
             </div>
           </div>

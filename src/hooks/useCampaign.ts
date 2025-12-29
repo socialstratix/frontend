@@ -4,6 +4,7 @@ import { campaignService, type Campaign, type CreateCampaignData, type UpdateCam
 interface UseCampaignsOptions {
   brandId?: string;
   status?: 'active' | 'previous' | 'draft' | 'closed' | 'completed';
+  sortBy?: 'date' | 'budget' | 'name';
   autoFetch?: boolean;
 }
 
@@ -20,7 +21,7 @@ interface UseCampaignsReturn {
  * Hook for managing campaigns by brand
  */
 export const useCampaigns = (options: UseCampaignsOptions = {}): UseCampaignsReturn => {
-  const { brandId, status, autoFetch = false } = options;
+  const { brandId, status, sortBy, autoFetch = false } = options;
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +33,8 @@ export const useCampaigns = (options: UseCampaignsOptions = {}): UseCampaignsRet
       setError(null);
       const response = await campaignService.getCampaignsByBrandId(
         id,
-        (campaignStatus || status) as any
+        (campaignStatus || status) as any,
+        sortBy
       );
       setCampaigns(response.campaigns || []);
       setCount(response.count || 0);
@@ -43,7 +45,7 @@ export const useCampaigns = (options: UseCampaignsOptions = {}): UseCampaignsRet
     } finally {
       setIsLoading(false);
     }
-  }, [status]);
+  }, [status, sortBy]);
 
   const refetch = useCallback(async () => {
     if (brandId) {
@@ -55,7 +57,7 @@ export const useCampaigns = (options: UseCampaignsOptions = {}): UseCampaignsRet
     if (autoFetch && brandId) {
       fetchCampaigns(brandId);
     }
-  }, [autoFetch, brandId, status, fetchCampaigns]);
+  }, [autoFetch, brandId, status, sortBy, fetchCampaigns]);
 
   return {
     campaigns,
