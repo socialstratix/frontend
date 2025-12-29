@@ -7,7 +7,6 @@ import {
   InfluencerDetail,
   InfluencerLanding,
   BrandDashboard,
-  CampaignDetail,
   CampaignDetailInfluencer,
   Messages,
   Login,

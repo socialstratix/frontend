@@ -151,24 +151,6 @@ export const PostCampaign: React.FC = () => {
         e.target.value = '';
     };
 
-    const handleRemoveAttachment = (index: number) => {
-        setAttachments((prev) => prev.filter((_, i) => i !== index));
-    };
-
-    const getFileIcon = (file: File) => {
-        if (file.type.startsWith('image/')) return '🖼️';
-        if (file.type === 'application/pdf') return '📄';
-        if (file.type.includes('word')) return '📝';
-        return '📎';
-    };
-
-    const formatFileSize = (bytes: number) => {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    };
-
-
     const onSubmit = async (data: PostCampaignFormData) => {
         setError(null);
 

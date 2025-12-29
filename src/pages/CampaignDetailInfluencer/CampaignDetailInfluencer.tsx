@@ -19,8 +19,6 @@ import { useCampaign } from '../../hooks/useCampaign';
 import { campaignService } from '../../services/campaignService';
 import type { Campaign as CampaignType } from '../../services/campaignService';
 import { useAuth } from '../../contexts/AuthContext';
-import EditIcon from '../../assets/icons/ui/edit.svg';
-import MoreIcon from '../../assets/icons/ui/more.svg';
 import { EditButton } from '../../components/atoms/EditButton';
 import { EditName } from '../../components/molecules/EditName';
 import { EditDescription } from '../../components/molecules/EditDescription';
@@ -126,18 +124,6 @@ export const CampaignDetailInfluencer: React.FC = () => {
       window.location.reload();
     } catch (err) {
       console.error('Failed to update description:', err);
-    }
-  };
-
-  // Handler for saving platforms
-  const handleSavePlatforms = async (platforms: string[]) => {
-    if (!id) return;
-    try {
-      await updateCampaign(id, { platforms });
-      setShowEditPlatforms(false);
-      window.location.reload();
-    } catch (err) {
-      console.error('Failed to update platforms:', err);
     }
   };
 
