@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { InfluencerDetailFrame } from '../../components';
+import { InfluencerCard } from '../../components/molecules/InfluencerCard/InfluencerCard';
 import { EditName } from '../../components/molecules/EditName/EditName';
 import { EditDescription } from '../../components/molecules/EditDescription/EditDescription';
 import { EditLocation } from '../../components/molecules/EditLocation/EditLocation';
@@ -9,7 +10,7 @@ import { EditTags } from '../../components/molecules/EditTags/EditTags';
 import { EditButton } from '../../components/atoms/EditButton';
 import { useInfluencer } from '../../hooks';
 import { useAuth } from '../../contexts/AuthContext';
-import { influencerService, type ContentItem, type FollowersResponse } from '../../services/influencerService';
+import { influencerService, type ContentItem, type FollowersResponse, type Influencer } from '../../services/influencerService';
 import { apiService } from '../../services/api';
 import { 
   XIcon, 
@@ -196,6 +197,10 @@ export const InfluencerDetail: React.FC = () => {
   const [isUpdatingBackgroundImage, setIsUpdatingBackgroundImage] = useState(false);
   const [isUpdatingTags, setIsUpdatingTags] = useState(false);
   
+  // Similar influencers state
+  const [similarInfluencers, setSimilarInfluencers] = useState<Influencer[]>([]);
+  const [isLoadingSimilar, setIsLoadingSimilar] = useState(false);
+  
   // Handle animation phases
   useEffect(() => {
     if (isAnimating && animationPhase === 'initial') {
@@ -279,6 +284,39 @@ export const InfluencerDetail: React.FC = () => {
       }
     });
     return map;
+  }, [influencer]);
+
+  // Fetch similar influencers based on tags
+  useEffect(() => {
+    const fetchSimilarInfluencers = async () => {
+      if (!influencer?._id || !influencer?.tags?.length) {
+        setSimilarInfluencers([]);
+        return;
+      }
+      
+      try {
+        setIsLoadingSimilar(true);
+        // Fetch influencers with matching tags
+        const response = await influencerService.getAllInfluencers({
+          tags: influencer.tags,
+          limit: 10,
+        });
+        
+        // Filter out current influencer
+        const filtered = response.influencers.filter(
+          inf => inf._id !== influencer._id
+        );
+        
+        setSimilarInfluencers(filtered.slice(0, 5));
+      } catch (error) {
+        console.error('Failed to fetch similar influencers:', error);
+        setSimilarInfluencers([]);
+      } finally {
+        setIsLoadingSimilar(false);
+      }
+    };
+    
+    fetchSimilarInfluencers();
   }, [influencer]);
 
   // Handler to refresh influencer data
@@ -2157,7 +2195,9 @@ export const InfluencerDetail: React.FC = () => {
             </p>
 
             {/* Sample Reviews */}
-            {[1, 2, 3].map((review) => (
+            {[1, 2, 3].map((review, index) => {
+              const reviewNames = ['Sarah Johnson', 'Michael Chen', 'Emily Rodriguez'];
+              return (
               <div
                 key={review}
                 style={{
@@ -2195,7 +2235,7 @@ export const InfluencerDetail: React.FC = () => {
                         marginBottom: '4px'
                       }}
                     >
-                      by Niko Tulg
+                      by {reviewNames[index]}
                     </div>
                     <p
                       style={{
@@ -2211,7 +2251,8 @@ export const InfluencerDetail: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
 
             <button
               style={{
@@ -2256,6 +2297,10 @@ export const InfluencerDetail: React.FC = () => {
                 Similar influencers
               </h3>
               <button
+                onClick={() => {
+                  const baseRoute = location.pathname.split('/')[1];
+                  navigate(`/${baseRoute}/discover`);
+                }}
                 style={{
                   fontFamily: 'Poppins, sans-serif',
                   fontSize: '14px',
@@ -2271,107 +2316,41 @@ export const InfluencerDetail: React.FC = () => {
             </div>
 
             {/* Influencer Cards Grid */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(5, 1fr)',
-                gap: '16px'
-              }}
-            >
-              {[1, 2, 3, 4, 5].map((influencer) => (
-                <div
-                  key={influencer}
-                  style={{
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  {/* Image */}
-                  <div style={{ position: 'relative', paddingBottom: '100%' }}>
-                    <img
-                      src={`https://picsum.photos/300/300?random=${influencer + 50}`}
-                      alt="Influencer"
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                    />
-                  </div>
-                  {/* Info */}
-                  <div style={{ padding: '12px' }}>
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
-                      <span
-                        style={{
-                          padding: '4px 8px',
-                          backgroundColor: '#F0F0F0',
-                          borderRadius: '12px',
-                          fontSize: '10px',
-                          fontWeight: 500
-                        }}
-                      >
-                        5.0
-                      </span>
-                      <span
-                        style={{
-                          padding: '4px 8px',
-                          backgroundColor: '#F0F0F0',
-                          borderRadius: '12px',
-                          fontSize: '10px',
-                          fontWeight: 500
-                        }}
-                      >
-                        210
-                      </span>
-                      <span
-                        style={{
-                          padding: '4px 8px',
-                          backgroundColor: '#F0F0F0',
-                          borderRadius: '12px',
-                          fontSize: '10px',
-                          fontWeight: 500
-                        }}
-                      >
-                        K15
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: 'Poppins, sans-serif',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#1E002B',
-                        marginBottom: '4px'
-                      }}
-                    >
-                      Influencer {influencer}
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: 'Poppins, sans-serif',
-                        fontSize: '12px',
-                        color: '#666'
-                      }}
-                    >
-                      Cooking, Unfiltered
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {isLoadingSimilar ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+                <span style={{ fontFamily: 'Poppins, sans-serif', color: '#666' }}>Loading similar influencers...</span>
+              </div>
+            ) : similarInfluencers.length > 0 ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: '16px'
+                }}
+              >
+                {similarInfluencers.map((inf) => (
+                  <InfluencerCard
+                    key={inf._id}
+                    name={inf.user?.name || 'Influencer'}
+                    image={inf.coverImage}
+                    profileImage={inf.profileImage || inf.user?.avatar}
+                    rating={inf.rating}
+                    description={inf.bio || inf.description}
+                    isTopCreator={inf.isTopCreator}
+                    influencerId={inf._id}
+                    platformFollowers={inf.platformFollowers}
+                    onClick={() => {
+                      const baseRoute = location.pathname.split('/')[1];
+                      navigate(`/${baseRoute}/influencer/${inf._id}`);
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+                <span style={{ fontFamily: 'Poppins, sans-serif', color: '#666' }}>No similar influencers found</span>
+              </div>
+            )}
           </div>
           )}
         </div>
