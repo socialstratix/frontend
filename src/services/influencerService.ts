@@ -97,6 +97,13 @@ export interface Influencer {
     avatar?: string;
   };
   platformFollowers?: PlatformFollowers;
+  socialProfiles?: Array<{
+    platform: 'youtube' | 'facebook' | 'instagram' | 'tiktok' | 'x';
+    username: string;
+    profileUrl?: string;
+    followers: number;
+    isVerified: boolean;
+  }>;
 }
 
 export interface InfluencerListParams {
@@ -238,6 +245,7 @@ class InfluencerService {
     data: {
       name?: string;
       description?: string;
+      tags?: string[];
       location?: {
         address?: string;
         city?: string;

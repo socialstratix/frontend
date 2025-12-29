@@ -259,38 +259,57 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
 
             {/* Country Selector with Flag */}
             <div style={{ marginBottom: '16px' }}>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {/* Country Code Dropdown */}
-                <div style={{ position: 'relative', width: '80px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                {/* Country Code Dropdown with Flag */}
+                <div style={{ position: 'relative', width: '100px', flexShrink: 0 }}>
                   <select
                     style={{
                       width: '100%',
                       height: '48px',
-                      padding: '12px',
-                      border: `1px solid ${colors.border.light}`,
+                      padding: '12px 28px 12px 10px',
+                      border: `1px solid ${colors.border.purple}`,
                       borderRadius: '4px',
-                      fontFamily: 'Poppins, sans-serif',
-                      fontSize: '14px',
+                      fontFamily: '"Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", Poppins, sans-serif',
+                      fontSize: '16px',
                       backgroundColor: colors.primary.white,
                       cursor: 'pointer',
-                      appearance: 'none'
+                      appearance: 'none',
+                      lineHeight: '1',
+                      overflow: 'hidden',
+                      textOverflow: 'clip',
+                      whiteSpace: 'nowrap',
+                      boxSizing: 'border-box'
                     }}
                   >
-                    <option value="+91">🇮🇳</option>
-                    <option value="+1">🇺🇸</option>
-                    <option value="+44">🇬🇧</option>
+                    <option value="+91">🇮🇳 IN</option>
+                    <option value="+1">🇺🇸 US</option>
+                    <option value="+44">🇬🇧 UK</option>
                   </select>
+                  <div style={{ 
+                    position: 'absolute', 
+                    right: '10px', 
+                    top: '50%', 
+                    transform: 'translateY(-50%)', 
+                    pointerEvents: 'none',
+                    fontSize: '10px',
+                    color: colors.text.secondary
+                  }}>▼</div>
                 </div>
 
                 {/* Mobile Number Input */}
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <Input
                     type="tel"
                     placeholder="10 digit mobile"
                     variant="default"
                     style={{
                       fontFamily: 'Poppins, sans-serif',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      border: `1px solid ${colors.border.purple}`,
+                      borderRadius: '4px',
+                      height: '48px',
+                      width: '100%',
+                      boxSizing: 'border-box'
                     }}
                     error={step1Form.formState.errors.mobile?.message}
                     {...step1Form.register('mobile')}
@@ -307,19 +326,22 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                   width: '100%',
                   height: '48px',
                   padding: '12px',
-                  border: `1px solid ${step1Form.formState.errors.country ? colors.red.main : colors.border.light}`,
+                  border: `1px solid ${step1Form.formState.errors.country ? colors.red.main : colors.border.purple}`,
                   borderRadius: '4px',
-                  fontFamily: 'Poppins, sans-serif',
+                  fontFamily: '"Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", Poppins, sans-serif',
                   fontSize: '14px',
                   color: step1Form.watch('country') ? colors.text.primary : colors.text.secondary,
                   backgroundColor: colors.primary.white,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  lineHeight: '1.4',
+                  overflow: 'hidden',
+                  boxSizing: 'border-box'
                 }}
               >
                 <option value="">Select country</option>
-                <option value="india">India</option>
-                <option value="usa">United States</option>
-                <option value="uk">United Kingdom</option>
+                <option value="india">🇮🇳 India</option>
+                <option value="usa">🇺🇸 United States</option>
+                <option value="uk">🇬🇧 United Kingdom</option>
               </select>
               {step1Form.formState.errors.country && (
                 <p style={{ color: colors.red.main, fontSize: '12px', marginTop: '4px', fontFamily: 'Poppins, sans-serif' }}>
@@ -336,7 +358,12 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 variant="default"
                 style={{
                   fontFamily: 'Poppins, sans-serif',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  border: `1px solid ${colors.border.purple}`,
+                  borderRadius: '4px',
+                  height: '48px',
+                  width: '100%',
+                  boxSizing: 'border-box'
                 }}
                 error={step1Form.formState.errors.state?.message}
                 {...step1Form.register('state')}
@@ -351,7 +378,12 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 variant="default"
                 style={{
                   fontFamily: 'Poppins, sans-serif',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  border: `1px solid ${colors.border.purple}`,
+                  borderRadius: '4px',
+                  height: '48px',
+                  width: '100%',
+                  boxSizing: 'border-box'
                 }}
                 error={step1Form.formState.errors.pincode?.message}
                 {...step1Form.register('pincode')}
@@ -366,7 +398,12 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 variant="default"
                 style={{
                   fontFamily: 'Poppins, sans-serif',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  border: `1px solid ${colors.border.purple}`,
+                  borderRadius: '4px',
+                  height: '48px',
+                  width: '100%',
+                  boxSizing: 'border-box'
                 }}
                 error={step1Form.formState.errors.city?.message}
                 {...step1Form.register('city')}
@@ -382,11 +419,12 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                   width: '100%',
                   height: '80px',
                   padding: '12px',
-                  border: `1px solid ${step1Form.formState.errors.address ? colors.red.main : colors.border.light}`,
+                  border: `1px solid ${step1Form.formState.errors.address ? colors.red.main : colors.border.purple}`,
                   borderRadius: '4px',
                   fontFamily: 'Poppins, sans-serif',
                   fontSize: '14px',
                   resize: 'none',
+                  boxSizing: 'border-box',
                   outline: 'none'
                 }}
               />
@@ -872,25 +910,6 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                     Learn more
                   </span>
                 </p>
-
-                {/* Material Icon Placeholder */}
-                <div 
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    backgroundColor: colors.primary.main,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: colors.primary.white,
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    marginTop: '16px'
-                  }}
-                >
-                  M
-                </div>
               </div>
             </div>
           </>
@@ -920,7 +939,9 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
       <div 
         style={{
           width: '550px',
+          maxWidth: '90vw',
           height: '700px',
+          maxHeight: '90vh',
           borderRadius: '8px',
           borderWidth: '1px',
           opacity: 1,
@@ -929,14 +950,14 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
           paddingRight: '32px',
           paddingBottom: '24px',
           paddingLeft: '32px',
-          background: '#FFFFFF',
-          backgroundColor: '#FAF9F6',
+          backgroundColor: '#FFFFFF',
           border: `1px solid ${colors.border.light}`,
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
           boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
-          zIndex: 10
+          zIndex: 10,
+          overflow: 'hidden'
         }}
       >
         {/* Back Button and Question Counter */}
@@ -969,7 +990,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
         </div>
 
         {/* Form Content */}
-        <div style={{ flex: 1, overflow: 'visible' }}>
+        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           {renderStep()}
         </div>
 
@@ -1024,22 +1045,44 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
 
         {/* Illustration - Show only in step 2 */}
         {currentStep === 2 && (
-          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            marginTop: '16px',
+            width: '100%'
+          }}>
             <img 
               src={InfluencerDescriptionImg} 
               alt="Influencer description illustration" 
-              style={{ maxWidth: '100%', height: 'auto', maxHeight: '120px' }}
+              style={{ 
+                maxWidth: '100%', 
+                height: 'auto', 
+                maxHeight: '120px',
+                display: 'block'
+              }}
             />
           </div>
         )}
 
         {/* Illustration - Show only in step 3 */}
         {currentStep === 3 && (
-          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            marginTop: '16px',
+            width: '100%'
+          }}>
             <img 
               src={TagsInfluencerImg} 
               alt="Tags illustration" 
-              style={{ maxWidth: '100%', height: 'auto', maxHeight: '120px' }}
+              style={{ 
+                maxWidth: '100%', 
+                height: 'auto', 
+                maxHeight: '120px',
+                display: 'block'
+              }}
             />
           </div>
         )}

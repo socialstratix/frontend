@@ -165,11 +165,20 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
             />
 
             {/* Illustration */}
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              width: '100%'
+            }}>
               <img 
                 src={OnboardingBrandStep2} 
                 alt="Brand onboarding illustration" 
-                style={{ maxWidth: '100%', height: 'auto' }}
+                style={{ 
+                  maxWidth: '100%', 
+                  height: 'auto',
+                  display: 'block'
+                }}
               />
             </div>
           </>
@@ -567,11 +576,22 @@ linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7));`,
 
         {/* Illustration - Show only in step 3 */}
         {currentStep === 3 && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '16px' }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            marginTop: '16px',
+            width: '100%'
+          }}>
             <img 
               src={TagsInfluencerImg} 
               alt="Tags illustration" 
-              style={{ maxWidth: '100%', height: 'auto', maxHeight: '120px' }}
+              style={{ 
+                maxWidth: '100%', 
+                height: 'auto', 
+                maxHeight: '120px',
+                display: 'block'
+              }}
             />
           </div>
         )}

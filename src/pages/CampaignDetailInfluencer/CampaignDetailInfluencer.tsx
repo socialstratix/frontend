@@ -18,6 +18,7 @@ import TiktokIcon from '../../assets/icons/social/Icon=Tiktok.svg';
 import { useCampaign } from '../../hooks/useCampaign';
 import { campaignService } from '../../services/campaignService';
 import type { Campaign as CampaignType } from '../../services/campaignService';
+import { savedCampaignService } from '../../services/savedCampaignService';
 import { useAuth } from '../../contexts/AuthContext';
 import { EditButton } from '../../components/atoms/EditButton';
 import { EditName } from '../../components/molecules/EditName';
@@ -48,6 +49,21 @@ export const CampaignDetailInfluencer: React.FC = () => {
     campaignId: id,
     autoFetch: !!id,
   });
+
+  // Fetch saved status on mount for influencers
+  useEffect(() => {
+    const fetchSavedStatus = async () => {
+      if (!id || isBrand) return;
+      try {
+        const saved = await savedCampaignService.checkIfSaved(id);
+        setIsSaved(saved);
+      } catch (err) {
+        console.error('Failed to check saved status:', err);
+      }
+    };
+
+    fetchSavedStatus();
+  }, [id, isBrand]);
 
   // Get base route for back navigation
   const baseRoute = location.pathname.split('/')[1];
@@ -99,6 +115,27 @@ export const CampaignDetailInfluencer: React.FC = () => {
       navigate(getBackRoute());
     } catch (err) {
       console.error('Failed to delete campaign:', err);
+    }
+  };
+
+  // Handler for toggling save status
+  const handleToggleSave = async () => {
+    if (!id) return;
+    try {
+      const wasSaved = isSaved;
+      // Optimistic update
+      setIsSaved(!wasSaved);
+      
+      // Make API call
+      if (wasSaved) {
+        await savedCampaignService.unsaveCampaign(id);
+      } else {
+        await savedCampaignService.saveCampaign(id);
+      }
+    } catch (error) {
+      console.error('Failed to toggle save:', error);
+      // Revert on error
+      setIsSaved(isSaved);
     }
   };
 
@@ -950,7 +987,7 @@ export const CampaignDetailInfluencer: React.FC = () => {
           {!isBrand && (
             <div style={{ display: 'flex', gap: '8px', paddingRight: '16px' }}>
               <button
-                onClick={() => setIsSaved(!isSaved)}
+                onClick={handleToggleSave}
                 style={{
                   flex: 1,
                   height: '36px',
@@ -968,15 +1005,18 @@ export const CampaignDetailInfluencer: React.FC = () => {
                   color: colors.text.primary,
                 }}
               >
-                <img
-                  src={FavoriteIcon}
-                  alt="Save"
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    filter: isSaved ? 'none' : 'grayscale(100%)',
-                  }}
-                />
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill={isSaved ? '#FF0000' : 'none'}
+                  stroke={isSaved ? '#FF0000' : '#666666'}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
                 SAVE
               </button>
 
