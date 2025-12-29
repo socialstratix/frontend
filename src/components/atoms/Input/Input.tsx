@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { classNames } from '../../../utils';
 import { VisibilityOnIcon, VisibilityOffIcon } from '../../../assets/icons';
 import { colors } from '../../../constants/colors';
@@ -18,7 +18,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   className?: string;
 }
 
-export const Input: React.FC<InputProps> = ({
+export const Input = forwardRef<HTMLInputElement, InputProps>(({
   type = 'text',
   placeholder,
   value,
@@ -33,10 +33,11 @@ export const Input: React.FC<InputProps> = ({
   variant = 'default',
   className,
   ...props
-}) => {
+}, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const hasValue = value !== undefined && value !== null && value !== '';
+  const [internalValue, setInternalValue] = useState('');
+  const hasValue = value !== undefined && value !== null && value !== '' || internalValue !== '';
   const isLabelFloating = isFocused || hasValue;
   const isPasswordType = type === 'password';
   const inputType = isPasswordType && showPassword ? 'text' : type;
@@ -71,6 +72,7 @@ export const Input: React.FC<InputProps> = ({
   } : {};
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInternalValue(e.target.value);
     if (onChange) {
       onChange(e);
     }
@@ -85,6 +87,7 @@ export const Input: React.FC<InputProps> = ({
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(false);
+    setInternalValue(e.target.value);
     if (onBlur) {
       onBlur(e);
     }
@@ -96,6 +99,7 @@ export const Input: React.FC<InputProps> = ({
       <div className="relative w-full">
         <div className="relative">
           <input
+            ref={ref}
             type={inputType}
             placeholder={label}
             value={value}
@@ -177,6 +181,7 @@ export const Input: React.FC<InputProps> = ({
           </label>
         )}
         <input
+          ref={ref}
           type={inputType}
           placeholder={!label ? placeholder : ''}
           value={value}
@@ -224,5 +229,7 @@ export const Input: React.FC<InputProps> = ({
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   );
-};
+});
+
+Input.displayName = 'Input';
 

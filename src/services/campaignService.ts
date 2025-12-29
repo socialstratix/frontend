@@ -63,11 +63,15 @@ class CampaignService {
    * Get all campaigns
    */
   async getAllCampaigns(
-    status?: 'active' | 'previous' | 'draft' | 'closed' | 'completed'
+    status?: 'active' | 'previous' | 'draft' | 'closed' | 'completed',
+    sortBy?: 'date' | 'budget' | 'name'
   ): Promise<CampaignListResponse> {
     const queryParams = new URLSearchParams();
     if (status) {
       queryParams.append('status', status);
+    }
+    if (sortBy) {
+      queryParams.append('sortBy', sortBy);
     }
     
     const queryString = queryParams.toString();
@@ -90,11 +94,15 @@ class CampaignService {
    */
   async getCampaignsByBrandId(
     brandId: string,
-    status?: 'active' | 'previous' | 'draft' | 'closed' | 'completed'
+    status?: 'active' | 'previous' | 'draft' | 'closed' | 'completed',
+    sortBy?: 'date' | 'budget' | 'name'
   ): Promise<CampaignListResponse> {
     const queryParams = new URLSearchParams();
     if (status) {
       queryParams.append('status', status);
+    }
+    if (sortBy) {
+      queryParams.append('sortBy', sortBy);
     }
     
     const queryString = queryParams.toString();

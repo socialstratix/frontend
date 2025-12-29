@@ -7,4 +7,5 @@ export { Select } from './Select';
 export { Textarea } from './Textarea';
 export { Checkbox } from './Checkbox';
 export { EditButton } from './EditButton';
+export { FormError } from './FormError';
 

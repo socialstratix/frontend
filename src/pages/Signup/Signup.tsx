@@ -1,23 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../../components/atoms/Input';
 import { Button } from '../../components/atoms/Button';
 import { colors } from '../../constants/colors';
 import { OnboardingForm } from '../OnboardingForm';
 import { BrandOnboardingForm } from '../BrandOnboardingForm';
 import { useAuth } from '../../contexts/AuthContext';
+import { signupSchema } from '../../utils/validationSchemas';
+import type { SignupFormData } from '../../utils/validationSchemas';
 
 export const Signup: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [userType, setUserType] = useState<'brand' | 'influencer' | ''>('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const navigate = useNavigate();
   const { signup } = useAuth();
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    mode: 'onBlur',
+  });
 
   // Pre-select userType from URL query parameter
   useEffect(() => {
@@ -30,8 +40,7 @@ export const Signup: React.FC = () => {
     }
   }, [searchParams, navigate]);
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: SignupFormData) => {
     setError('');
 
     if (!userType) {
@@ -39,15 +48,10 @@ export const Signup: React.FC = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      await signup(email, password, fullName, userType as 'brand' | 'influencer');
+      await signup(data.email, data.password, data.fullName, userType as 'brand' | 'influencer');
       // Show onboarding form after successful signup
       setShowOnboarding(true);
     } catch (err) {
@@ -82,7 +86,7 @@ export const Signup: React.FC = () => {
 
   return (
     <>
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%)' }}>
     <div 
       className="flex"
       style={{
@@ -422,7 +426,7 @@ export const Signup: React.FC = () => {
                 </div>
               )}
 
-              <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {/* Inputs Container */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {/* Full Name Input */}
@@ -430,11 +434,10 @@ export const Signup: React.FC = () => {
                     <Input
                       type="text"
                       label="Full Name"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
                       placeholder="Enter your full name"
-                      required
                       variant="login"
+                      error={errors.fullName?.message}
+                      {...register('fullName')}
                     />
                   </div>
 
@@ -443,11 +446,10 @@ export const Signup: React.FC = () => {
                     <Input
                       type="email"
                       label="Email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
-                      required
                       variant="login"
+                      error={errors.email?.message}
+                      {...register('email')}
                     />
                   </div>
 
@@ -456,11 +458,22 @@ export const Signup: React.FC = () => {
                     <Input
                       type="password"
                       label="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password (min 6 characters)"
-                      required
+                      placeholder="Enter your password"
                       variant="login"
+                      error={errors.password?.message}
+                      {...register('password')}
+                    />
+                  </div>
+
+                  {/* Confirm Password Input */}
+                  <div>
+                    <Input
+                      type="password"
+                      label="Confirm Password"
+                      placeholder="Confirm your password"
+                      variant="login"
+                      error={errors.confirmPassword?.message}
+                      {...register('confirmPassword')}
                     />
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { colors } from '../../../constants/colors';
 import { typography } from '../../../constants/typography';
 
@@ -8,14 +8,14 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
   variant?: 'default' | 'custom';
 }
 
-export const Textarea: React.FC<TextareaProps> = ({
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
   label,
   error,
   className = '',
   variant = 'default',
   style,
   ...props
-}) => {
+}, ref) => {
   const baseStyle: React.CSSProperties = variant === 'custom' 
     ? {
         width: '100%',
@@ -46,6 +46,7 @@ export const Textarea: React.FC<TextareaProps> = ({
         </label>
       )}
       <textarea
+        ref={ref}
         style={variant === 'custom' ? baseStyle : undefined}
         className={variant === 'default' ? `w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
           error ? 'border-red-500' : 'border-gray-300'
@@ -55,5 +56,7 @@ export const Textarea: React.FC<TextareaProps> = ({
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   );
-};
+});
+
+Textarea.displayName = 'Textarea';
 

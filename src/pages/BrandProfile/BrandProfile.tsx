@@ -33,6 +33,7 @@ interface Campaign {
   location: string;
   budget: number;
   platforms: string[];
+  status?: string;
 }
 
 // Use Brand type from service
@@ -51,6 +52,8 @@ export const BrandProfile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [brandAvatarError, setBrandAvatarError] = useState(false);
+  const [showAllCampaigns, setShowAllCampaigns] = useState(false);
+  const [sortBy, setSortBy] = useState<'date' | 'budget' | 'name'>('date');
   
   // Edit modal states
   const [showEditName, setShowEditName] = useState(false);
@@ -76,6 +79,7 @@ export const BrandProfile: React.FC = () => {
   } = useCampaigns({
     brandId: brand?._id || undefined,
     status: statusFilter as 'active' | 'previous' | 'closed' | 'completed',
+    sortBy: sortBy,
     autoFetch: !!brand?._id,
   });
 
@@ -282,6 +286,7 @@ export const BrandProfile: React.FC = () => {
       location: campaign.location || '',
       budget: campaign.budget || 0,
       platforms: campaign.platforms || [],
+      status: campaign.status,
     }));
   }, [apiCampaigns, brand?.user?.name, formatTimeAgo]);
 
@@ -347,6 +352,19 @@ export const BrandProfile: React.FC = () => {
       }
     } catch (err: any) {
       setError(err.message || 'Failed to mark campaign as complete');
+    }
+  };
+
+  const handleReopenCampaign = async (campaignId: string) => {
+    try {
+      await updateCampaign(campaignId, { status: 'active' });
+      setOpenMenuId(null);
+      // Refetch campaigns to update the list
+      if (brand?._id) {
+        await refetchCampaigns();
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to reopen campaign');
     }
   };
 
@@ -478,9 +496,10 @@ export const BrandProfile: React.FC = () => {
         <div
           style={{
             backgroundColor: colors.primary.white,
-            borderRadius: '8px',
+            borderTopLeftRadius: '8px',
+            borderTopRightRadius: '8px',
             padding: '32px',
-            marginBottom: '24px',
+            paddingBottom: '16px',
           }}
         >
           {/* Brand Header */}
@@ -690,9 +709,10 @@ export const BrandProfile: React.FC = () => {
         <div
           style={{
             backgroundColor: colors.primary.white,
-            borderRadius: '8px',
             padding: '32px',
-            marginBottom: '24px',
+            paddingTop: '24px',
+            paddingBottom: '24px',
+            borderTop: `1px solid ${colors.border.light}`,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
@@ -714,17 +734,24 @@ export const BrandProfile: React.FC = () => {
             {/* Card 1 - Number of campaigns */}
             <div
               style={{
-                padding: '3px',
+                padding: '2px',
                 background: 'linear-gradient(225deg, #EAFFC2 0%, #FFD4F6 100%)',
                 borderRadius: '8px',
+                minHeight: '120px',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <div
                 style={{
-                  padding: '20px',
+                  flex: 1,
+                  padding: '20px 16px',
                   backgroundColor: colors.primary.white,
-                  borderRadius: '5px',
+                  borderRadius: '6px',
                   textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
                 }}
               >
                 <div
@@ -732,7 +759,7 @@ export const BrandProfile: React.FC = () => {
                     fontFamily: 'Poppins',
                     fontSize: '12px',
                     color: colors.text.secondary,
-                    marginBottom: '8px',
+                    marginBottom: '12px',
                   }}
                 >
                   Number of campaigns
@@ -753,17 +780,24 @@ export const BrandProfile: React.FC = () => {
             {/* Card 2 - AVG campaign budget */}
             <div
               style={{
-                padding: '3px',
+                padding: '2px',
                 background: 'linear-gradient(225deg, #FFD4F6 0%, #99FCFF 100%)',
                 borderRadius: '8px',
+                minHeight: '120px',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <div
                 style={{
-                  padding: '20px',
+                  flex: 1,
+                  padding: '20px 16px',
                   backgroundColor: colors.primary.white,
-                  borderRadius: '5px',
+                  borderRadius: '6px',
                   textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
                 }}
               >
                 <div
@@ -771,7 +805,7 @@ export const BrandProfile: React.FC = () => {
                     fontFamily: 'Poppins',
                     fontSize: '12px',
                     color: colors.text.secondary,
-                    marginBottom: '8px',
+                    marginBottom: '12px',
                   }}
                 >
                   AVG campaign budget
@@ -792,17 +826,24 @@ export const BrandProfile: React.FC = () => {
             {/* Card 3 - Number of influencers */}
             <div
               style={{
-                padding: '3px',
+                padding: '2px',
                 background: 'linear-gradient(225deg, #EAFFC2 0%, #99FCFF 100%)',
                 borderRadius: '8px',
+                minHeight: '120px',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <div
                 style={{
-                  padding: '20px',
+                  flex: 1,
+                  padding: '20px 16px',
                   backgroundColor: colors.primary.white,
-                  borderRadius: '5px',
+                  borderRadius: '6px',
                   textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
                 }}
               >
                 <div
@@ -810,7 +851,7 @@ export const BrandProfile: React.FC = () => {
                     fontFamily: 'Poppins',
                     fontSize: '12px',
                     color: colors.text.secondary,
-                    marginBottom: '8px',
+                    marginBottom: '12px',
                   }}
                 >
                   Number of influencers
@@ -831,17 +872,24 @@ export const BrandProfile: React.FC = () => {
             {/* Card 4 - Highest campaign budget */}
             <div
               style={{
-                padding: '3px',
+                padding: '2px',
                 background: 'linear-gradient(225deg, #FFE2B6 0%, #99FCFF 100%)',
                 borderRadius: '8px',
+                minHeight: '120px',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <div
                 style={{
-                  padding: '20px',
+                  flex: 1,
+                  padding: '20px 16px',
                   backgroundColor: colors.primary.white,
-                  borderRadius: '5px',
+                  borderRadius: '6px',
                   textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
                 }}
               >
                 <div
@@ -849,7 +897,7 @@ export const BrandProfile: React.FC = () => {
                     fontFamily: 'Poppins',
                     fontSize: '12px',
                     color: colors.text.secondary,
-                    marginBottom: '8px',
+                    marginBottom: '12px',
                   }}
                 >
                   Highest campaign budget
@@ -870,17 +918,24 @@ export const BrandProfile: React.FC = () => {
             {/* Card 5 - Total money spent */}
             <div
               style={{
-                padding: '3px',
+                padding: '2px',
                 background: 'linear-gradient(225deg, #FFE2B6 0%, #99FCFF 100%)',
                 borderRadius: '8px',
+                minHeight: '120px',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <div
                 style={{
-                  padding: '20px',
+                  flex: 1,
+                  padding: '20px 16px',
                   backgroundColor: colors.primary.white,
-                  borderRadius: '5px',
+                  borderRadius: '6px',
                   textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
                 }}
               >
                 <div
@@ -888,7 +943,7 @@ export const BrandProfile: React.FC = () => {
                     fontFamily: 'Poppins',
                     fontSize: '12px',
                     color: colors.text.secondary,
-                    marginBottom: '8px',
+                    marginBottom: '12px',
                   }}
                 >
                   Total money spent
@@ -912,14 +967,20 @@ export const BrandProfile: React.FC = () => {
         <div
           style={{
             backgroundColor: colors.primary.white,
-            borderRadius: '8px',
+            borderBottomLeftRadius: '8px',
+            borderBottomRightRadius: '8px',
             padding: '32px',
+            paddingTop: '24px',
+            borderTop: `1px solid ${colors.border.light}`,
           }}
         >
           {/* Tabs */}
           <div style={{ display: 'flex', gap: '32px', marginBottom: '24px', borderBottom: `2px solid ${colors.border.light}` }}>
             <button
-              onClick={() => setActiveTab('active')}
+              onClick={() => {
+                setActiveTab('active');
+                setShowAllCampaigns(false);
+              }}
               style={{
                 backgroundColor: 'transparent',
                 border: 'none',
@@ -936,7 +997,10 @@ export const BrandProfile: React.FC = () => {
               Active Campaigns
             </button>
             <button
-              onClick={() => setActiveTab('previous')}
+              onClick={() => {
+                setActiveTab('previous');
+                setShowAllCampaigns(false);
+              }}
               style={{
                 backgroundColor: 'transparent',
                 border: 'none',
@@ -967,6 +1031,8 @@ export const BrandProfile: React.FC = () => {
                 Sort by:
               </span>
               <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'date' | 'budget' | 'name')}
                 style={{
                   fontFamily: 'Poppins',
                   fontSize: '14px',
@@ -978,9 +1044,9 @@ export const BrandProfile: React.FC = () => {
                   outline: 'none',
                 }}
               >
-                <option>Date Posted</option>
-                <option>Budget</option>
-                <option>Name</option>
+                <option value="date">Date Posted</option>
+                <option value="budget">Budget</option>
+                <option value="name">Name</option>
               </select>
             </div>
           </div>
@@ -1036,7 +1102,7 @@ export const BrandProfile: React.FC = () => {
                 )}
               </div>
             ) : (
-              campaigns.map((campaign) => (
+              (showAllCampaigns ? campaigns : campaigns.slice(0, 4)).map((campaign) => (
               <div
                 key={campaign.id}
                 style={{
@@ -1051,13 +1117,37 @@ export const BrandProfile: React.FC = () => {
                   <div>
                     <div
                       style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
                         fontFamily: 'Poppins',
                         fontSize: '12px',
                         color: colors.text.secondary,
                         marginBottom: '4px',
                       }}
                     >
-                      Posted {campaign.postedTime}
+                      <span>Posted {campaign.postedTime}</span>
+                      {campaign.status && (
+                        <div
+                          style={{
+                            padding: '4px 12px',
+                            borderRadius: '12px',
+                            backgroundColor: 
+                              campaign.status === 'active' ? 'rgba(46, 125, 50, 0.1)' :
+                              campaign.status === 'completed' || campaign.status === 'closed' ? 'rgba(120, 60, 145, 0.1)' :
+                              'rgba(158, 158, 158, 0.1)',
+                            color:
+                              campaign.status === 'active' ? 'rgba(46, 125, 50, 1)' :
+                              campaign.status === 'completed' || campaign.status === 'closed' ? 'rgba(120, 60, 145, 1)' :
+                              'rgba(97, 97, 97, 1)',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {campaign.status === 'completed' ? 'Closed' : campaign.status}
+                        </div>
+                      )}
                     </div>
                     <div
                       style={{
@@ -1066,6 +1156,9 @@ export const BrandProfile: React.FC = () => {
                         color: colors.primary.main,
                         marginBottom: '8px',
                         cursor: 'pointer',
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                        wordBreak: 'break-word',
                       }}
                     >
                       {campaign.brandName}
@@ -1155,7 +1248,11 @@ export const BrandProfile: React.FC = () => {
                           }}
                         >
                           <button
-                            onClick={() => handleMarkAsComplete(campaign.id)}
+                            onClick={() => 
+                              (campaign.status === 'completed' || campaign.status === 'closed') 
+                                ? handleReopenCampaign(campaign.id) 
+                                : handleMarkAsComplete(campaign.id)
+                            }
                             style={{
                               width: '100%',
                               padding: '12px 16px',
@@ -1164,7 +1261,9 @@ export const BrandProfile: React.FC = () => {
                               textAlign: 'left',
                               fontFamily: 'Poppins',
                               fontSize: '14px',
-                              color: colors.text.primary,
+                              color: (campaign.status === 'completed' || campaign.status === 'closed') 
+                                ? 'rgba(46, 125, 50, 1)' 
+                                : colors.text.primary,
                               cursor: 'pointer',
                             }}
                             onMouseEnter={(e) => {
@@ -1174,7 +1273,9 @@ export const BrandProfile: React.FC = () => {
                               e.currentTarget.style.backgroundColor = 'transparent';
                             }}
                           >
-                            Mark as Complete
+                            {(campaign.status === 'completed' || campaign.status === 'closed') 
+                              ? 'Reopen Campaign' 
+                              : 'Mark as Complete'}
                           </button>
                           <button
                             onClick={() => handleDeleteCampaign(campaign.id)}
@@ -1207,12 +1308,26 @@ export const BrandProfile: React.FC = () => {
 
                 {/* Campaign Name */}
                 <h3
+                  onClick={() => navigate(`/${baseRoute}/campaigns/${campaign.id}`)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = colors.primary.main;
+                    e.currentTarget.style.textDecoration = 'underline';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = colors.text.primary;
+                    e.currentTarget.style.textDecoration = 'none';
+                  }}
                   style={{
                     fontFamily: 'Poppins',
                     fontSize: '18px',
                     fontWeight: 600,
                     color: colors.text.primary,
                     margin: '0 0 12px 0',
+                    cursor: 'pointer',
+                    transition: 'color 0.2s ease, text-decoration 0.2s ease',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
+                    wordBreak: 'break-word',
                   }}
                 >
                   {campaign.name}
@@ -1245,13 +1360,16 @@ export const BrandProfile: React.FC = () => {
                     color: colors.text.secondary,
                     lineHeight: '1.6',
                     margin: '0 0 16px 0',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
+                    wordBreak: 'break-word',
                   }}
                 >
                   {campaign.description}
                 </p>
 
                 {/* Campaign Details */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
                   {/* Location */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span
@@ -1265,12 +1383,15 @@ export const BrandProfile: React.FC = () => {
                       Location:
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <img src={LocationIcon} alt="Location" style={{ width: '16px', height: '16px' }} />
+                      <img src={LocationIcon} alt="Location" style={{ width: '16px', height: '16px', flexShrink: 0 }} />
                       <span
                         style={{
                           fontFamily: 'Poppins',
                           fontSize: '14px',
                           color: colors.text.secondary,
+                          wordWrap: 'break-word',
+                          overflowWrap: 'break-word',
+                          wordBreak: 'break-word',
                         }}
                       >
                         {campaign.location}
@@ -1335,23 +1456,26 @@ export const BrandProfile: React.FC = () => {
             )}
           </div>
 
-          {/* See More Button */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
-            <button
-              style={{
-                backgroundColor: 'transparent',
-                border: 'none',
-                fontFamily: 'Poppins',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: colors.primary.main,
-                cursor: 'pointer',
-                padding: '8px 16px',
-              }}
-            >
-              See more ˅
-            </button>
-          </div>
+           {/* See More Button */}
+           {campaigns.length > 4 && (
+             <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
+               <button
+                 onClick={() => setShowAllCampaigns(!showAllCampaigns)}
+                 style={{
+                   backgroundColor: 'transparent',
+                   border: 'none',
+                   fontFamily: 'Poppins',
+                   fontSize: '14px',
+                   fontWeight: 600,
+                   color: colors.primary.main,
+                   cursor: 'pointer',
+                   padding: '8px 16px',
+                 }}
+               >
+                 {showAllCampaigns ? 'See less ▲' : 'See more ▼'}
+               </button>
+             </div>
+           )}
         </div>
       </div>
 

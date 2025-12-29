@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { EditIcon } from '../../../assets/icons';
 import { colors } from '../../../constants/colors';
 
@@ -12,13 +12,15 @@ export const EditButton: React.FC<EditButtonProps> = ({
   disabled,
   ...props
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   const buttonStyle: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '8px',
-    width: '34px',
-    height: '40px',
+    width: '28px',
+    height: '32px',
     borderRadius: '100px',
     borderWidth: '1px',
     borderStyle: 'solid',
@@ -27,6 +29,8 @@ export const EditButton: React.FC<EditButtonProps> = ({
     opacity: disabled ? 0.5 : 1,
     cursor: disabled ? 'not-allowed' : 'pointer',
     padding: 0,
+    transform: isHovered ? 'scale(1.15)' : 'scale(1)',
+    transition: 'transform 0.2s ease',
     ...style,
   };
 
@@ -34,6 +38,8 @@ export const EditButton: React.FC<EditButtonProps> = ({
     <button
       style={buttonStyle}
       disabled={disabled}
+      onMouseEnter={() => !disabled && setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       {...props}
     >
       {showIcon && (
@@ -41,8 +47,8 @@ export const EditButton: React.FC<EditButtonProps> = ({
           src={EditIcon} 
           alt="Edit" 
           style={{ 
-            width: '16px', 
-            height: '16px',
+            width: '14px', 
+            height: '14px',
             display: 'block'
           }} 
         />
