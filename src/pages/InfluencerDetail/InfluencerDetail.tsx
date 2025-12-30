@@ -13,7 +13,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { influencerService, type ContentItem, type FollowersResponse, type Influencer } from '../../services/influencerService';
 import { apiService } from '../../services/api';
 import { useConversations } from '../../hooks/useConversations';
-import { Button } from '../../components/atoms/Button';
 import { 
   XIcon, 
   YouTubeIcon, 
