@@ -7,6 +7,8 @@ import { Button } from '../../atoms/Button';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { influencerService } from '../../../services/influencerService';
 import type { Influencer } from '../../../services/influencerService';
+import { messageService } from '../../../services/messageService';
+import { useSocket } from '../../../contexts/SocketContext';
 
 interface HeaderProps {
   userAvatar?: string;
@@ -26,6 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { socket } = useSocket();
   const baseRoute = location.pathname.split('/')[1]; // Get 'home', 'brand', or 'influencer'
   
   // Search state
@@ -35,6 +38,9 @@ export const Header: React.FC<HeaderProps> = ({
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  
+  // Unread message count
+  const [unreadCount, setUnreadCount] = useState(0);
   
   // Get the actual user ID from auth context or props
   const actualUserId = userId || user?.id || '';
@@ -106,6 +112,68 @@ export const Header: React.FC<HeaderProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Fetch unread message count on mount
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await messageService.getUnreadCount();
+        // Response structure: { success: true, data: { unreadCount: number } }
+        if (response && response.success && response.data) {
+          setUnreadCount(response.data.unreadCount || 0);
+        } else {
+          console.warn('Unexpected response format from getUnreadCount:', response);
+          setUnreadCount(0);
+        }
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error);
+        setUnreadCount(0); // Set to 0 on error
+      }
+    };
+
+    if (user) {
+      fetchUnreadCount();
+    }
+  }, [user]);
+
+  // Listen for new messages via socket to update unread count
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    const handleNewMessage = () => {
+      // Refresh unread count when new message arrives
+      messageService.getUnreadCount()
+        .then((response) => {
+          if (response.success && response.data) {
+            setUnreadCount(response.data.unreadCount || 0);
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to update unread count:', error);
+        });
+    };
+
+    const handleMessageRead = () => {
+      // Refresh unread count when message is read
+      messageService.getUnreadCount()
+        .then((response) => {
+          if (response.success && response.data) {
+            setUnreadCount(response.data.unreadCount || 0);
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to update unread count:', error);
+        });
+    };
+
+    socket.on('newMessage', handleNewMessage);
+    socket.on('messageRead', handleMessageRead);
+
+    return () => {
+      socket.off('newMessage', handleNewMessage);
+      socket.off('messageRead', handleMessageRead);
+    };
+  }, [socket, user]);
 
   // Get influencer detail path based on base route
   const getInfluencerPath = (influencerId: string) => {
@@ -451,7 +519,7 @@ export const Header: React.FC<HeaderProps> = ({
             </Link>
             <Link
               to={`/${baseRoute || 'brand'}/messages`}
-              className="px-2 md:px-4 py-2 hover:opacity-80 transition-colors text-xs md:text-sm whitespace-nowrap"
+              className="px-2 md:px-4 py-2 hover:opacity-80 transition-colors text-xs md:text-sm whitespace-nowrap relative"
               style={{
                 fontFamily: 'Poppins, sans-serif',
                 fontWeight: 400,
@@ -462,6 +530,28 @@ export const Header: React.FC<HeaderProps> = ({
               }}
             >
               Messages
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '4px',
+                    right: '4px',
+                    backgroundColor: '#EF4444',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: '18px',
+                    height: '18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    fontFamily: 'Poppins, sans-serif',
+                  }}
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Link>
 
             {/* Notification Bell */}

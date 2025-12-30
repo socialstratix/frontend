@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { colors, PLACEHOLDER_IMAGE } from '../../constants';
 import { Button } from '../../components/atoms/Button/Button';
 import LocationIcon from '../../assets/icons/ui/Location.svg';
-import FavoriteIcon from '../../assets/icons/ui/favorite.svg';
 import InstagramIcon from '../../assets/icons/social/Icon=Instagram.svg';
 import FacebookIcon from '../../assets/icons/social/Icon=Facebook.svg';
 import XIcon from '../../assets/icons/social/Icon=X.svg';
@@ -176,7 +175,7 @@ export const InfluencerLanding: React.FC = () => {
     }
   };
 
-  const filteredCampaigns = campaigns.filter((campaign) => {
+  const filteredCampaigns = campaigns.filter(() => {
     // All filtering is now handled by the API
     // For 'saved' tab, API returns only saved campaigns
     // For 'all' and 'suggested' tabs, API returns all campaigns

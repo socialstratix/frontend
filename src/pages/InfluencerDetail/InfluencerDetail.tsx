@@ -12,6 +12,8 @@ import { useInfluencer } from '../../hooks';
 import { useAuth } from '../../contexts/AuthContext';
 import { influencerService, type ContentItem, type FollowersResponse, type Influencer } from '../../services/influencerService';
 import { apiService } from '../../services/api';
+import { useConversations } from '../../hooks/useConversations';
+import { Button } from '../../components/atoms/Button';
 import { 
   XIcon, 
   YouTubeIcon, 
@@ -47,6 +49,9 @@ export const InfluencerDetail: React.FC = () => {
   
   // Fetch influencer data using the hook
   const { influencer, isLoading, error, fetchInfluencerById, fetchInfluencer } = useInfluencer();
+  
+  // Conversations hook for sending messages
+  const { createConversation } = useConversations();
   
   // Check if the current user is viewing their own profile
   // Only allow editing if user is an influencer viewing their own profile
@@ -474,6 +479,34 @@ export const InfluencerDetail: React.FC = () => {
   }, [user, id, fetchInfluencerById, fetchInfluencer]);
 
   // Handler for saving background image
+  // Handle sending a message to the influencer
+  const handleSendMessage = useCallback(async () => {
+    if (!influencer || !user || !isBrand) return;
+    
+    try {
+      // Get the influencer's userId (not _id)
+      const influencerUserId = typeof influencer.userId === 'object' 
+        ? (influencer.userId as any)?._id?.toString() 
+        : influencer.userId?.toString();
+      
+      if (!influencerUserId) {
+        console.error('Influencer userId not found');
+        return;
+      }
+      
+      // Create or get existing conversation
+      const conversation = await createConversation(influencerUserId);
+      
+      if (conversation) {
+        // Navigate to messages page with conversation ID
+        const baseRoute = location.pathname.split('/')[1] || 'brand';
+        navigate(`/${baseRoute}/messages/${conversation._id}`);
+      }
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+    }
+  }, [influencer, user, isBrand, createConversation, navigate, location.pathname]);
+
   const handleSaveBackgroundImage = useCallback(async (coverImageFile: File | null) => {
     if (!user?.id) {
       alert('You must be logged in to update your profile');
@@ -756,6 +789,26 @@ export const InfluencerDetail: React.FC = () => {
             onEditTags={isOwnProfile ? () => setShowEditTags(true) : undefined}
             onEditBackgroundImage={isOwnProfile ? () => setShowEditBackgroundImage(true) : undefined}
           />
+
+          {/* Send Message Button - Only show for brand users viewing influencer profiles */}
+          {isBrand && influencer && !isOwnProfile && (
+            <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+              <Button
+                variant="filled"
+                onClick={handleSendMessage}
+                style={{
+                  fontFamily: 'Poppins, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  padding: '12px 24px',
+                  backgroundColor: '#783C91',
+                  color: '#FFFFFF',
+                }}
+              >
+                Send Message
+              </Button>
+            </div>
+          )}
 
          
 

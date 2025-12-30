@@ -32,6 +32,7 @@ export const CampaignDetailInfluencer: React.FC = () => {
   const { user } = useAuth();
   const isBrand = user?.userType === 'brand';
   const [isSaved, setIsSaved] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
   const [brandAvatarError, setBrandAvatarError] = useState(false);
   const [similarCampaignAvatarErrors, setSimilarCampaignAvatarErrors] = useState<{ [key: string]: boolean }>({});
   const [openMenu, setOpenMenu] = useState(false);
@@ -99,6 +100,30 @@ export const CampaignDetailInfluencer: React.FC = () => {
       window.location.reload();
     } catch (err) {
       console.error('Failed to reopen campaign:', err);
+    }
+  };
+
+  // Handler for applying to campaign
+  const handleApplyToCampaign = async () => {
+    if (!id || isBrand || !user) return;
+    
+    try {
+      setIsApplying(true);
+      const result = await campaignService.applyToCampaign(id);
+      
+      console.log('Application successful, conversation ID:', result.conversationId);
+      
+      // Small delay to ensure the conversation is saved
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Navigate to messages page with the conversation
+      const baseRoute = location.pathname.split('/')[1] || 'influencer';
+      navigate(`/${baseRoute}/messages/${result.conversationId}`);
+    } catch (error: any) {
+      console.error('Failed to apply to campaign:', error);
+      alert(error.message || 'Failed to apply to campaign. Please try again.');
+    } finally {
+      setIsApplying(false);
     }
   };
 
@@ -220,6 +245,7 @@ export const CampaignDetailInfluencer: React.FC = () => {
       platforms: apiCampaign.platforms || [],
       tags: apiCampaign.tags || [],
       attachments: apiCampaign.attachments || [],
+      isClosed: apiCampaign.isClosed || apiCampaign.status === 'closed' || apiCampaign.status === 'completed',
     };
   }, [apiCampaign]);
 
@@ -1022,6 +1048,8 @@ export const CampaignDetailInfluencer: React.FC = () => {
 
               <Button
                 variant="filled"
+                onClick={handleApplyToCampaign}
+                disabled={isApplying || campaign.isClosed}
                 style={{
                   flex: 1,
                   height: '36px',
@@ -1031,7 +1059,7 @@ export const CampaignDetailInfluencer: React.FC = () => {
                   borderRadius: '100px',
                 }}
               >
-                APPLY
+                {isApplying ? 'APPLYING...' : 'APPLY'}
               </Button>
             </div>
           )}

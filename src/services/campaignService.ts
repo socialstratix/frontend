@@ -196,6 +196,26 @@ class CampaignService {
       throw new Error(response.message || 'Failed to delete campaign');
     }
   }
+
+  /**
+   * Apply to a campaign (Influencer only)
+   */
+  async applyToCampaign(campaignId: string): Promise<{ conversationId: string; messageId: string }> {
+    const response = await apiService.post<{ 
+      application: any; 
+      conversation: { _id: string }; 
+      message: { _id: string } 
+    }>(`/campaign/${campaignId}/apply`, {});
+    
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to apply to campaign');
+    }
+    
+    return {
+      conversationId: response.data.conversation._id,
+      messageId: response.data.message._id,
+    };
+  }
 }
 
 export const campaignService = new CampaignService();

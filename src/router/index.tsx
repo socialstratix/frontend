@@ -103,6 +103,10 @@ export const router = createBrowserRouter([
         path: 'messages',
         element: <Messages />,
       },
+      {
+        path: 'messages/:conversationId',
+        element: <Messages />,
+      },
     ],
   },
   // Influencer routes
@@ -147,6 +151,10 @@ export const router = createBrowserRouter([
       },
       {
         path: 'messages',
+        element: <Messages />,
+      },
+      {
+        path: 'messages/:conversationId',
         element: <Messages />,
       },
     ],
@@ -197,6 +205,10 @@ export const router = createBrowserRouter([
       },
       {
         path: 'messages',
+        element: <Messages />,
+      },
+      {
+        path: 'messages/:conversationId',
         element: <Messages />,
       },
     ],
