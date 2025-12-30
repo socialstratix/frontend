@@ -26,6 +26,9 @@ interface InfluencerDetailFrameProps {
   onEditDescription?: () => void;
   onEditTags?: () => void;
   onEditBackgroundImage?: () => void;
+  onShare?: () => void;
+  onShortlist?: () => void;
+  onConnect?: () => void;
 }
 
 export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
@@ -41,6 +44,9 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
   onEditDescription: _onEditDescription,
   onEditTags,
   onEditBackgroundImage,
+  onShare,
+  onShortlist,
+  onConnect,
 }) => {
   const [backgroundImageError, setBackgroundImageError] = useState(false);
   const [profileImageError, setProfileImageError] = useState(false);
@@ -408,47 +414,131 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
         </div>
 
         {/* Action Buttons - Right Side */}
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignSelf: 'flex-start' }}>
-            <button
-              style={{
-                width: '122px',
-                height: '41px',
-                opacity: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '0 16px',
-                backgroundColor: 'white',
-                border: 'none',
-                borderWidth: '1px',
-                borderRadius: '100px',
-                fontFamily: 'Poppins, sans-serif',
-                fontSize: '14px',
-                fontWeight: 600,
-                fontStyle: 'normal',
-                lineHeight: '100%',
-                letterSpacing: '0%',
-                textAlign: 'center',
-                verticalAlign: 'middle',
-                textTransform: 'uppercase',
-                color: '#783C91',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#783C91';
-                e.currentTarget.style.color = 'white';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'white';
-                e.currentTarget.style.color = '#783C91';
-              }}
-            >
-              <img src={IosShareIcon} alt="Share" style={{ width: '18px', height: '18px' }} />
-              <span>SHARE</span>
-            </button>
-        </div>
+        {(onShare || onShortlist || onConnect) && (
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignSelf: 'flex-start' }}>
+            {/* SHARE Button */}
+            {onShare && (
+              <button
+                onClick={onShare}
+                style={{
+                  width: '122px',
+                  height: '41px',
+                  opacity: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '0 16px',
+                  backgroundColor: 'white',
+                  border: 'none',
+                  borderRadius: '100px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  fontStyle: 'normal',
+                  lineHeight: '100%',
+                  letterSpacing: '0%',
+                  textAlign: 'center',
+                  verticalAlign: 'middle',
+                  textTransform: 'uppercase',
+                  color: '#783C91',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#783C91';
+                  e.currentTarget.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.color = '#783C91';
+                }}
+              >
+                <img src={IosShareIcon} alt="Share" style={{ width: '18px', height: '18px' }} />
+                <span>SHARE</span>
+              </button>
+            )}
+
+            {/* SHORTLIST Button */}
+            {onShortlist && (
+              <button
+                onClick={onShortlist}
+                style={{
+                  height: '41px',
+                  padding: '0 24px',
+                  backgroundColor: 'white',
+                  border: '1px solid #783C91',
+                  borderRadius: '100px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  fontStyle: 'normal',
+                  lineHeight: '100%',
+                  letterSpacing: '0%',
+                  textAlign: 'center',
+                  verticalAlign: 'middle',
+                  textTransform: 'uppercase',
+                  color: '#783C91',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#783C91';
+                  e.currentTarget.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.color = '#783C91';
+                }}
+              >
+                SHORTLIST
+              </button>
+            )}
+
+            {/* CONNECT Button */}
+            {onConnect && (
+              <button
+                onClick={onConnect}
+                style={{
+                  height: '41px',
+                  padding: '0 24px',
+                  backgroundColor: '#F5F0F8',
+                  border: 'none',
+                  borderRadius: '100px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  fontStyle: 'normal',
+                  lineHeight: '100%',
+                  letterSpacing: '0%',
+                  textAlign: 'center',
+                  verticalAlign: 'middle',
+                  textTransform: 'uppercase',
+                  color: '#783C91',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#E8D5F0';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#F5F0F8';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                }}
+              >
+                CONNECT
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
