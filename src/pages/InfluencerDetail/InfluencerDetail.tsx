@@ -788,27 +788,16 @@ export const InfluencerDetail: React.FC = () => {
             onEditDescription={isOwnProfile ? () => setShowEditDescription(true) : undefined}
             onEditTags={isOwnProfile ? () => setShowEditTags(true) : undefined}
             onEditBackgroundImage={isOwnProfile ? () => setShowEditBackgroundImage(true) : undefined}
+            onShare={isBrand && influencer && !isOwnProfile ? () => {
+              // TODO: Implement share functionality
+              console.log('Share clicked');
+            } : undefined}
+            onShortlist={isBrand && influencer && !isOwnProfile ? () => {
+              // TODO: Implement shortlist functionality
+              console.log('Shortlist clicked');
+            } : undefined}
+            onConnect={isBrand && influencer && !isOwnProfile ? handleSendMessage : undefined}
           />
-
-          {/* Send Message Button - Only show for brand users viewing influencer profiles */}
-          {isBrand && influencer && !isOwnProfile && (
-            <div style={{ marginTop: '16px', marginBottom: '16px' }}>
-              <Button
-                variant="filled"
-                onClick={handleSendMessage}
-                style={{
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  padding: '12px 24px',
-                  backgroundColor: '#783C91',
-                  color: '#FFFFFF',
-                }}
-              >
-                Send Message
-              </Button>
-            </div>
-          )}
 
          
 
