@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom'
 import './index.css'
 import { router } from './router'
 import { AuthProvider } from './contexts/AuthContext'
+import { SocketProvider } from './contexts/SocketContext'
 import { apiService } from './services/api'
 
 // Set up unauthorized handler for API service
@@ -18,7 +19,9 @@ apiService.setUnauthorizedHandler(handleUnauthorized);
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <RouterProvider router={router} />
+      <SocketProvider>
+        <RouterProvider router={router} />
+      </SocketProvider>
     </AuthProvider>
   </StrictMode>,
 )

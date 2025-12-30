@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { InfluencerDetailFrame } from '../../components';
+import { InfluencerCard } from '../../components/molecules/InfluencerCard/InfluencerCard';
 import { EditName } from '../../components/molecules/EditName/EditName';
 import { EditDescription } from '../../components/molecules/EditDescription/EditDescription';
 import { EditLocation } from '../../components/molecules/EditLocation/EditLocation';
 import { EditProfilePhoto } from '../../components/molecules/EditProfilePhoto/EditProfilePhoto';
+import { EditTags } from '../../components/molecules/EditTags/EditTags';
+import { EditButton } from '../../components/atoms/EditButton';
 import { useInfluencer } from '../../hooks';
 import { useAuth } from '../../contexts/AuthContext';
-import { influencerService, type ContentItem, type FollowersResponse } from '../../services/influencerService';
+import { influencerService, type ContentItem, type FollowersResponse, type Influencer } from '../../services/influencerService';
 import { apiService } from '../../services/api';
+import { useConversations } from '../../hooks/useConversations';
+import { Button } from '../../components/atoms/Button';
 import { 
   XIcon, 
   YouTubeIcon, 
@@ -44,6 +49,9 @@ export const InfluencerDetail: React.FC = () => {
   
   // Fetch influencer data using the hook
   const { influencer, isLoading, error, fetchInfluencerById, fetchInfluencer } = useInfluencer();
+  
+  // Conversations hook for sending messages
+  const { createConversation } = useConversations();
   
   // Check if the current user is viewing their own profile
   // Only allow editing if user is an influencer viewing their own profile
@@ -184,6 +192,7 @@ export const InfluencerDetail: React.FC = () => {
   const [showEditLocation, setShowEditLocation] = useState(false);
   const [showEditProfileImage, setShowEditProfileImage] = useState(false);
   const [showEditBackgroundImage, setShowEditBackgroundImage] = useState(false);
+  const [showEditTags, setShowEditTags] = useState(false);
   
   // Edit operation loading states
   const [isUpdatingName, setIsUpdatingName] = useState(false);
@@ -191,6 +200,11 @@ export const InfluencerDetail: React.FC = () => {
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
   const [isUpdatingProfileImage, setIsUpdatingProfileImage] = useState(false);
   const [isUpdatingBackgroundImage, setIsUpdatingBackgroundImage] = useState(false);
+  const [isUpdatingTags, setIsUpdatingTags] = useState(false);
+  
+  // Similar influencers state
+  const [similarInfluencers, setSimilarInfluencers] = useState<Influencer[]>([]);
+  const [isLoadingSimilar, setIsLoadingSimilar] = useState(false);
   
   // Handle animation phases
   useEffect(() => {
@@ -262,7 +276,52 @@ export const InfluencerDetail: React.FC = () => {
       hasVerifiedPayment: influencer.hasVerifiedPayment,
       platformFollowers: influencer.platformFollowers || {},
       platforms,
+      tags: influencer.tags || [],
     };
+  }, [influencer]);
+
+  // Map social media platforms to profile URLs
+  const socialProfilesMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    influencer?.socialProfiles?.forEach(profile => {
+      if (profile.profileUrl) {
+        map[profile.platform] = profile.profileUrl;
+      }
+    });
+    return map;
+  }, [influencer]);
+
+  // Fetch similar influencers based on tags
+  useEffect(() => {
+    const fetchSimilarInfluencers = async () => {
+      if (!influencer?._id || !influencer?.tags?.length) {
+        setSimilarInfluencers([]);
+        return;
+      }
+      
+      try {
+        setIsLoadingSimilar(true);
+        // Fetch influencers with matching tags
+        const response = await influencerService.getAllInfluencers({
+          tags: influencer.tags,
+          limit: 10,
+        });
+        
+        // Filter out current influencer
+        const filtered = response.influencers.filter(
+          inf => inf._id !== influencer._id
+        );
+        
+        setSimilarInfluencers(filtered.slice(0, 5));
+      } catch (error) {
+        console.error('Failed to fetch similar influencers:', error);
+        setSimilarInfluencers([]);
+      } finally {
+        setIsLoadingSimilar(false);
+      }
+    };
+    
+    fetchSimilarInfluencers();
   }, [influencer]);
 
   // Handler to refresh influencer data
@@ -320,6 +379,30 @@ export const InfluencerDetail: React.FC = () => {
       alert(err.message || 'Failed to update description');
     } finally {
       setIsUpdatingDescription(false);
+    }
+  }, [user, refreshInfluencerData]);
+
+  // Handler for saving tags
+  const handleSaveTags = useCallback(async (tags: string[]) => {
+    if (!user?.id) {
+      alert('You must be logged in to update your profile');
+      return;
+    }
+
+    try {
+      setIsUpdatingTags(true);
+      
+      await influencerService.updateInfluencer(user.id, {
+        tags,
+      });
+      
+      await refreshInfluencerData();
+      setShowEditTags(false);
+    } catch (err: any) {
+      console.error('Error updating tags:', err);
+      alert(err.message || 'Failed to update tags');
+    } finally {
+      setIsUpdatingTags(false);
     }
   }, [user, refreshInfluencerData]);
 
@@ -396,6 +479,34 @@ export const InfluencerDetail: React.FC = () => {
   }, [user, id, fetchInfluencerById, fetchInfluencer]);
 
   // Handler for saving background image
+  // Handle sending a message to the influencer
+  const handleSendMessage = useCallback(async () => {
+    if (!influencer || !user || !isBrand) return;
+    
+    try {
+      // Get the influencer's userId (not _id)
+      const influencerUserId = typeof influencer.userId === 'object' 
+        ? (influencer.userId as any)?._id?.toString() 
+        : influencer.userId?.toString();
+      
+      if (!influencerUserId) {
+        console.error('Influencer userId not found');
+        return;
+      }
+      
+      // Create or get existing conversation
+      const conversation = await createConversation(influencerUserId);
+      
+      if (conversation) {
+        // Navigate to messages page with conversation ID
+        const baseRoute = location.pathname.split('/')[1] || 'brand';
+        navigate(`/${baseRoute}/messages/${conversation._id}`);
+      }
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+    }
+  }, [influencer, user, isBrand, createConversation, navigate, location.pathname]);
+
   const handleSaveBackgroundImage = useCallback(async (coverImageFile: File | null) => {
     if (!user?.id) {
       alert('You must be logged in to update your profile');
@@ -669,13 +780,35 @@ export const InfluencerDetail: React.FC = () => {
             name={influencerData.name}
             location={influencerData.location}
             description={influencerData.description}
+            tags={influencerData.tags}
             platformFollowers={influencerData.platformFollowers}
             onEditProfileImage={isOwnProfile ? () => setShowEditProfileImage(true) : undefined}
             onEditName={isOwnProfile ? () => setShowEditName(true) : undefined}
             onEditLocation={isOwnProfile ? () => setShowEditLocation(true) : undefined}
             onEditDescription={isOwnProfile ? () => setShowEditDescription(true) : undefined}
+            onEditTags={isOwnProfile ? () => setShowEditTags(true) : undefined}
             onEditBackgroundImage={isOwnProfile ? () => setShowEditBackgroundImage(true) : undefined}
           />
+
+          {/* Send Message Button - Only show for brand users viewing influencer profiles */}
+          {isBrand && influencer && !isOwnProfile && (
+            <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+              <Button
+                variant="filled"
+                onClick={handleSendMessage}
+                style={{
+                  fontFamily: 'Poppins, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  padding: '12px 24px',
+                  backgroundColor: '#783C91',
+                  color: '#FFFFFF',
+                }}
+              >
+                Send Message
+              </Button>
+            </div>
+          )}
 
          
 
@@ -731,7 +864,15 @@ export const InfluencerDetail: React.FC = () => {
               ) : followers ? (
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                   {followers.platformFollowers.x !== undefined && (
-                  <div
+                  <a
+                    href={socialProfilesMap['x'] || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (!socialProfilesMap['x']) {
+                        e.preventDefault();
+                      }
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -741,7 +882,20 @@ export const InfluencerDetail: React.FC = () => {
                       borderRadius: '8px',
                       border: `1px solid ${getPlatformColor('x')}`,
                       fontSize: '14px',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      cursor: socialProfilesMap['x'] ? 'pointer' : 'default',
+                      textDecoration: 'none',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (socialProfilesMap['x']) {
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
                     }}
                   >
                     <div style={{ color: getPlatformColor('x'), display: 'flex', alignItems: 'center' }}>
@@ -750,10 +904,18 @@ export const InfluencerDetail: React.FC = () => {
                     <span style={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 600 }}>
                       {formatFollowers(followers.platformFollowers.x)} Followers
                     </span>
-                  </div>
+                  </a>
                   )}
                   {followers.platformFollowers.youtube !== undefined && (
-                  <div
+                  <a
+                    href={socialProfilesMap['youtube'] || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (!socialProfilesMap['youtube']) {
+                        e.preventDefault();
+                      }
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -763,7 +925,20 @@ export const InfluencerDetail: React.FC = () => {
                       borderRadius: '8px',
                       border: `1px solid ${getPlatformColor('youtube')}`,
                       fontSize: '14px',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      cursor: socialProfilesMap['youtube'] ? 'pointer' : 'default',
+                      textDecoration: 'none',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (socialProfilesMap['youtube']) {
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
                     }}
                   >
                     <div style={{ color: getPlatformColor('youtube'), display: 'flex', alignItems: 'center' }}>
@@ -772,10 +947,18 @@ export const InfluencerDetail: React.FC = () => {
                     <span style={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 600 }}>
                       {formatFollowers(followers.platformFollowers.youtube)} Followers
                     </span>
-                  </div>
+                  </a>
                   )}
                   {followers.platformFollowers.facebook !== undefined && (
-                  <div
+                  <a
+                    href={socialProfilesMap['facebook'] || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (!socialProfilesMap['facebook']) {
+                        e.preventDefault();
+                      }
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -785,7 +968,20 @@ export const InfluencerDetail: React.FC = () => {
                       borderRadius: '8px',
                       border: `1px solid ${getPlatformColor('facebook')}`,
                       fontSize: '14px',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      cursor: socialProfilesMap['facebook'] ? 'pointer' : 'default',
+                      textDecoration: 'none',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (socialProfilesMap['facebook']) {
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
                     }}
                   >
                     <div style={{ color: getPlatformColor('facebook'), display: 'flex', alignItems: 'center' }}>
@@ -794,10 +990,18 @@ export const InfluencerDetail: React.FC = () => {
                     <span style={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 600 }}>
                       {formatFollowers(followers.platformFollowers.facebook)} Followers
                     </span>
-                  </div>
+                  </a>
                   )}
                   {followers.platformFollowers.instagram !== undefined && (
-                  <div
+                  <a
+                    href={socialProfilesMap['instagram'] || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (!socialProfilesMap['instagram']) {
+                        e.preventDefault();
+                      }
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -807,7 +1011,20 @@ export const InfluencerDetail: React.FC = () => {
                       borderRadius: '8px',
                       border: `1px solid ${getPlatformColor('instagram')}`,
                       fontSize: '14px',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      cursor: socialProfilesMap['instagram'] ? 'pointer' : 'default',
+                      textDecoration: 'none',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (socialProfilesMap['instagram']) {
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
                     }}
                   >
                     <div style={{ color: getPlatformColor('instagram'), display: 'flex', alignItems: 'center' }}>
@@ -816,10 +1033,18 @@ export const InfluencerDetail: React.FC = () => {
                     <span style={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 600 }}>
                       {formatFollowers(followers.platformFollowers.instagram)} Followers
                     </span>
-                  </div>
+                  </a>
                   )}
                   {followers.platformFollowers.tiktok !== undefined && (
-                  <div
+                  <a
+                    href={socialProfilesMap['tiktok'] || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (!socialProfilesMap['tiktok']) {
+                        e.preventDefault();
+                      }
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -829,7 +1054,20 @@ export const InfluencerDetail: React.FC = () => {
                       borderRadius: '8px',
                       border: `1px solid ${getPlatformColor('tiktok')}`,
                       fontSize: '14px',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      cursor: socialProfilesMap['tiktok'] ? 'pointer' : 'default',
+                      textDecoration: 'none',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (socialProfilesMap['tiktok']) {
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
                     }}
                   >
                     <div style={{ color: getPlatformColor('tiktok'), display: 'flex', alignItems: 'center' }}>
@@ -838,7 +1076,7 @@ export const InfluencerDetail: React.FC = () => {
                     <span style={{ fontFamily: 'Poppins, sans-serif', color: '#333', fontWeight: 600 }}>
                       {formatFollowers(followers.platformFollowers.tiktok)} Followers
                     </span>
-                  </div>
+                  </a>
                   )}
                 </div>
               ) : (
@@ -960,20 +1198,39 @@ export const InfluencerDetail: React.FC = () => {
               Description
             </h2>
             
-            {/* Description Body Text */}
-            <p
+            {/* Description Body Text with Edit Button */}
+            <div
               style={{
-                fontFamily: 'Poppins, sans-serif',
-                fontSize: '14px',
-                fontWeight: 400,
-                color: '#666',
-                lineHeight: '1.5',
-                textAlign: 'left',
-                marginBottom: '32px'
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+                marginBottom: '32px',
               }}
             >
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-            </p>
+              <p
+                style={{
+                  fontFamily: 'Poppins',
+                  fontSize: '14px',
+                  fontWeight: 400,
+                  fontStyle: 'normal',
+                  color: '#1E002B',
+                  lineHeight: '100%',
+                  letterSpacing: '0%',
+                  verticalAlign: 'middle',
+                  textAlign: 'left',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  wordBreak: 'break-word',
+                  flex: 1,
+                  margin: 0,
+                }}
+              >
+                {influencerData?.description || 'No description available'}
+              </p>
+              {isOwnProfile && <EditButton onClick={() => setShowEditDescription(true)} />}
+            </div>
+
+          
 
             {/* Social Media Dropdown */}
             <div style={{ marginTop: '32px', marginBottom: '24px' }}>
@@ -1991,7 +2248,9 @@ export const InfluencerDetail: React.FC = () => {
             </p>
 
             {/* Sample Reviews */}
-            {[1, 2, 3].map((review) => (
+            {[1, 2, 3].map((review, index) => {
+              const reviewNames = ['Sarah Johnson', 'Michael Chen', 'Emily Rodriguez'];
+              return (
               <div
                 key={review}
                 style={{
@@ -2029,7 +2288,7 @@ export const InfluencerDetail: React.FC = () => {
                         marginBottom: '4px'
                       }}
                     >
-                      by Niko Tulg
+                      by {reviewNames[index]}
                     </div>
                     <p
                       style={{
@@ -2045,7 +2304,8 @@ export const InfluencerDetail: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
 
             <button
               style={{
@@ -2090,6 +2350,10 @@ export const InfluencerDetail: React.FC = () => {
                 Similar influencers
               </h3>
               <button
+                onClick={() => {
+                  const baseRoute = location.pathname.split('/')[1];
+                  navigate(`/${baseRoute}/discover`);
+                }}
                 style={{
                   fontFamily: 'Poppins, sans-serif',
                   fontSize: '14px',
@@ -2105,107 +2369,41 @@ export const InfluencerDetail: React.FC = () => {
             </div>
 
             {/* Influencer Cards Grid */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(5, 1fr)',
-                gap: '16px'
-              }}
-            >
-              {[1, 2, 3, 4, 5].map((influencer) => (
-                <div
-                  key={influencer}
-                  style={{
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  {/* Image */}
-                  <div style={{ position: 'relative', paddingBottom: '100%' }}>
-                    <img
-                      src={`https://picsum.photos/300/300?random=${influencer + 50}`}
-                      alt="Influencer"
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                    />
-                  </div>
-                  {/* Info */}
-                  <div style={{ padding: '12px' }}>
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
-                      <span
-                        style={{
-                          padding: '4px 8px',
-                          backgroundColor: '#F0F0F0',
-                          borderRadius: '12px',
-                          fontSize: '10px',
-                          fontWeight: 500
-                        }}
-                      >
-                        5.0
-                      </span>
-                      <span
-                        style={{
-                          padding: '4px 8px',
-                          backgroundColor: '#F0F0F0',
-                          borderRadius: '12px',
-                          fontSize: '10px',
-                          fontWeight: 500
-                        }}
-                      >
-                        210
-                      </span>
-                      <span
-                        style={{
-                          padding: '4px 8px',
-                          backgroundColor: '#F0F0F0',
-                          borderRadius: '12px',
-                          fontSize: '10px',
-                          fontWeight: 500
-                        }}
-                      >
-                        K15
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: 'Poppins, sans-serif',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#1E002B',
-                        marginBottom: '4px'
-                      }}
-                    >
-                      Influencer {influencer}
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: 'Poppins, sans-serif',
-                        fontSize: '12px',
-                        color: '#666'
-                      }}
-                    >
-                      Cooking, Unfiltered
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {isLoadingSimilar ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+                <span style={{ fontFamily: 'Poppins, sans-serif', color: '#666' }}>Loading similar influencers...</span>
+              </div>
+            ) : similarInfluencers.length > 0 ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: '16px'
+                }}
+              >
+                {similarInfluencers.map((inf) => (
+                  <InfluencerCard
+                    key={inf._id}
+                    name={inf.user?.name || 'Influencer'}
+                    image={inf.coverImage}
+                    profileImage={inf.profileImage || inf.user?.avatar}
+                    rating={inf.rating}
+                    description={inf.bio || inf.description}
+                    isTopCreator={inf.isTopCreator}
+                    influencerId={inf._id}
+                    platformFollowers={inf.platformFollowers}
+                    onClick={() => {
+                      const baseRoute = location.pathname.split('/')[1];
+                      navigate(`/${baseRoute}/influencer/${inf._id}`);
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+                <span style={{ fontFamily: 'Poppins, sans-serif', color: '#666' }}>No similar influencers found</span>
+              </div>
+            )}
           </div>
           )}
         </div>
@@ -2238,6 +2436,19 @@ export const InfluencerDetail: React.FC = () => {
             onSave={handleSaveDescription}
             title="Edit Description"
             instruction="Share a brief overview of what you do and experiences that set you apart."
+          />
+
+          <EditTags
+            isOpen={showEditTags}
+            onClose={() => {
+              if (!isUpdatingTags) {
+                setShowEditTags(false);
+              }
+            }}
+            initialTags={influencerData?.tags || []}
+            onSave={handleSaveTags}
+            title="Edit Tags"
+            instruction="Add tags that clearly highlight your skills and expertise, making it easy for brands to understand you."
           />
 
           <EditLocation

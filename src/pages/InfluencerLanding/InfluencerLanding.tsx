@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { colors, PLACEHOLDER_IMAGE } from '../../constants';
 import { Button } from '../../components/atoms/Button/Button';
 import LocationIcon from '../../assets/icons/ui/Location.svg';
-import FavoriteIcon from '../../assets/icons/ui/favorite.svg';
 import InstagramIcon from '../../assets/icons/social/Icon=Instagram.svg';
 import FacebookIcon from '../../assets/icons/social/Icon=Facebook.svg';
 import XIcon from '../../assets/icons/social/Icon=X.svg';
 import YoutubeIcon from '../../assets/icons/social/Icon=Youtube.svg';
 import TiktokIcon from '../../assets/icons/social/Icon=Tiktok.svg';
 import { campaignService, type Campaign as CampaignServiceType } from '../../services/campaignService';
+import { savedCampaignService } from '../../services/savedCampaignService';
 
 interface Campaign {
   id: string;
@@ -35,6 +35,22 @@ export const InfluencerLanding: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [brandAvatarErrors, setBrandAvatarErrors] = useState<{ [key: string]: boolean }>({});
+  const [showAllCampaigns, setShowAllCampaigns] = useState(false);
+  const [sortBy, setSortBy] = useState<'date' | 'budget' | 'name'>('date');
+
+  // Fetch saved campaign IDs on mount
+  useEffect(() => {
+    const fetchSavedCampaignIds = async () => {
+      try {
+        const ids = await savedCampaignService.getSavedCampaignIds();
+        setSavedCampaigns(new Set(ids));
+      } catch (err: any) {
+        console.error('Failed to fetch saved campaign IDs:', err);
+      }
+    };
+
+    fetchSavedCampaignIds();
+  }, []);
 
   // Fetch campaigns from API
   useEffect(() => {
@@ -42,14 +58,21 @@ export const InfluencerLanding: React.FC = () => {
       try {
         setIsLoading(true);
         setError(null);
-        // Fetch both active and completed campaigns
-        const [activeResponse, completedResponse] = await Promise.all([
-          campaignService.getAllCampaigns('active'),
-          campaignService.getAllCampaigns('completed').catch(() => ({ campaigns: [], count: 0 })),
-        ]);
-        // Combine active and completed campaigns
-        const allCampaigns = [...(activeResponse.campaigns || []), ...(completedResponse.campaigns || [])];
-        setApiCampaigns(allCampaigns);
+        
+        // If on saved tab, fetch saved campaigns
+        if (activeTab === 'saved') {
+          const savedResponse = await savedCampaignService.getSavedCampaigns(sortBy);
+          setApiCampaigns(savedResponse.campaigns || []);
+        } else {
+          // Fetch both active and completed campaigns with sorting
+          const [activeResponse, completedResponse] = await Promise.all([
+            campaignService.getAllCampaigns('active', sortBy),
+            campaignService.getAllCampaigns('completed', sortBy).catch(() => ({ campaigns: [], count: 0 })),
+          ]);
+          // Combine active and completed campaigns
+          const allCampaigns = [...(activeResponse.campaigns || []), ...(completedResponse.campaigns || [])];
+          setApiCampaigns(allCampaigns);
+        }
       } catch (err: any) {
         setError(err.message || 'Failed to load campaigns');
         setApiCampaigns([]);
@@ -59,7 +82,7 @@ export const InfluencerLanding: React.FC = () => {
     };
 
     fetchCampaigns();
-  }, []);
+  }, [sortBy, activeTab]);
 
   // Format time ago helper function
   const formatTimeAgo = useCallback((date: string | Date): string => {
@@ -116,23 +139,46 @@ export const InfluencerLanding: React.FC = () => {
     return icons[platform];
   };
 
-  const toggleSave = (campaignId: string) => {
-    setSavedCampaigns((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(campaignId)) {
-        newSet.delete(campaignId);
+  const toggleSave = async (campaignId: string) => {
+    try {
+      const isSaved = savedCampaigns.has(campaignId);
+      
+      // Optimistic UI update
+      setSavedCampaigns((prev) => {
+        const newSet = new Set(prev);
+        if (isSaved) {
+          newSet.delete(campaignId);
+        } else {
+          newSet.add(campaignId);
+        }
+        return newSet;
+      });
+
+      // Make API call
+      if (isSaved) {
+        await savedCampaignService.unsaveCampaign(campaignId);
       } else {
-        newSet.add(campaignId);
+        await savedCampaignService.saveCampaign(campaignId);
       }
-      return newSet;
-    });
+    } catch (error: any) {
+      console.error('Failed to toggle save:', error);
+      // Revert optimistic update on error
+      setSavedCampaigns((prev) => {
+        const newSet = new Set(prev);
+        if (savedCampaigns.has(campaignId)) {
+          newSet.add(campaignId);
+        } else {
+          newSet.delete(campaignId);
+        }
+        return newSet;
+      });
+    }
   };
 
-  const filteredCampaigns = campaigns.filter((campaign) => {
-    if (activeTab === 'saved') {
-      return savedCampaigns.has(campaign.id);
-    }
-    // For now, show all campaigns in 'all' and 'suggested' tabs
+  const filteredCampaigns = campaigns.filter(() => {
+    // All filtering is now handled by the API
+    // For 'saved' tab, API returns only saved campaigns
+    // For 'all' and 'suggested' tabs, API returns all campaigns
     return true;
   });
 
@@ -251,7 +297,10 @@ export const InfluencerLanding: React.FC = () => {
               }}
             >
               <button
-                onClick={() => setActiveTab('all')}
+                onClick={() => {
+                  setActiveTab('all');
+                  setShowAllCampaigns(false);
+                }}
                 style={{
                   backgroundColor: 'transparent',
                   border: 'none',
@@ -268,7 +317,10 @@ export const InfluencerLanding: React.FC = () => {
                 All listing
               </button>
               <button
-                onClick={() => setActiveTab('suggested')}
+                onClick={() => {
+                  setActiveTab('suggested');
+                  setShowAllCampaigns(false);
+                }}
                 style={{
                   backgroundColor: 'transparent',
                   border: 'none',
@@ -285,7 +337,10 @@ export const InfluencerLanding: React.FC = () => {
                 Suggested
               </button>
               <button
-                onClick={() => setActiveTab('saved')}
+                onClick={() => {
+                  setActiveTab('saved');
+                  setShowAllCampaigns(false);
+                }}
                 style={{
                   backgroundColor: 'transparent',
                   border: 'none',
@@ -303,15 +358,15 @@ export const InfluencerLanding: React.FC = () => {
               </button>
             </div>
 
-            {/* Filters */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '16px',
-                alignItems: 'center',
-              }}
-            >
+            {/* Filters and Sort */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              {/* Clear Filter Button */}
               <button
+                onClick={() => {
+                  setActiveTab('all');
+                  setSortBy('date');
+                  setShowAllCampaigns(false);
+                }}
                 style={{
                   backgroundColor: 'transparent',
                   border: 'none',
@@ -327,37 +382,37 @@ export const InfluencerLanding: React.FC = () => {
                 Clear filter
                 <span style={{ fontSize: '16px' }}>⊗</span>
               </button>
-              <button
-                style={{
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  fontFamily: 'Poppins',
-                  fontSize: '14px',
-                  color: colors.text.secondary,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                Filter: Reset
-                <span style={{ fontSize: '16px' }}>▼</span>
-              </button>
-              <select
-                style={{
-                  fontFamily: 'Poppins',
-                  fontSize: '14px',
-                  color: colors.text.primary,
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer',
-                  outline: 'none',
-                }}
-              >
-                <option>Sort by: Date Posted</option>
-                <option>Sort by: Budget</option>
-                <option>Sort by: Name</option>
-              </select>
+
+              {/* Sort By */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span
+                  style={{
+                    fontFamily: 'Poppins',
+                    fontSize: '14px',
+                    color: colors.text.secondary,
+                  }}
+                >
+                  Sort by:
+                </span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'date' | 'budget' | 'name')}
+                  style={{
+                    fontFamily: 'Poppins',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: colors.text.primary,
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    cursor: 'pointer',
+                    outline: 'none',
+                  }}
+                >
+                  <option value="date">Date Posted</option>
+                  <option value="budget">Budget</option>
+                  <option value="name">Name</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -377,7 +432,7 @@ export const InfluencerLanding: React.FC = () => {
               No campaigns available at the moment.
             </div>
           ) : (
-            filteredCampaigns.map((campaign) => (
+            (showAllCampaigns ? filteredCampaigns : filteredCampaigns.slice(0, 4)).map((campaign) => (
             <div
               key={campaign.id}
               style={{
@@ -614,15 +669,18 @@ export const InfluencerLanding: React.FC = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    <img
-                      src={FavoriteIcon}
-                      alt="Save"
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        filter: savedCampaigns.has(campaign.id) ? 'none' : 'grayscale(100%)',
-                      }}
-                    />
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill={savedCampaigns.has(campaign.id) ? '#FF0000' : 'none'}
+                      stroke={savedCampaigns.has(campaign.id) ? '#FF0000' : '#666666'}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
                   </button>
 
                   {/* Apply Button */}
@@ -703,22 +761,25 @@ export const InfluencerLanding: React.FC = () => {
         </div>
 
         {/* See More Button */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
-          <button
-            style={{
-              backgroundColor: 'transparent',
-              border: 'none',
-              fontFamily: 'Poppins',
-              fontSize: '14px',
-              fontWeight: 600,
-              color: colors.primary.main,
-              cursor: 'pointer',
-              padding: '8px 16px',
-            }}
-          >
-            See more ˅
-          </button>
-        </div>
+        {filteredCampaigns.length > 4 && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
+            <button
+              onClick={() => setShowAllCampaigns(!showAllCampaigns)}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                fontFamily: 'Poppins',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: colors.primary.main,
+                cursor: 'pointer',
+                padding: '8px 16px',
+              }}
+            >
+              {showAllCampaigns ? 'See less ▲' : 'See more ▼'}
+            </button>
+          </div>
+        )}
       </div>
     
       

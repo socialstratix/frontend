@@ -12,6 +12,7 @@ interface InfluencerDetailFrameProps {
   name: string;
   location?: string;
   description?: string;
+  tags?: string[];
   platformFollowers?: {
     x?: number;
     youtube?: number;
@@ -23,6 +24,7 @@ interface InfluencerDetailFrameProps {
   onEditName?: () => void;
   onEditLocation?: () => void;
   onEditDescription?: () => void;
+  onEditTags?: () => void;
   onEditBackgroundImage?: () => void;
 }
 
@@ -31,11 +33,13 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
   profileImage,
   name,
   location,
-  description,
+  description: _description,
+  tags,
   onEditProfileImage,
   onEditName,
   onEditLocation,
-  onEditDescription,
+  onEditDescription: _onEditDescription,
+  onEditTags,
   onEditBackgroundImage,
 }) => {
   const [backgroundImageError, setBackgroundImageError] = useState(false);
@@ -372,35 +376,35 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
             )}
           </div>
 
-          {/* Description */}
-          {description && (
+          {/* Tags - Comma Separated */}
+          {tags && tags.length > 0 && (
             <div
               style={{
                 display: 'flex',
-                alignItems: 'flex-start',
-                gap: '8px'
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '8px'
               }}
             >
-              <div
+              <span
                 style={{
-                  fontFamily: 'Poppins, sans-serif',
+                  fontFamily: 'Poppins',
                   fontWeight: 400,
                   fontStyle: 'normal',
                   fontSize: '18px',
                   lineHeight: '100%',
                   letterSpacing: '0%',
-                  textAlign: 'left',
+                  textAlign: 'center',
                   verticalAlign: 'middle',
-                  color: '#666',
-                  flex: '0 1 auto',
-                  maxWidth: '100%'
+                  color: '#676767',
                 }}
               >
-                {description}
-              </div>
-              {onEditDescription && <EditButton onClick={onEditDescription} />}
+                {Array.from(new Set(tags)).join(', ')}
+              </span>
+              {onEditTags && <EditButton onClick={onEditTags} />}
             </div>
           )}
+
         </div>
 
         {/* Action Buttons - Right Side */}
