@@ -555,44 +555,8 @@ export const CampaignDetailInfluencer: React.FC = () => {
             </div>
           </div>
 
-          {/* Brief Description */}
-          <div style={{ marginBottom: '24px' }}>
-            <p
-              style={{
-                fontFamily: 'Poppins',
-                fontSize: '14px',
-                color: colors.text.secondary,
-                lineHeight: '1.6',
-                margin: 0,
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word',
-                wordBreak: 'break-word',
-              }}
-            >
-              {campaign.briefDescription}
-            </p>
-          </div>
-
           {/* Description */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              <h3
-                style={{
-                  fontFamily: 'Poppins',
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  color: colors.text.primary,
-                  margin: 0,
-                }}
-              >
-                Description
-              </h3>
-              {isBrand && (
-                <EditButton 
-                  onClick={() => setShowEditDescription(true)}
-                />
-              )}
-            </div>
+          <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
             <p
               style={{
                 fontFamily: 'Poppins',
@@ -604,10 +568,16 @@ export const CampaignDetailInfluencer: React.FC = () => {
                 wordWrap: 'break-word',
                 overflowWrap: 'break-word',
                 wordBreak: 'break-word',
+                flex: 1,
               }}
             >
               {campaign.description}
             </p>
+            {isBrand && (
+              <EditButton 
+                onClick={() => setShowEditDescription(true)}
+              />
+            )}
           </div>
 
           {/* Post On */}

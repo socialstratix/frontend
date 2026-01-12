@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { colors, PLACEHOLDER_IMAGE } from '../../constants';
+import { colors, PLACEHOLDER_IMAGE, INFLUENCER_TAGS } from '../../constants';
 import { Button } from '../../components/atoms/Button/Button';
 import { EditButton } from '../../components/atoms/EditButton/EditButton';
 import { EditDescription } from '../../components/molecules/EditDescription/EditDescription';
@@ -1510,7 +1510,7 @@ export const BrandProfile: React.FC = () => {
           }
         }}
         initialTags={brandInfo?.tags || brand?.tags || []}
-        suggestedTags={['Cooking', 'Unfiltered', 'Roastmaster', 'Gourmet', 'Placeholder']}
+        suggestedTags={[...INFLUENCER_TAGS]}
         maxTags={6}
         onSave={handleSaveTags}
       />

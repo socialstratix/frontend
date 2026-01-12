@@ -2,7 +2,8 @@ import React, { useState, type KeyboardEvent } from 'react';
 import { colors } from '../../../constants/colors';
 import { Input } from '../../atoms/Input/Input';
 import { Button } from '../../atoms/Button/Button';
-import { CloseIcon } from '../../../assets/icons';
+import { CloseIcon, CheckIcon } from '../../../assets/icons';
+import { INFLUENCER_TAGS } from '../../../constants/tags';
 
 interface EditTagsProps {
   isOpen: boolean;
@@ -37,16 +38,28 @@ export const EditTags: React.FC<EditTagsProps> = ({
 
   if (!isOpen) return null;
 
-  const handleAddTag = (tag: string) => {
-    const trimmedTag = tag.trim();
-    if (trimmedTag && !tags.includes(trimmedTag) && tags.length < maxTags) {
-      setTags([...tags, trimmedTag]);
-      setInputValue('');
+  const handleAddTag = (tag?: string) => {
+    const tagToAdd = tag || inputValue;
+    // Parse comma-separated tags from input
+    const inputTags = tagToAdd.split(',').map(t => t.trim()).filter(t => t && !tags.includes(t));
+    if (inputTags.length > 0) {
+      const newTags = [...tags, ...inputTags].slice(0, maxTags);
+      setTags(newTags);
+      setInputValue(newTags.join(', '));
+    } else {
+      const trimmedTag = tagToAdd.trim();
+      if (trimmedTag && !tags.includes(trimmedTag) && tags.length < maxTags) {
+        const newTags = [...tags, trimmedTag];
+        setTags(newTags);
+        setInputValue(newTags.join(', '));
+      }
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
+    const newTags = tags.filter((tag) => tag !== tagToRemove);
+    setTags(newTags);
+    setInputValue(newTags.join(', '));
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -57,8 +70,16 @@ export const EditTags: React.FC<EditTagsProps> = ({
   };
 
   const handleSuggestedTagClick = (tag: string) => {
-    if (!tags.includes(tag) && tags.length < maxTags) {
-      setTags([...tags, tag]);
+    if (tags.includes(tag)) {
+      // Remove tag if already selected
+      const newTags = tags.filter((t) => t !== tag);
+      setTags(newTags);
+      setInputValue(newTags.join(', '));
+    } else if (tags.length < maxTags) {
+      // Add tag if not selected and under max limit
+      const newTags = [...tags, tag];
+      setTags(newTags);
+      setInputValue(newTags.join(', '));
     }
   };
 
@@ -73,7 +94,8 @@ export const EditTags: React.FC<EditTagsProps> = ({
     }
   };
 
-  const availableSuggestedTags = suggestedTags.filter((tag) => !tags.includes(tag));
+  // Use INFLUENCER_TAGS if suggestedTags is empty, otherwise use suggestedTags
+  const allTags = suggestedTags.length > 0 ? suggestedTags : [...INFLUENCER_TAGS];
 
   return (
     <div
@@ -155,10 +177,13 @@ export const EditTags: React.FC<EditTagsProps> = ({
         <div style={{ marginBottom: '16px' }}>
           <Input
             type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            value={tags.length > 0 ? tags.join(', ') : inputValue}
+            onChange={(e) => {
+              // Allow manual editing, but sync with tags when user types
+              setInputValue(e.target.value);
+            }}
             onKeyDown={handleKeyDown}
-            placeholder="Type and press Enter to add a tag"
+            placeholder="Selected tags will appear here"
             disabled={tags.length >= maxTags}
             style={{
               width: '100%',
@@ -230,8 +255,8 @@ export const EditTags: React.FC<EditTagsProps> = ({
           </p>
         )}
 
-        {/* Suggested Tags */}
-        {availableSuggestedTags.length > 0 && (
+        {/* All Tags - Scrollable */}
+        {allTags.length > 0 && (
           <div style={{ marginBottom: '24px' }}>
             <h3
               style={{
@@ -242,35 +267,87 @@ export const EditTags: React.FC<EditTagsProps> = ({
                 marginBottom: '12px',
               }}
             >
-              Suggested Tags
+              All Tags
             </h3>
             <div
               style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '8px',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                padding: '4px',
+                scrollbarWidth: 'thin',
+                scrollbarColor: `${colors.primary.main || '#783C91'} ${colors.secondary.light || '#F5F0F8'}`,
               }}
             >
-              {availableSuggestedTags.map((tag, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSuggestedTagClick(tag)}
-                  disabled={tags.length >= maxTags}
-                  style={{
-                    padding: '6px 12px',
-                    backgroundColor: colors.secondary.light,
-                    borderRadius: '16px',
-                    border: 'none',
-                    fontFamily: 'Poppins',
-                    fontSize: '14px',
-                    color: colors.text.primary,
-                    cursor: tags.length >= maxTags ? 'not-allowed' : 'pointer',
-                    opacity: tags.length >= maxTags ? 0.5 : 1,
-                  }}
-                >
-                  {tag}
-                </button>
-              ))}
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                }}
+              >
+                {allTags.map((tag, index) => {
+                  const isSelected = tags.includes(tag);
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleSuggestedTagClick(tag)}
+                      disabled={!isSelected && tags.length >= maxTags}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: isSelected 
+                          ? (colors.primary.main || '#783C91')
+                          : (colors.grey.light || '#E0E0E0'),
+                        borderRadius: '20px',
+                        border: 'none',
+                        fontFamily: 'Poppins, sans-serif',
+                        fontSize: '14px',
+                        color: isSelected 
+                          ? '#FFFFFF'
+                          : (colors.text.secondary || '#676767'),
+                        cursor: (!isSelected && tags.length >= maxTags) ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        opacity: (!isSelected && tags.length >= maxTags) ? 0.5 : 1,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!(!isSelected && tags.length >= maxTags)) {
+                          e.currentTarget.style.backgroundColor = isSelected
+                            ? (colors.primary.dark || '#3F214C')
+                            : (colors.primary.main || '#783C91');
+                          e.currentTarget.style.color = '#FFFFFF';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!(!isSelected && tags.length >= maxTags)) {
+                          e.currentTarget.style.backgroundColor = isSelected
+                            ? (colors.primary.main || '#783C91')
+                            : (colors.grey.light || '#E0E0E0');
+                          e.currentTarget.style.color = isSelected
+                            ? '#FFFFFF'
+                            : (colors.text.secondary || '#676767');
+                        }
+                      }}
+                    >
+                      {isSelected && (
+                        <img 
+                          src={CheckIcon} 
+                          alt="Selected" 
+                          style={{ 
+                            width: '14px', 
+                            height: '14px',
+                            filter: 'brightness(0) invert(1)'
+                          }} 
+                        />
+                      )}
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}

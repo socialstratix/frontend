@@ -143,129 +143,127 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
       </div>
 
       {/* Profile Image - 50% overlapping on background image */}
-      {profileImage && (
+      <div
+        style={{
+          position: 'absolute',
+          width: '200px',
+          height: '200px',
+          borderRadius: '50%',
+          overflow: 'visible',
+          border: '6px solid white',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 20,
+          // Position at bottom edge: 50% on image (100px from bottom), 50% below
+          left: '24px',
+          top: '404px' // 504px (background height) - 100px (half of profile image)
+        }}
+      >
         <div
           style={{
-            position: 'absolute',
-            width: '200px',
-            height: '200px',
+            width: '100%',
+            height: '100%',
             borderRadius: '50%',
-            overflow: 'visible',
-            border: '6px solid white',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            zIndex: 20,
-            // Position at bottom edge: 50% on image (100px from bottom), 50% below
-            left: '24px',
-            top: '404px' // 504px (background height) - 100px (half of profile image)
+            overflow: 'hidden',
+            backgroundColor: '#E0D5E5',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              backgroundColor: '#E0D5E5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            {profileImageUrl && !profileImageError ? (
-              <img
-                key={profileImageUrl}
-                src={profileImageUrl}
-                alt="Influencer profile"
-                loading="lazy"
-                onError={() => {
-                  console.error('Failed to load profile image:', profileImageUrl);
-                  // Try alternative URL format if it's a Google Drive URL and we haven't tried thumbnail yet
-                  if (profileImageUrl && profileImageUrl.includes('drive.google.com') && !profileImageTriedThumbnail) {
-                    const fileIdMatch = profileImageUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-                    if (fileIdMatch && fileIdMatch[1]) {
-                      const fileId = fileIdMatch[1];
-                      // Try thumbnail format as fallback
-                      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
-                      console.log('Trying thumbnail format as fallback:', thumbnailUrl);
-                      setProfileImageTriedThumbnail(true);
-                      setProfileImageUrl(thumbnailUrl);
-                      return; // Don't set error yet, let it try the thumbnail
-                    }
+          {profileImageUrl && !profileImageError ? (
+            <img
+              key={profileImageUrl}
+              src={profileImageUrl}
+              alt="Influencer profile"
+              loading="lazy"
+              onError={() => {
+                console.error('Failed to load profile image:', profileImageUrl);
+                // Try alternative URL format if it's a Google Drive URL and we haven't tried thumbnail yet
+                if (profileImageUrl && profileImageUrl.includes('drive.google.com') && !profileImageTriedThumbnail) {
+                  const fileIdMatch = profileImageUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                  if (fileIdMatch && fileIdMatch[1]) {
+                    const fileId = fileIdMatch[1];
+                    // Try thumbnail format as fallback
+                    const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+                    console.log('Trying thumbnail format as fallback:', thumbnailUrl);
+                    setProfileImageTriedThumbnail(true);
+                    setProfileImageUrl(thumbnailUrl);
+                    return; // Don't set error yet, let it try the thumbnail
                   }
-                  console.error('All attempts failed, showing placeholder');
-                  setProfileImageError(true);
-                }}
-                onLoad={() => {
-                  console.log('Profile image loaded successfully:', profileImageUrl);
-                }}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: '50%',
-                  backgroundColor: '#E0D5E5',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '48px',
-                  color: '#783C91',
-                  fontWeight: 600
-                }}
-              >
-                {name ? name.charAt(0).toUpperCase() : '?'}
-              </div>
-            )}
-          </div>
-          {/* Edit Button - Circular overlay on bottom-right corner */}
-          {onEditProfileImage && (
+                }
+                console.error('All attempts failed, showing placeholder');
+                setProfileImageError(true);
+              }}
+              onLoad={() => {
+                console.log('Profile image loaded successfully:', profileImageUrl);
+              }}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+          ) : (
             <div
               style={{
-                position: 'absolute',
-                bottom: '8px',
-                right: '8px',
-                zIndex: 21,
-                width: '36px',
-                height: '36px',
+                width: '100%',
+                height: '100%',
                 borderRadius: '50%',
-                backgroundColor: 'rgba(255, 255, 255, 1)',
-                border: '2px solid rgba(120, 60, 145, 1)',
+                backgroundColor: '#E0D5E5',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                transition: 'all 0.2s ease'
-              }}
-              onClick={onEditProfileImage}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.1)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+                fontSize: '48px',
+                color: '#783C91',
+                fontWeight: 600
               }}
             >
-              <img 
-                src={EditIcon} 
-                alt="Edit" 
-                style={{ 
-                  width: '16px', 
-                  height: '16px',
-                  display: 'block'
-                }} 
-              />
+              {name ? name.charAt(0).toUpperCase() : '?'}
             </div>
           )}
         </div>
-      )}
+        {/* Edit Button - Circular overlay on bottom-right corner */}
+        {onEditProfileImage && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '8px',
+              right: '8px',
+              zIndex: 21,
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(255, 255, 255, 1)',
+              border: '2px solid rgba(120, 60, 145, 1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+              transition: 'all 0.2s ease'
+            }}
+            onClick={onEditProfileImage}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+            }}
+          >
+            <img 
+              src={EditIcon} 
+              alt="Edit" 
+              style={{ 
+                width: '16px', 
+                height: '16px',
+                display: 'block'
+              }} 
+            />
+          </div>
+        )}
+      </div>
 
       {/* Content Section Below Background Image */}
       <div
@@ -280,9 +278,7 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
         }}
       >
         {/* Spacer for profile image */}
-        {profileImage && (
-          <div style={{ width: '200px', flexShrink: 0 }} />
-        )}
+        <div style={{ width: '200px', flexShrink: 0 }} />
 
         {/* Name, Location, Description */}
         <div
