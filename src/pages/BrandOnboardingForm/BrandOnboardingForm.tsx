@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/atoms/Button';
 import { Input } from '../../components/atoms/Input';
 import { colors } from '../../constants/colors';
-import { BackwardIcon } from '../../assets/icons';
+import { INFLUENCER_TAGS } from '../../constants/tags';
+import { BackwardIcon, CheckIcon } from '../../assets/icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiService } from '../../services/api';
 import OnboardingBrandStep2 from '../../assets/images/illustrations/OnbiardingBrandstep2.png';
@@ -76,14 +77,31 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
   };
 
   const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput('');
+    // Parse comma-separated tags from input
+    const inputTags = tagInput.split(',').map(tag => tag.trim()).filter(tag => tag && !tags.includes(tag));
+    if (inputTags.length > 0) {
+      const newTags = [...tags, ...inputTags].slice(0, 6); // Limit to 6 tags
+      setTags(newTags);
+      setTagInput(newTags.join(', '));
+    } else if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      const newTags = [...tags, tagInput.trim()];
+      setTags(newTags);
+      setTagInput(newTags.join(', '));
+    }
+  };
+
+  const handleAddTagFromSuggestion = (tag: string) => {
+    if (!tags.includes(tag) && tags.length < 6) {
+      const newTags = [...tags, tag];
+      setTags(newTags);
+      setTagInput(newTags.join(', '));
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
+    const newTags = tags.filter(tag => tag !== tagToRemove);
+    setTags(newTags);
+    setTagInput(newTags.join(', '));
   };
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -364,9 +382,12 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
             <div style={{ marginBottom: '16px', display: 'flex', gap: '8px' }}>
               <Input
                 type="text"
-                placeholder="Add Tags"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
+                placeholder="Selected tags will appear here"
+                value={tags.length > 0 ? tags.join(', ') : tagInput}
+                onChange={(e) => {
+                  // Allow manual editing, but sync with tags when user types
+                  setTagInput(e.target.value);
+                }}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -389,57 +410,86 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
               </Button>
             </div>
 
-            {/* Tags Display */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px' }}>
-              {tags.map((tag, index) => (
-                <div
-                  key={index}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: colors.grey.light,
-                    borderRadius: '20px',
-                    fontFamily: 'Poppins, sans-serif',
-                    fontSize: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  {tag}
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    style={{
-                      border: 'none',
-                      background: 'none',
-                      cursor: 'pointer',
-                      padding: 0,
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-              {tags.length === 0 && (
-                <>
-                  {['Placeholder', 'Placeholder', 'Placeholder', 'Placeholder', 'Placeholder', 'Placeholder', 'Placeholder', 'Placeholder', 'Placeholder'].map((tag, index) => (
-                    <div
+            {/* Tags Display - Scrollable with all tags */}
+            <div 
+              style={{ 
+                maxHeight: '200px',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                marginBottom: '24px',
+                padding: '4px',
+                scrollbarWidth: 'thin',
+                scrollbarColor: `${colors.primary?.main || '#783C91'} ${colors.secondary?.light || '#F5F0F8'}`,
+              }}
+            >
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {INFLUENCER_TAGS.map((tag, index) => {
+                  const isSelected = tags.includes(tag);
+                  return (
+                    <button
                       key={index}
+                      onClick={() => {
+                        if (isSelected) {
+                          handleRemoveTag(tag);
+                        } else {
+                          handleAddTagFromSuggestion(tag);
+                        }
+                      }}
+                      disabled={!isSelected && tags.length >= 6}
                       style={{
                         padding: '8px 16px',
-                        backgroundColor: '#f0f0f0',
+                        backgroundColor: isSelected 
+                          ? (colors.primary?.main || '#783C91')
+                          : (colors.grey?.light || '#E0E0E0'),
                         borderRadius: '20px',
+                        border: 'none',
                         fontFamily: 'Poppins, sans-serif',
                         fontSize: '14px',
-                        color: '#999'
+                        color: isSelected 
+                          ? '#FFFFFF'
+                          : (colors.text?.secondary || '#676767'),
+                        cursor: (!isSelected && tags.length >= 6) ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        opacity: (!isSelected && tags.length >= 6) ? 0.5 : 1,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!(!isSelected && tags.length >= 6)) {
+                          e.currentTarget.style.backgroundColor = isSelected
+                            ? (colors.primary?.dark || '#3F214C')
+                            : (colors.primary?.main || '#783C91');
+                          e.currentTarget.style.color = '#FFFFFF';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!(!isSelected && tags.length >= 6)) {
+                          e.currentTarget.style.backgroundColor = isSelected
+                            ? (colors.primary?.main || '#783C91')
+                            : (colors.grey?.light || '#E0E0E0');
+                          e.currentTarget.style.color = isSelected
+                            ? '#FFFFFF'
+                            : (colors.text?.secondary || '#676767');
+                        }
                       }}
                     >
+                      {isSelected && (
+                        <img 
+                          src={CheckIcon} 
+                          alt="Selected" 
+                          style={{ 
+                            width: '14px', 
+                            height: '14px',
+                            filter: 'brightness(0) invert(1)'
+                          }} 
+                        />
+                      )}
                       {tag}
-                    </div>
-                  ))}
-                </>
-              )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
           </>

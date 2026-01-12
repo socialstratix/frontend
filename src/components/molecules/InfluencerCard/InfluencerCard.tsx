@@ -229,26 +229,41 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
       >
         {/* Profile Image and Name */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {profileImage && (
-            <div
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                flexShrink: 0,
-                border: '2px solid white',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}
-            >
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              flexShrink: 0,
+              border: '2px solid white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              backgroundColor: '#E0D5E5',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            {profileImage && !profileImageError ? (
               <img
-                src={profileImageError ? PLACEHOLDER_IMAGE : profileImage}
+                src={profileImage}
                 alt={name}
                 className="w-full h-full object-cover"
                 onError={() => setProfileImageError(true)}
               />
-            </div>
-          )}
+            ) : (
+              <span
+                style={{
+                  fontSize: '20px',
+                  color: '#783C91',
+                  fontWeight: 600,
+                  fontFamily: 'Poppins, sans-serif'
+                }}
+              >
+                {name ? name.charAt(0).toUpperCase() : '?'}
+              </span>
+            )}
+          </div>
           <h3 
             className="font-semibold text-gray-900"
             style={{

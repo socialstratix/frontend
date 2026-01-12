@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { colors } from '../../constants/colors';
 import { typography } from '../../constants/typography';
+import { INFLUENCER_TAGS } from '../../constants/tags';
 import { Input } from '../../components/atoms/Input';
 import { Textarea } from '../../components/atoms/Textarea';
 import { Button } from '../../components/atoms/Button';
@@ -18,6 +19,7 @@ import {
     XIcon,
     AttachFileIcon,
     CheckSelectedIcon,
+    CheckIcon,
 } from '../../assets/icons';
 import { postCampaignSchema } from '../../utils/validationSchemas';
 import type { PostCampaignFormData } from '../../utils/validationSchemas';
@@ -95,11 +97,27 @@ export const PostCampaign: React.FC = () => {
 
     const handleAddTag = (e?: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e && e.key !== 'Enter') return;
-        if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+        // Parse comma-separated tags from input
+        const inputTags = tagInput.split(',').map(tag => tag.trim()).filter(tag => tag && !tags.includes(tag));
+        if (inputTags.length > 0) {
+            const newTags = [...tags, ...inputTags];
+            setTags(newTags);
+            setValue('tags', newTags);
+            setTagInput(newTags.join(', '));
+        } else if (tagInput.trim() && !tags.includes(tagInput.trim())) {
             const newTags = [...tags, tagInput.trim()];
             setTags(newTags);
             setValue('tags', newTags);
-            setTagInput('');
+            setTagInput(newTags.join(', '));
+        }
+    };
+
+    const handleAddTagFromSuggestion = (tag: string) => {
+        if (!tags.includes(tag)) {
+            const newTags = [...tags, tag];
+            setTags(newTags);
+            setValue('tags', newTags);
+            setTagInput(newTags.join(', '));
         }
     };
 
@@ -107,6 +125,7 @@ export const PostCampaign: React.FC = () => {
         const newTags = tags.filter((tag) => tag !== tagToRemove);
         setTags(newTags);
         setValue('tags', newTags);
+        setTagInput(newTags.join(', '));
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -455,9 +474,12 @@ export const PostCampaign: React.FC = () => {
                         </h3>
 
                         <Textarea
-                            placeholder="Type a tag and press Enter"
-                            value={tagInput}
-                            onChange={(e) => setTagInput(e.target.value)}
+                            placeholder="Selected tags will appear here"
+                            value={tags.length > 0 ? tags.join(', ') : tagInput}
+                            onChange={(e) => {
+                                // Allow manual editing, but sync with tags when user types
+                                setTagInput(e.target.value);
+                            }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     e.preventDefault();
@@ -466,42 +488,83 @@ export const PostCampaign: React.FC = () => {
                             }}
                             variant="custom"
                         />
-                        {tags.length > 0 && (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
-                                {tags.map((tag, index) => (
-                                    <span
-                                        key={index}
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                            padding: '4px 12px',
-                                            backgroundColor: colors.secondary.light,
-                                            borderRadius: '16px',
-                                            fontFamily: 'Poppins',
-                                            fontSize: '14px',
-                                            color: colors.text.primary,
-                                        }}
-                                    >
-                                        {tag}
+                        
+                        {/* Tags Display - Scrollable with all tags */}
+                        <div 
+                            style={{ 
+                                maxHeight: '200px',
+                                overflowY: 'auto',
+                                overflowX: 'hidden',
+                                marginTop: '16px',
+                                padding: '4px',
+                                scrollbarWidth: 'thin',
+                                scrollbarColor: `${colors.primary.main || '#783C91'} ${colors.secondary.light || '#F5F0F8'}`,
+                            }}
+                        >
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                {INFLUENCER_TAGS.map((tag, index) => {
+                                    const isSelected = tags.includes(tag);
+                                    return (
                                         <button
-                                            onClick={() => handleRemoveTag(tag)}
+                                            key={index}
+                                            type="button"
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    handleRemoveTag(tag);
+                                                } else {
+                                                    handleAddTagFromSuggestion(tag);
+                                                }
+                                            }}
                                             style={{
-                                                background: 'none',
+                                                padding: '8px 16px',
+                                                backgroundColor: isSelected 
+                                                    ? (colors.primary.main || '#783C91')
+                                                    : (colors.grey.light || '#E0E0E0'),
+                                                borderRadius: '20px',
                                                 border: 'none',
+                                                fontFamily: 'Poppins, sans-serif',
+                                                fontSize: '14px',
+                                                color: isSelected 
+                                                    ? '#FFFFFF'
+                                                    : (colors.text.secondary || '#676767'),
                                                 cursor: 'pointer',
-                                                fontSize: '16px',
-                                                color: colors.text.secondary,
-                                                padding: 0,
-                                                lineHeight: 1,
+                                                transition: 'all 0.2s ease',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.backgroundColor = isSelected
+                                                    ? (colors.primary.dark || '#3F214C')
+                                                    : (colors.primary.main || '#783C91');
+                                                e.currentTarget.style.color = '#FFFFFF';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.backgroundColor = isSelected
+                                                    ? (colors.primary.main || '#783C91')
+                                                    : (colors.grey.light || '#E0E0E0');
+                                                e.currentTarget.style.color = isSelected
+                                                    ? '#FFFFFF'
+                                                    : (colors.text.secondary || '#676767');
                                             }}
                                         >
-                                            ×
+                                            {isSelected && (
+                                                <img 
+                                                    src={CheckIcon} 
+                                                    alt="Selected" 
+                                                    style={{ 
+                                                        width: '14px', 
+                                                        height: '14px',
+                                                        filter: 'brightness(0) invert(1)'
+                                                    }} 
+                                                />
+                                            )}
+                                            {tag}
                                         </button>
-                                    </span>
-                                ))}
+                                    );
+                                })}
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     {/* Attachments */}

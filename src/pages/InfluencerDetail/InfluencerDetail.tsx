@@ -7,11 +7,13 @@ import { EditDescription } from '../../components/molecules/EditDescription/Edit
 import { EditLocation } from '../../components/molecules/EditLocation/EditLocation';
 import { EditProfilePhoto } from '../../components/molecules/EditProfilePhoto/EditProfilePhoto';
 import { EditTags } from '../../components/molecules/EditTags/EditTags';
+import { FloatingButton } from '../../components/molecules/FloatingButton/FloatingButton';
 import { EditButton } from '../../components/atoms/EditButton';
 import { useInfluencer } from '../../hooks';
 import { useAuth } from '../../contexts/AuthContext';
 import { influencerService, type ContentItem, type FollowersResponse, type Influencer } from '../../services/influencerService';
 import { apiService } from '../../services/api';
+import { INFLUENCER_TAGS } from '../../constants/tags';
 import { useConversations } from '../../hooks/useConversations';
 import { 
   XIcon, 
@@ -193,6 +195,15 @@ export const InfluencerDetail: React.FC = () => {
   const [showEditBackgroundImage, setShowEditBackgroundImage] = useState(false);
   const [showEditTags, setShowEditTags] = useState(false);
   
+  // Profile completion state
+  const [isProfileCompletionDismissed, setIsProfileCompletionDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const dismissed = localStorage.getItem('profileCompletionDismissed');
+      return dismissed === 'true';
+    }
+    return false;
+  });
+
   // Edit operation loading states
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   const [isUpdatingDescription, setIsUpdatingDescription] = useState(false);
@@ -289,6 +300,45 @@ export const InfluencerDetail: React.FC = () => {
     });
     return map;
   }, [influencer]);
+
+  // Calculate profile completion
+  const profileCompletion = useMemo(() => {
+    if (!influencer) return { percentage: 0, hasProfilePic: false, hasTags: false, hasDescription: false, hasSocialAccounts: false };
+    
+    const hasProfilePic = !!(influencer.profileImage || influencer.user?.avatar);
+    const hasTags = !!(influencer.tags && influencer.tags.length > 0);
+    const hasDescription = !!(influencer.description || influencer.bio);
+    const hasSocialAccounts = !!(influencer.socialProfiles && influencer.socialProfiles.length > 0);
+    
+    let percentage = 0;
+    if (hasProfilePic) percentage += 25;
+    if (hasTags) percentage += 25;
+    if (hasDescription) percentage += 25;
+    if (hasSocialAccounts) percentage += 25;
+    
+    return {
+      percentage,
+      hasProfilePic,
+      hasTags,
+      hasDescription,
+      hasSocialAccounts,
+    };
+  }, [influencer]);
+
+  // Handle profile completion dismiss
+  const handleProfileCompletionDismiss = useCallback(() => {
+    setIsProfileCompletionDismissed(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('profileCompletionDismissed', 'true');
+    }
+  }, []);
+
+  // Handle view profiles navigation
+  const handleViewProfiles = useCallback(() => {
+    const baseRoute = location.pathname.split('/')[1] || 'influencer';
+    // Navigate to landing page which shows influencer listings
+    navigate(`/${baseRoute}`);
+  }, [navigate, location.pathname]);
 
   // Fetch similar influencers based on tags
   useEffect(() => {
@@ -730,7 +780,8 @@ export const InfluencerDetail: React.FC = () => {
     <div 
       className="min-h-screen py-8"
       style={{
-        background: 'linear-gradient(135deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%)'
+        background: 'linear-gradient(135deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%)',
+        position: 'relative'
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -2435,6 +2486,7 @@ export const InfluencerDetail: React.FC = () => {
             }}
             initialTags={influencerData?.tags || []}
             onSave={handleSaveTags}
+            suggestedTags={[...INFLUENCER_TAGS]}
             title="Edit Tags"
             instruction="Add tags that clearly highlight your skills and expertise, making it easy for brands to understand you."
           />
@@ -2480,6 +2532,30 @@ export const InfluencerDetail: React.FC = () => {
             title="Edit Background Image"
           />
         </>
+      )}
+
+      {/* Profile Completion Floating Button */}
+      {(() => {
+        console.log('FloatingButton render condition:', {
+          isOwnProfile,
+          profileCompletion: profileCompletion.percentage,
+          isDismissed: isProfileCompletionDismissed
+        });
+        return isOwnProfile;
+      })() && (
+        <FloatingButton
+          completionPercentage={profileCompletion.percentage}
+          hasProfilePic={profileCompletion.hasProfilePic}
+          hasTags={profileCompletion.hasTags}
+          hasDescription={profileCompletion.hasDescription}
+          hasSocialAccounts={profileCompletion.hasSocialAccounts}
+          onViewProfiles={handleViewProfiles}
+          onEditProfilePic={() => setShowEditProfileImage(true)}
+          onEditTags={() => setShowEditTags(true)}
+          onEditDescription={() => setShowEditDescription(true)}
+          isDismissed={isProfileCompletionDismissed}
+          onDismiss={handleProfileCompletionDismiss}
+        />
       )}
     </div>
   );
