@@ -104,6 +104,11 @@ export interface Influencer {
     followers: number;
     isVerified: boolean;
   }>;
+  // Engagement metrics (from followers API)
+  avgViewPerPost?: number;
+  highestView?: number;
+  avgLikesPerPost?: number;
+  highestLikes?: number;
 }
 
 export interface InfluencerListParams {
@@ -147,6 +152,10 @@ export interface FollowersResponse {
   };
   totalFollowers: number;
   periodLabel: string;
+  avgViewPerPost?: number;
+  highestView?: number;
+  avgLikesPerPost?: number;
+  highestLikes?: number;
 }
 
 export interface ContentResponse {
