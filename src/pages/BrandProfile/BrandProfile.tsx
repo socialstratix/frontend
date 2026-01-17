@@ -54,6 +54,7 @@ export const BrandProfile: React.FC = () => {
   const [brandAvatarError, setBrandAvatarError] = useState(false);
   const [showAllCampaigns, setShowAllCampaigns] = useState(false);
   const [sortBy, setSortBy] = useState<'date' | 'budget' | 'name'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   // Edit modal states
   const [showEditName, setShowEditName] = useState(false);
@@ -80,6 +81,7 @@ export const BrandProfile: React.FC = () => {
     brandId: brand?._id || undefined,
     status: statusFilter as 'active' | 'previous' | 'closed' | 'completed',
     sortBy: sortBy,
+    sortOrder: sortOrder,
     autoFetch: !!brand?._id,
   });
 
@@ -1020,7 +1022,7 @@ export const BrandProfile: React.FC = () => {
 
           {/* Sort By */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span
                 style={{
                   fontFamily: 'Poppins',
@@ -1042,11 +1044,34 @@ export const BrandProfile: React.FC = () => {
                   backgroundColor: 'transparent',
                   cursor: 'pointer',
                   outline: 'none',
+                  paddingRight: '8px',
                 }}
               >
                 <option value="date">Date Posted</option>
                 <option value="budget">Budget</option>
                 <option value="name">Name</option>
+              </select>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                style={{
+                  fontFamily: 'Poppins',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: colors.text.primary,
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  paddingRight: '8px',
+                }}
+              >
+                <option value="desc">
+                  {sortBy === 'date' ? 'Newest First' : sortBy === 'budget' ? 'Highest First' : 'Z-A'}
+                </option>
+                <option value="asc">
+                  {sortBy === 'date' ? 'Oldest First' : sortBy === 'budget' ? 'Lowest First' : 'A-Z'}
+                </option>
               </select>
             </div>
           </div>

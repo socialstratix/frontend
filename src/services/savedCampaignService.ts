@@ -42,11 +42,15 @@ class SavedCampaignService {
    * Get all saved campaigns
    */
   async getSavedCampaigns(
-    sortBy?: 'date' | 'budget' | 'name'
+    sortBy?: 'date' | 'budget' | 'name',
+    sortOrder?: 'asc' | 'desc'
   ): Promise<SavedCampaignResponse> {
     const queryParams = new URLSearchParams();
     if (sortBy) {
       queryParams.append('sortBy', sortBy);
+    }
+    if (sortOrder) {
+      queryParams.append('sortOrder', sortOrder);
     }
     
     const queryString = queryParams.toString();

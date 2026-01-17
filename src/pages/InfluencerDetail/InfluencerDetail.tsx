@@ -8,6 +8,7 @@ import { EditLocation } from '../../components/molecules/EditLocation/EditLocati
 import { EditProfilePhoto } from '../../components/molecules/EditProfilePhoto/EditProfilePhoto';
 import { EditTags } from '../../components/molecules/EditTags/EditTags';
 import { FloatingButton } from '../../components/molecules/FloatingButton/FloatingButton';
+import { toastService } from '../../utils/toast';
 import { EditButton } from '../../components/atoms/EditButton';
 import { useInfluencer } from '../../hooks';
 import { useAuth } from '../../contexts/AuthContext';
@@ -401,7 +402,7 @@ export const InfluencerDetail: React.FC = () => {
       setShowEditName(false);
     } catch (err: any) {
       console.error('Error updating name:', err);
-      alert(err.message || 'Failed to update name');
+      toastService.error(err.message || 'Failed to update name');
     } finally {
       setIsUpdatingName(false);
     }
@@ -410,7 +411,7 @@ export const InfluencerDetail: React.FC = () => {
   // Handler for saving description
   const handleSaveDescription = useCallback(async (description: string) => {
     if (!user?.id) {
-      alert('You must be logged in to update your profile');
+      toastService.warning('You must be logged in to update your profile');
       return;
     }
 
@@ -425,7 +426,7 @@ export const InfluencerDetail: React.FC = () => {
       setShowEditDescription(false);
     } catch (err: any) {
       console.error('Error updating description:', err);
-      alert(err.message || 'Failed to update description');
+      toastService.error(err.message || 'Failed to update description');
     } finally {
       setIsUpdatingDescription(false);
     }
@@ -434,7 +435,7 @@ export const InfluencerDetail: React.FC = () => {
   // Handler for saving tags
   const handleSaveTags = useCallback(async (tags: string[]) => {
     if (!user?.id) {
-      alert('You must be logged in to update your profile');
+      toastService.warning('You must be logged in to update your profile');
       return;
     }
 
@@ -449,7 +450,7 @@ export const InfluencerDetail: React.FC = () => {
       setShowEditTags(false);
     } catch (err: any) {
       console.error('Error updating tags:', err);
-      alert(err.message || 'Failed to update tags');
+      toastService.error(err.message || 'Failed to update tags');
     } finally {
       setIsUpdatingTags(false);
     }
@@ -464,7 +465,7 @@ export const InfluencerDetail: React.FC = () => {
     pincode?: string;
   }) => {
     if (!user?.id) {
-      alert('You must be logged in to update your profile');
+      toastService.warning('You must be logged in to update your profile');
       return;
     }
 
@@ -479,7 +480,7 @@ export const InfluencerDetail: React.FC = () => {
       setShowEditLocation(false);
     } catch (err: any) {
       console.error('Error updating location:', err);
-      alert(err.message || 'Failed to update location');
+      toastService.error(err.message || 'Failed to update location');
     } finally {
       setIsUpdatingLocation(false);
     }
@@ -488,7 +489,7 @@ export const InfluencerDetail: React.FC = () => {
   // Handler for saving profile image
   const handleSaveProfileImage = useCallback(async (profileImageFile: File | null) => {
     if (!user?.id) {
-      alert('You must be logged in to update your profile');
+      toastService.warning('You must be logged in to update your profile');
       return;
     }
 
@@ -521,7 +522,7 @@ export const InfluencerDetail: React.FC = () => {
       setShowEditProfileImage(false);
     } catch (err: any) {
       console.error('Error updating profile image:', err);
-      alert(err.message || 'Failed to update profile image');
+      toastService.error(err.message || 'Failed to update profile image');
     } finally {
       setIsUpdatingProfileImage(false);
     }
@@ -558,7 +559,7 @@ export const InfluencerDetail: React.FC = () => {
 
   const handleSaveBackgroundImage = useCallback(async (coverImageFile: File | null) => {
     if (!user?.id) {
-      alert('You must be logged in to update your profile');
+      toastService.warning('You must be logged in to update your profile');
       return;
     }
 
@@ -592,7 +593,7 @@ export const InfluencerDetail: React.FC = () => {
       setShowEditBackgroundImage(false);
     } catch (err: any) {
       console.error('Error updating background image:', err);
-      alert(err.message || 'Failed to update background image');
+      toastService.error(err.message || 'Failed to update background image');
     } finally {
       setIsUpdatingBackgroundImage(false);
     }

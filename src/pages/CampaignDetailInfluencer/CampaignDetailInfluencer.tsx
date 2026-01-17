@@ -24,6 +24,7 @@ import { EditButton } from '../../components/atoms/EditButton';
 import { EditName } from '../../components/molecules/EditName';
 import { EditDescription } from '../../components/molecules/EditDescription';
 import { EditTags } from '../../components/molecules/EditTags';
+import { toastService } from '../../utils/toast';
 
 export const CampaignDetailInfluencer: React.FC = () => {
   const navigate = useNavigate();
@@ -121,7 +122,7 @@ export const CampaignDetailInfluencer: React.FC = () => {
       navigate(`/${baseRoute}/messages/${result.conversationId}`);
     } catch (error: any) {
       console.error('Failed to apply to campaign:', error);
-      alert(error.message || 'Failed to apply to campaign. Please try again.');
+      toastService.error(error.message || 'Failed to apply to campaign. Please try again.');
     } finally {
       setIsApplying(false);
     }
