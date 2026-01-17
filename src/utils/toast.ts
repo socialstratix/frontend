@@ -1,6 +1,5 @@
 import { toast } from 'react-toastify';
 import type { ToastOptions } from 'react-toastify';
-import { colors } from '../constants/colors';
 
 const defaultOptions: ToastOptions = {
   position: 'top-right',
