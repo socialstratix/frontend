@@ -37,6 +37,7 @@ export const InfluencerLanding: React.FC = () => {
   const [brandAvatarErrors, setBrandAvatarErrors] = useState<{ [key: string]: boolean }>({});
   const [showAllCampaigns, setShowAllCampaigns] = useState(false);
   const [sortBy, setSortBy] = useState<'date' | 'budget' | 'name'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Fetch saved campaign IDs on mount
   useEffect(() => {
@@ -61,13 +62,13 @@ export const InfluencerLanding: React.FC = () => {
         
         // If on saved tab, fetch saved campaigns
         if (activeTab === 'saved') {
-          const savedResponse = await savedCampaignService.getSavedCampaigns(sortBy);
+          const savedResponse = await savedCampaignService.getSavedCampaigns(sortBy, sortOrder);
           setApiCampaigns(savedResponse.campaigns || []);
         } else {
           // Fetch both active and completed campaigns with sorting
           const [activeResponse, completedResponse] = await Promise.all([
-            campaignService.getAllCampaigns('active', sortBy),
-            campaignService.getAllCampaigns('completed', sortBy).catch(() => ({ campaigns: [], count: 0 })),
+            campaignService.getAllCampaigns('active', sortBy, sortOrder),
+            campaignService.getAllCampaigns('completed', sortBy, sortOrder).catch(() => ({ campaigns: [], count: 0 })),
           ]);
           // Combine active and completed campaigns
           const allCampaigns = [...(activeResponse.campaigns || []), ...(completedResponse.campaigns || [])];
@@ -82,7 +83,7 @@ export const InfluencerLanding: React.FC = () => {
     };
 
     fetchCampaigns();
-  }, [sortBy, activeTab]);
+  }, [sortBy, sortOrder, activeTab]);
 
   // Format time ago helper function
   const formatTimeAgo = useCallback((date: string | Date): string => {
@@ -384,7 +385,7 @@ export const InfluencerLanding: React.FC = () => {
               </button>
 
               {/* Sort By */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span
                   style={{
                     fontFamily: 'Poppins',
@@ -406,11 +407,34 @@ export const InfluencerLanding: React.FC = () => {
                     backgroundColor: 'transparent',
                     cursor: 'pointer',
                     outline: 'none',
+                    paddingRight: '8px',
                   }}
                 >
                   <option value="date">Date Posted</option>
                   <option value="budget">Budget</option>
                   <option value="name">Name</option>
+                </select>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                  style={{
+                    fontFamily: 'Poppins',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: colors.text.primary,
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    paddingRight: '8px',
+                  }}
+                >
+                  <option value="desc">
+                    {sortBy === 'date' ? 'Newest First' : sortBy === 'budget' ? 'Highest First' : 'Z-A'}
+                  </option>
+                  <option value="asc">
+                    {sortBy === 'date' ? 'Oldest First' : sortBy === 'budget' ? 'Lowest First' : 'A-Z'}
+                  </option>
                 </select>
               </div>
             </div>
