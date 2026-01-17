@@ -3,6 +3,7 @@ import { colors } from '../../../constants/colors';
 import { Button } from '../../atoms/Button/Button';
 import { EditButton } from '../../atoms/EditButton/EditButton';
 import { CloseIcon } from '../../../assets/icons';
+import { toastService } from '../../../utils/toast';
 
 interface EditProfilePhotoProps {
   isOpen: boolean;
@@ -41,12 +42,12 @@ export const EditProfilePhoto: React.FC<EditProfilePhotoProps> = ({
 
   const handleFileSelect = (file: File) => {
     if (file.size > maxSize * 1024 * 1024) {
-      alert(`File size must be less than ${maxSize} MB`);
+      toastService.error(`File size must be less than ${maxSize} MB`);
       return;
     }
 
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      toastService.error('Please select an image file');
       return;
     }
 

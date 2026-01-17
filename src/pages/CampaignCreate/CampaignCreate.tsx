@@ -1,6 +1,7 @@
 import React from 'react';
 import { Typography } from '../../components';
 import { CampaignForm } from '../../components';
+import { toastService } from '../../utils/toast';
 
 // Mock data
 const mockInfluencers = Array.from({ length: 10 }, (_, i) => ({
@@ -12,7 +13,7 @@ const mockInfluencers = Array.from({ length: 10 }, (_, i) => ({
 export const CampaignCreate: React.FC = () => {
   const handleSubmit = (_data: any) => {
     // Handle campaign creation
-    alert('Campaign created successfully!');
+    toastService.success('Campaign created successfully!');
   };
 
   return (
