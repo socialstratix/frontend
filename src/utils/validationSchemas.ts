@@ -13,6 +13,50 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
+// Password validation helper function
+export const validatePassword = (password: string): string[] => {
+  const errors: string[] = [];
+  
+  if (password.length < 6) {
+    errors.push('At least 6 characters');
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push('uppercase letter');
+  }
+  if (!/[a-z]/.test(password)) {
+    errors.push('lowercase letter');
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push('number');
+  }
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    errors.push('special character');
+  }
+  
+  return errors;
+};
+
+// Format password errors as a single message
+export const formatPasswordErrors = (errors: string[]): string => {
+  if (errors.length === 0) return '';
+  
+  const lengthError = errors.find(e => e.includes('6 characters'));
+  const otherErrors = errors.filter(e => !e.includes('6 characters'));
+  
+  let message = '';
+  
+  if (lengthError) {
+    message = lengthError;
+    if (otherErrors.length > 0) {
+      message += '. Password must contain at least one ' + otherErrors.join(', ');
+    }
+  } else if (otherErrors.length > 0) {
+    message = 'Password must contain at least one ' + otherErrors.join(', ');
+  }
+  
+  return message;
+};
+
 // Signup Validation Schema
 export const signupSchema = z.object({
   fullName: z
@@ -25,11 +69,13 @@ export const signupSchema = z.object({
     .email('Please enter a valid email address'),
   password: z
     .string()
-    .min(6, 'Password must be at least 6 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number')
-    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+    .min(1, 'Password is required')
+    .refine((password) => {
+      const errors = validatePassword(password);
+      return errors.length === 0;
+    }, {
+      message: 'Password validation failed',
+    }),
   confirmPassword: z
     .string()
     .min(1, 'Please confirm your password'),

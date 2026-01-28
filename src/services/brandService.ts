@@ -160,13 +160,22 @@ class BrandService {
    * @param data - Brand data to update
    * @param logoFile - Optional logo file to upload
    */
-  async updateBrand(userId: string, data: UpdateBrandData, logoFile?: File): Promise<Brand> {
+  async updateBrand(userId: string, data: UpdateBrandData, logoFile?: File | null): Promise<Brand> {
     let requestData: UpdateBrandData | FormData;
     
-    // If logo file is provided, use FormData
-    if (logoFile) {
+    // Check if we need to remove logo or upload file
+    const shouldRemoveLogo = logoFile === null;
+    const hasFileUpload = logoFile instanceof File;
+    
+    // If logo file is provided or removal flag needed, use FormData
+    if (hasFileUpload || shouldRemoveLogo) {
       const formData = new FormData();
-      formData.append('logo', logoFile);
+      
+      if (logoFile instanceof File) {
+        formData.append('logo', logoFile);
+      } else if (shouldRemoveLogo) {
+        formData.append('removeLogo', 'true');
+      }
       
       // Append other fields to FormData
       if (data.description !== undefined) {

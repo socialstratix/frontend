@@ -18,6 +18,7 @@ import XIcon from '../../assets/icons/social/Icon=X.svg';
 import YoutubeIcon from '../../assets/icons/social/Icon=Youtube.svg';
 import TiktokIcon from '../../assets/icons/social/Icon=Tiktok.svg';
 import { brandService, type Brand as BrandServiceType } from '../../services/brandService';
+import { toastService } from '../../utils/toast';
 import { apiService } from '../../services/api';
 import { useCampaigns, useCampaign } from '../../hooks/useCampaign';
 import type { Campaign as CampaignServiceType } from '../../services/campaignService';
@@ -227,24 +228,21 @@ export const BrandProfile: React.FC = () => {
       return;
     }
 
-    if (!file) {
-      setError('No file selected');
-      return;
-    }
-
     try {
       setIsUpdatingPhoto(true);
       setError(null);
       
-      // Update the brand
+      // Update the brand - null means remove, File means upload
       await brandService.updateBrand(brand.userId, {}, file);
       
       // Refresh brand data to get the latest complete data
       await refreshBrandData();
+      toastService.success(file ? 'Photo updated successfully' : 'Photo removed successfully');
       setShowEditPhoto(false);
     } catch (err: any) {
       setError(err.message || 'Failed to update photo');
       console.error('Error updating photo:', err);
+      toastService.error(err.message || 'Failed to update photo');
     } finally {
       setIsUpdatingPhoto(false);
     }

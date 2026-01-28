@@ -64,11 +64,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
     return isLabelFloating ? 'py-3' : 'pt-3 pb-3';
   };
 
-  const loginStyles = variant === 'login' ? {
-    width: '464px',
+  const loginStyles: React.CSSProperties = variant === 'login' ? {
+    width: '100%',
+    maxWidth: '100%',
     height: '56px',
     borderRadius: '4px',
     border: `${isFocused ? '2px' : '1px'} solid ${colors.border.purple}`,
+    boxSizing: 'border-box' as const,
   } : {};
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,13 +144,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
             </button>
           )}
         </div>
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-1 text-sm text-red-600" style={{ wordWrap: 'break-word', overflowWrap: 'break-word', maxWidth: '100%' }}>{error}</p>}
       </div>
     );
   }
 
   return (
-    <div className={variant === 'login' ? 'flex flex-col gap-2.5' : 'w-full'}>
+    <div className={variant === 'login' ? 'flex flex-col gap-2.5' : 'w-full'} style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
       <div className="relative">
         {icon && (
           <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10">
@@ -226,7 +228,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
           </button>
         )}
       </div>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-sm text-red-600" style={{ wordWrap: 'break-word', overflowWrap: 'break-word', maxWidth: '100%' }}>{error}</p>}
     </div>
   );
 });

@@ -90,6 +90,13 @@ export const EditProfilePhoto: React.FC<EditProfilePhotoProps> = ({
     onClose();
   };
 
+  const handleRemovePhoto = () => {
+    setPhoto(null);
+    setPhotoFile(null);
+    onSave(null);
+    onClose();
+  };
+
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
@@ -164,7 +171,7 @@ export const EditProfilePhoto: React.FC<EditProfilePhotoProps> = ({
           {/* Left Side - Photo Upload Area */}
           <div style={{ flex: '1', minWidth: '250px' }}>
             {photo ? (
-              <div style={{ position: 'relative', display: 'inline-block' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '200px' }}>
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   style={{
@@ -216,42 +223,92 @@ export const EditProfilePhoto: React.FC<EditProfilePhotoProps> = ({
                     color: colors.text.secondary,
                     marginTop: '8px',
                     textAlign: 'center',
+                    width: '100%',
+                    margin: '8px 0 0 0',
                   }}
                 >
                   {maxDimensions} Min / {maxSize} MB Max
                 </p>
+                {/* Remove Photo Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemovePhoto();
+                  }}
+                  style={{
+                    display: 'block',
+                    margin: '8px auto 0',
+                    padding: '6px 16px',
+                    backgroundColor: 'transparent',
+                    border: `1px solid ${colors.text.secondary}`,
+                    borderRadius: '4px',
+                    fontFamily: 'Poppins',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    color: colors.text.secondary,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#fee';
+                    e.currentTarget.style.borderColor = '#c33';
+                    e.currentTarget.style.color = '#c33';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.borderColor = colors.text.secondary;
+                    e.currentTarget.style.color = colors.text.secondary;
+                  }}
+                >
+                  Remove Photo
+                </button>
               </div>
             ) : (
-              <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                style={{
-                  width: '200px',
-                  height: '200px',
-                  borderRadius: '50%',
-                  border: `2px dashed ${isDragging ? colors.primary.main : colors.border.light}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  backgroundColor: isDragging ? colors.secondary.light : 'transparent',
-                  transition: 'all 0.2s',
-                }}
-              >
-                <div style={{ textAlign: 'center', padding: '16px' }}>
-                  <p
-                    style={{
-                      fontFamily: 'Poppins',
-                      fontSize: '14px',
-                      color: colors.text.secondary,
-                      margin: 0,
-                    }}
-                  >
-                    Add or drop photo here
-                  </p>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '200px' }}>
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    width: '200px',
+                    height: '200px',
+                    borderRadius: '50%',
+                    border: `2px dashed ${isDragging ? colors.primary.main : colors.border.light}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    backgroundColor: isDragging ? colors.secondary.light : 'transparent',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <div style={{ textAlign: 'center', padding: '16px' }}>
+                    <p
+                      style={{
+                        fontFamily: 'Poppins',
+                        fontSize: '14px',
+                        color: colors.text.secondary,
+                        margin: 0,
+                      }}
+                    >
+                      Add or drop photo here
+                    </p>
+                  </div>
                 </div>
+                <p
+                  style={{
+                    fontFamily: 'Poppins',
+                    fontSize: '12px',
+                    color: colors.text.secondary,
+                    marginTop: '8px',
+                    textAlign: 'center',
+                    width: '100%',
+                    margin: '8px 0 0 0',
+                  }}
+                >
+                  {maxDimensions} Min / {maxSize} MB Max
+                </p>
               </div>
             )}
 
@@ -262,20 +319,6 @@ export const EditProfilePhoto: React.FC<EditProfilePhotoProps> = ({
               onChange={handleFileInputChange}
               style={{ display: 'none' }}
             />
-
-            {!photo && (
-              <p
-                style={{
-                  fontFamily: 'Poppins',
-                  fontSize: '12px',
-                  color: colors.text.secondary,
-                  marginTop: '8px',
-                  textAlign: 'center',
-                }}
-              >
-                {maxDimensions} Min / {maxSize} MB Max
-              </p>
-            )}
           </div>
 
           {/* Right Side - Info */}

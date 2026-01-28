@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Typography, Button, RangeSlider } from '../../components';
+import { Typography, RangeSlider } from '../../components';
 import { InfluencerGrid } from '../../components';
 import { useInfluencerList } from '../../hooks';
 import { INFLUENCER_TAGS } from '../../constants/tags';
@@ -23,7 +23,6 @@ export const InfluencerDiscovery: React.FC = () => {
   const location = useLocation();
 
   // Filter state
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [locationFilter, setLocationFilter] = useState('');
@@ -370,20 +369,9 @@ export const InfluencerDiscovery: React.FC = () => {
           </Typography>
         </div>
 
-        {/* Advanced Search Button */}
-        <div className="mb-6 flex justify-center items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            style={{
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: '16px',
-              fontWeight: 500,
-            }}
-          >
-            {showAdvancedFilters ? 'Hide Advanced Search' : 'Advanced Search'}
-          </Button>
-          {isLoadingMetrics && (
+        {/* Loading Metrics Indicator */}
+        {isLoadingMetrics && (
+          <div className="mb-6 flex justify-center items-center gap-4">
             <div
               style={{
                 display: 'flex',
@@ -406,11 +394,11 @@ export const InfluencerDiscovery: React.FC = () => {
               />
               <span>Fetching engagement metrics...</span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Advanced Filters Panel */}
-        {showAdvancedFilters && (
+        <div>
           <div
             style={{
               backgroundColor: '#FFFFFF',
@@ -811,7 +799,7 @@ export const InfluencerDiscovery: React.FC = () => {
               </div>
             )}
           </div>
-        )}
+        </div>
 
         {isLoading ? (
           <div

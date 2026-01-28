@@ -1,0 +1,2 @@
+export { EditSocialAccounts } from './EditSocialAccounts';
+

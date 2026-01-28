@@ -10,6 +10,7 @@ export { EditName } from './EditName';
 export { EditTags } from './EditTags';
 export { EditProfilePhoto } from './EditProfilePhoto';
 export { EditLocation } from './EditLocation';
+export { EditSocialAccounts } from './EditSocialAccounts';
 export { ProfileCompletionCard } from './ProfileCompletionCard';
 export { FloatingButton } from './FloatingButton';
 export { RangeSlider } from './RangeSlider';

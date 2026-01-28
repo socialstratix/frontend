@@ -27,7 +27,12 @@ export const Avatar: React.FC<AvatarProps> = ({
   const displaySrc = imageError ? PLACEHOLDER_IMAGE : src;
 
   return (
-    <div className={`${sizes[size]} rounded-full overflow-hidden bg-gray-200 flex items-center justify-center ${className}`}>
+    <div 
+      className={`${sizes[size]} rounded-full overflow-hidden flex items-center justify-center ${className}`}
+      style={{
+        backgroundColor: displaySrc ? undefined : '#E0D5E5',
+      }}
+    >
       {displaySrc ? (
         <img 
           src={displaySrc} 
@@ -36,8 +41,15 @@ export const Avatar: React.FC<AvatarProps> = ({
           onError={() => setImageError(true)}
         />
       ) : (
-        <span className="text-gray-600 font-semibold">
-          {fallback || alt.charAt(0).toUpperCase()}
+        <span 
+          style={{
+            color: '#783C91',
+            fontFamily: 'Poppins, sans-serif',
+            fontWeight: 600,
+          }}
+          className="font-semibold"
+        >
+          {(fallback || alt).charAt(0).toUpperCase()}
         </span>
       )}
     </div>
