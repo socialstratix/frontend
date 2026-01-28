@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Typography, Button, RangeSlider } from '../../components';
+import { Typography, RangeSlider } from '../../components';
 import { InfluencerGrid } from '../../components';
 import { useInfluencerList } from '../../hooks';
 import { INFLUENCER_TAGS } from '../../constants/tags';

@@ -64,13 +64,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
     return isLabelFloating ? 'py-3' : 'pt-3 pb-3';
   };
 
-  const loginStyles = variant === 'login' ? {
+  const loginStyles: React.CSSProperties = variant === 'login' ? {
     width: '100%',
     maxWidth: '100%',
     height: '56px',
     borderRadius: '4px',
     border: `${isFocused ? '2px' : '1px'} solid ${colors.border.purple}`,
-    boxSizing: 'border-box',
+    boxSizing: 'border-box' as const,
   } : {};
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
