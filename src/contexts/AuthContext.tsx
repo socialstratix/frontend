@@ -158,7 +158,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const updateUser = async (data: { name?: string; avatar?: string | File }): Promise<void> => {
+  const updateUser = async (data: { name?: string; avatar?: string | File | null }): Promise<void> => {
     try {
       const formData = new FormData();
       
@@ -166,9 +166,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         formData.append('name', data.name);
       }
       
-      // If avatar is a File, upload it; otherwise use it as URL string
+      // Handle avatar: File = upload, null = remove, string = URL (legacy)
       if (data.avatar !== undefined) {
-        if (data.avatar instanceof File) {
+        if (data.avatar === null) {
+          formData.append('removeAvatar', 'true');
+        } else if (data.avatar instanceof File) {
           formData.append('avatar', data.avatar);
         } else {
           formData.append('avatar', data.avatar);

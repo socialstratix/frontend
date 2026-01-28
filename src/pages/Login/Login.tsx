@@ -239,7 +239,9 @@ export const Login: React.FC = () => {
               linear-gradient(0deg, #FFFFFF, #FFFFFF),
               linear-gradient(106.35deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%),
               linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7))
-            `
+            `,
+            boxSizing: 'border-box',
+            overflow: 'hidden'
           }}
           className="flex flex-col"
         >
@@ -285,13 +287,14 @@ export const Login: React.FC = () => {
 
           <div
             style={{
-              width: '464px',
-              height: '608px',
+              width: '100%',
+              maxWidth: '100%',
               gap: '16px',
               opacity: 1,
               transform: 'rotate(0deg)',
               display: 'flex',
-              flexDirection: 'column'
+              flexDirection: 'column',
+              boxSizing: 'border-box'
             }}
           >
             <h1 
@@ -357,7 +360,7 @@ export const Login: React.FC = () => {
                   error={errors.password?.message}
                   {...register('password')}
                 />
-                <div className="mt-2" style={{ width: '464px', textAlign: 'right' }}>
+                <div className="mt-2" style={{ width: '100%', textAlign: 'right' }}>
                   <a 
                     href="#" 
                     style={{
@@ -385,7 +388,7 @@ export const Login: React.FC = () => {
               variant="filled"
               disabled={isLoading}
               style={{
-                width: '464px',
+                width: '100%',
                 height: '41px',
                 gap: '8px',
                 opacity: isLoading ? 0.6 : 1
@@ -411,7 +414,7 @@ export const Login: React.FC = () => {
               type="button"
               onClick={handleGoogleLogin}
               style={{
-                width: '442px',
+                width: '100%',
                 height: '56px',
                 paddingTop: '8px',
                 paddingBottom: '8px',
@@ -429,7 +432,7 @@ export const Login: React.FC = () => {
             >
               <div
                 style={{
-                  width: '442px',
+                  width: '100%',
                   height: '40px',
                   opacity: 1,
                   transform: 'rotate(0deg)',
@@ -478,8 +481,6 @@ export const Login: React.FC = () => {
             <div className="text-center" style={{ marginTop: '16px' }}>
               <p
                 style={{
-                  width: '179px',
-                  height: '18px',
                   fontFamily: 'Poppins',
                   fontWeight: 600,
                   fontSize: '12px',
@@ -500,7 +501,7 @@ export const Login: React.FC = () => {
                   type="button"
                   onClick={() => navigate('/user-type-selection')}
                 style={{
-                  width: '464px',
+                  width: '100%',
                   height: '41px',
                   borderRadius: '100px',
                   border: `1px solid ${colors.primary.main}`,
@@ -519,8 +520,6 @@ export const Login: React.FC = () => {
               >
                 <span
                   style={{
-                    width: '56px',
-                    height: '21px',
                     fontFamily: 'Poppins',
                     fontWeight: 600,
                     fontSize: '14px',

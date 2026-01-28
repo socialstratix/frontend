@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../../components/atoms/Input';
@@ -8,7 +8,7 @@ import { colors } from '../../constants/colors';
 import { OnboardingForm } from '../OnboardingForm';
 import { BrandOnboardingForm } from '../BrandOnboardingForm';
 import { useAuth } from '../../contexts/AuthContext';
-import { signupSchema } from '../../utils/validationSchemas';
+import { signupSchema, validatePassword, formatPasswordErrors } from '../../utils/validationSchemas';
 import type { SignupFormData } from '../../utils/validationSchemas';
 
 export const Signup: React.FC = () => {
@@ -23,11 +23,18 @@ export const Signup: React.FC = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    watch,
+    formState: { errors, touchedFields },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     mode: 'onBlur',
   });
+
+  const passwordValue = watch('password');
+  const passwordErrors = passwordValue ? validatePassword(passwordValue) : [];
+  const hasPasswordErrors = passwordErrors.length > 0;
+  const showPasswordErrors = touchedFields.password && hasPasswordErrors;
+  const formattedPasswordError = showPasswordErrors ? formatPasswordErrors(passwordErrors) : null;
 
   // Pre-select userType from URL query parameter
   useEffect(() => {
@@ -271,7 +278,9 @@ export const Signup: React.FC = () => {
               linear-gradient(0deg, #FFFFFF, #FFFFFF),
               linear-gradient(106.35deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%),
               linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7))
-            `
+            `,
+            boxSizing: 'border-box',
+            overflow: 'hidden'
           }}
           className="flex flex-col"
         >
@@ -317,17 +326,19 @@ export const Signup: React.FC = () => {
 
           <div
             style={{
-              width: '464px',
+              width: '100%',
+              maxWidth: '100%',
               opacity: 1,
               transform: 'rotate(0deg)',
               display: 'flex',
-              flexDirection: 'column'
+              flexDirection: 'column',
+              boxSizing: 'border-box'
             }}
           >
             <h1 
               style={{
-                width: '348px',
-                height: '50px',
+                width: '100%',
+                maxWidth: '100%',
                 fontFamily: 'Poppins, sans-serif',
                 fontWeight: 600,
                 fontSize: '33px',
@@ -340,7 +351,8 @@ export const Signup: React.FC = () => {
                 transform: 'rotate(0deg)',
                 color: '#1E002B',
                 margin: '0 auto 24px auto',
-                alignSelf: 'center'
+                alignSelf: 'center',
+                boxSizing: 'border-box'
               }}
             >
               Create your Account
@@ -420,6 +432,11 @@ export const Signup: React.FC = () => {
                     fontSize: '14px',
                     fontFamily: 'Poppins',
                     marginBottom: '16px',
+                    width: '100%',
+                    maxWidth: '100%',
+                    boxSizing: 'border-box',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
                   }}
                 >
                   {error}
@@ -460,7 +477,7 @@ export const Signup: React.FC = () => {
                       label="Password"
                       placeholder="Enter your password"
                       variant="login"
-                      error={errors.password?.message}
+                      error={formattedPasswordError || errors.password?.message}
                       {...register('password')}
                     />
                   </div>
@@ -484,7 +501,7 @@ export const Signup: React.FC = () => {
                   variant="filled"
                   disabled={isLoading}
                   style={{
-                    width: '464px',
+                    width: '100%',
                     height: '41px',
                     gap: '8px',
                     opacity: isLoading ? 0.6 : 1
@@ -511,7 +528,23 @@ export const Signup: React.FC = () => {
                     marginBottom: '12px'
                   }}
                 >
-                  Already have an account
+                  <Link
+                    to="/login"
+                    style={{
+                      cursor: 'pointer',
+                      color: colors.primary.main,
+                      textDecoration: 'underline',
+                      transition: 'color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = colors.primary.dark;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = colors.primary.main;
+                    }}
+                  >
+                    Already have an account
+                  </Link>
                 </p>
 
                 <Button
@@ -519,7 +552,7 @@ export const Signup: React.FC = () => {
                   variant="outline"
                   onClick={handleLoginClick}
                   style={{
-                    width: '464px',
+                    width: '100%',
                     height: '41px',
                     gap: '8px',
                     opacity: 1

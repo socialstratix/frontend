@@ -119,8 +119,9 @@ export const Messages: React.FC = () => {
         justifyContent: 'center',
         padding: '0 clamp(16px, 8vw, 120px)',
         alignItems: 'center',
-        minHeight: 'calc(100vh - 80px)',
+        height: 'calc(100vh - 80px)',
         width: '100%',
+        overflow: 'hidden',
         background:
           'linear-gradient(135deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%)',
       }}
@@ -131,9 +132,10 @@ export const Messages: React.FC = () => {
         style={{
           width: '100%',
           maxWidth: '1718px',
-          height: '970px',
-          maxHeight: '970px',
+          height: '100%',
+          maxHeight: '100%',
           backgroundColor: colors.primary.white,
+          overflow: 'hidden',
         }}
       >
         {/* Left Sidebar - Conversation List */}

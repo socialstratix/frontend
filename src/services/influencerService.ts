@@ -246,8 +246,8 @@ class InfluencerService {
    * Update influencer profile
    * @param userId - User ID of the influencer
    * @param data - Influencer data to update
-   * @param profileImageFile - Optional profile image file to upload
-   * @param coverImageFile - Optional cover/background image file to upload
+   * @param profileImageFile - Optional profile image file to upload, or null to remove
+   * @param coverImageFile - Optional cover/background image file to upload, or null to remove
    */
   async updateInfluencer(
     userId: string,
@@ -262,22 +262,33 @@ class InfluencerService {
         country?: string;
         pincode?: string;
       };
+      socialMedia?: Array<{ platform: string; username: string; profileUrl: string }>;
     },
-    profileImageFile?: File,
-    coverImageFile?: File
+    profileImageFile?: File | null,
+    coverImageFile?: File | null
   ): Promise<Influencer> {
     let requestData: any | FormData;
     
-    // If any file is provided, use FormData
-    if (profileImageFile || coverImageFile) {
+    // Check if we need to remove photos or upload files
+    const shouldRemoveProfileImage = profileImageFile === null;
+    const shouldRemoveCoverImage = coverImageFile === null;
+    const hasFileUpload = (profileImageFile instanceof File) || (coverImageFile instanceof File);
+    const hasSocialMedia = data.socialMedia !== undefined;
+    
+    // If any file is provided, removal flags needed, or socialMedia is provided, use FormData
+    if (hasFileUpload || shouldRemoveProfileImage || shouldRemoveCoverImage || hasSocialMedia) {
       const formData = new FormData();
       
-      if (profileImageFile) {
+      if (profileImageFile instanceof File) {
         formData.append('profileImage', profileImageFile);
+      } else if (shouldRemoveProfileImage) {
+        formData.append('removeProfileImage', 'true');
       }
       
-      if (coverImageFile) {
+      if (coverImageFile instanceof File) {
         formData.append('coverImage', coverImageFile);
+      } else if (shouldRemoveCoverImage) {
+        formData.append('removeCoverImage', 'true');
       }
       
       // Append other fields to FormData
@@ -286,6 +297,9 @@ class InfluencerService {
       }
       if (data.location !== undefined) {
         formData.append('location', JSON.stringify(data.location));
+      }
+      if (data.socialMedia !== undefined) {
+        formData.append('socialMedia', JSON.stringify(data.socialMedia));
       }
       
       requestData = formData;

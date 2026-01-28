@@ -79,16 +79,28 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, loading = 
   });
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0 }}>
+    <div 
+      style={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        width: '100%', 
+        minWidth: 0,
+        height: '100%',
+        overflow: 'hidden',
+      }}
+    >
       {/* Chat Header */}
       <div
         style={{
           width: '100%',
           height: '60px',
+          minHeight: '60px',
           display: 'flex',
           alignItems: 'center',
           padding: '0 20px',
           borderBottom: `1px solid ${colors.border.light}`,
+          flexShrink: 0,
         }}
       >
         {/* Avatar */}
@@ -141,11 +153,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, loading = 
         style={{
           flex: 1,
           overflowY: 'auto',
+          overflowX: 'hidden',
           display: 'flex',
           flexDirection: 'column',
           padding: '20px',
           backgroundColor: 'rgba(250, 249, 246, 1)',
           gap: '16px',
+          minHeight: 0,
         }}
       >
         {messagesLoading && (
@@ -204,8 +218,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ conversation, loading = 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input Area */}
-      <MessageInput onSend={handleSendMessage} disabled={loading || messagesLoading} />
+      {/* Message Input Area - Fixed at Bottom */}
+      <div style={{ flexShrink: 0 }}>
+        <MessageInput onSend={handleSendMessage} disabled={loading || messagesLoading} />
+      </div>
     </div>
   );
 };

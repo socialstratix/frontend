@@ -54,8 +54,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       className="w-full md:w-[280px] lg:w-[360px] border-b md:border-b-0 md:border-r flex flex-col"
       style={{
         width: '360px',
+        height: '100%',
         borderRight: `1px solid ${colors.border.light}`,
         backgroundColor: colors.primary.white,
+        overflow: 'hidden',
       }}
     >
       {/* Messages Header */}
@@ -64,6 +66,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           padding: '16px 20px 12px',
           borderRadius: '12px',
           backgroundColor: colors.primary.white,
+          flexShrink: 0,
         }}
       >
         <h1
@@ -137,9 +140,11 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         style={{
           flex: 1,
           overflowY: 'auto',
+          overflowX: 'hidden',
           backgroundColor: '#F9F9F9',
           padding: '8px',
           borderRadius: '12px',
+          minHeight: 0,
         }}
       >
         {loading && (

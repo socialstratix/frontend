@@ -7,6 +7,7 @@ import { EditDescription } from '../../components/molecules/EditDescription/Edit
 import { EditLocation } from '../../components/molecules/EditLocation/EditLocation';
 import { EditProfilePhoto } from '../../components/molecules/EditProfilePhoto/EditProfilePhoto';
 import { EditTags } from '../../components/molecules/EditTags/EditTags';
+import { EditSocialAccounts } from '../../components/molecules/EditSocialAccounts/EditSocialAccounts';
 import { FloatingButton } from '../../components/molecules/FloatingButton/FloatingButton';
 import { toastService } from '../../utils/toast';
 import { EditButton } from '../../components/atoms/EditButton';
@@ -195,6 +196,7 @@ export const InfluencerDetail: React.FC = () => {
   const [showEditProfileImage, setShowEditProfileImage] = useState(false);
   const [showEditBackgroundImage, setShowEditBackgroundImage] = useState(false);
   const [showEditTags, setShowEditTags] = useState(false);
+  const [showEditSocialAccounts, setShowEditSocialAccounts] = useState(false);
   
   // Profile completion state
   const [isProfileCompletionDismissed, setIsProfileCompletionDismissed] = useState(() => {
@@ -212,6 +214,7 @@ export const InfluencerDetail: React.FC = () => {
   const [isUpdatingProfileImage, setIsUpdatingProfileImage] = useState(false);
   const [isUpdatingBackgroundImage, setIsUpdatingBackgroundImage] = useState(false);
   const [isUpdatingTags, setIsUpdatingTags] = useState(false);
+  const [isUpdatingSocialAccounts, setIsUpdatingSocialAccounts] = useState(false);
   
   // Similar influencers state
   const [similarInfluencers, setSimilarInfluencers] = useState<Influencer[]>([]);
@@ -325,6 +328,35 @@ export const InfluencerDetail: React.FC = () => {
       hasSocialAccounts,
     };
   }, [influencer]);
+
+  // Track previous completion percentage to detect transition to 100%
+  const prevCompletionRef = useRef<number>(0);
+  
+  // Show toast and auto-dismiss when profile reaches 100%
+  // Reset dismissed state when percentage drops below 100%
+  useEffect(() => {
+    const currentPercentage = profileCompletion.percentage;
+    const prevPercentage = prevCompletionRef.current;
+    
+    // Only show toast when transitioning from <100% to 100%
+    if (currentPercentage === 100 && prevPercentage < 100 && isOwnProfile) {
+      toastService.success(' Congratulations! Your profile is 100% complete!');
+      // Auto-dismiss the floating button when 100% complete
+      setIsProfileCompletionDismissed(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('profileCompletionDismissed', 'true');
+      }
+    } else if (currentPercentage < 100 && isProfileCompletionDismissed && isOwnProfile) {
+      // Reset dismissed state when percentage drops below 100% so button can show again
+      setIsProfileCompletionDismissed(false);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('profileCompletionDismissed');
+      }
+    }
+    
+    // Update previous percentage
+    prevCompletionRef.current = currentPercentage;
+  }, [profileCompletion.percentage, isOwnProfile, isProfileCompletionDismissed]);
 
   // Handle profile completion dismiss
   const handleProfileCompletionDismiss = useCallback(() => {
@@ -456,6 +488,31 @@ export const InfluencerDetail: React.FC = () => {
     }
   }, [user, refreshInfluencerData]);
 
+  // Handler for saving social accounts
+  const handleSaveSocialAccounts = useCallback(async (socialMedia: Array<{ platform: string; username: string; profileUrl: string }>) => {
+    if (!user?.id) {
+      toastService.warning('You must be logged in to update your profile');
+      return;
+    }
+
+    try {
+      setIsUpdatingSocialAccounts(true);
+      
+      await influencerService.updateInfluencer(user.id, {
+        socialMedia,
+      });
+      
+      await refreshInfluencerData();
+      toastService.success('Social media accounts updated successfully');
+      setShowEditSocialAccounts(false);
+    } catch (err: any) {
+      console.error('Error updating social accounts:', err);
+      toastService.error(err.message || 'Failed to update social accounts');
+    } finally {
+      setIsUpdatingSocialAccounts(false);
+    }
+  }, [user, refreshInfluencerData]);
+
   // Handler for saving location
   const handleSaveLocation = useCallback(async (location: {
     city?: string;
@@ -493,19 +550,14 @@ export const InfluencerDetail: React.FC = () => {
       return;
     }
 
-    if (!profileImageFile) {
-      setShowEditProfileImage(false);
-      return;
-    }
-
     try {
       setIsUpdatingProfileImage(true);
       
-      // Update influencer with new profile image
+      // Update influencer with new profile image or remove it
       await influencerService.updateInfluencer(
         user.id,
         {},
-        profileImageFile
+        profileImageFile // null means remove, File means upload
       );
       
       // Small delay to ensure backend has processed the update
@@ -519,6 +571,7 @@ export const InfluencerDetail: React.FC = () => {
         await fetchInfluencer(user.id);
       }
       
+      toastService.success(profileImageFile ? 'Profile image updated successfully' : 'Profile image removed successfully');
       setShowEditProfileImage(false);
     } catch (err: any) {
       console.error('Error updating profile image:', err);
@@ -563,20 +616,15 @@ export const InfluencerDetail: React.FC = () => {
       return;
     }
 
-    if (!coverImageFile) {
-      setShowEditBackgroundImage(false);
-      return;
-    }
-
     try {
       setIsUpdatingBackgroundImage(true);
       
-      // Update influencer with new cover image
+      // Update influencer with new cover image or remove it
       await influencerService.updateInfluencer(
         user.id,
         {},
         undefined,
-        coverImageFile
+        coverImageFile // null means remove, File means upload
       );
       
       // Small delay to ensure backend has processed the update
@@ -590,6 +638,7 @@ export const InfluencerDetail: React.FC = () => {
         await fetchInfluencer(user.id);
       }
       
+      toastService.success(coverImageFile ? 'Background image updated successfully' : 'Background image removed successfully');
       setShowEditBackgroundImage(false);
     } catch (err: any) {
       console.error('Error updating background image:', err);
@@ -858,6 +907,7 @@ export const InfluencerDetail: React.FC = () => {
                 <h3 style={{ fontFamily: 'Poppins, sans-serif', fontSize: '20px', fontWeight: 600, color: '#1E002B', margin: 0 }}>
                   Followers
                 </h3>
+                {isOwnProfile && <EditButton onClick={() => setShowEditSocialAccounts(true)} />}
                 <div style={{ position: 'relative', display: 'inline-block' }}>
                   <select
                     style={{
@@ -2532,17 +2582,28 @@ export const InfluencerDetail: React.FC = () => {
             onSave={handleSaveBackgroundImage}
             title="Edit Background Image"
           />
+
+          <EditSocialAccounts
+            isOpen={showEditSocialAccounts}
+            onClose={() => {
+              if (!isUpdatingSocialAccounts) {
+                setShowEditSocialAccounts(false);
+              }
+            }}
+            initialSocialProfiles={influencer?.socialProfiles || []}
+            onSave={handleSaveSocialAccounts}
+          />
         </>
       )}
 
-      {/* Profile Completion Floating Button */}
+      {/* Profile Completion Floating Button - Only show when less than 100% */}
       {(() => {
         console.log('FloatingButton render condition:', {
           isOwnProfile,
           profileCompletion: profileCompletion.percentage,
           isDismissed: isProfileCompletionDismissed
         });
-        return isOwnProfile;
+        return isOwnProfile && profileCompletion.percentage < 100 && !isProfileCompletionDismissed;
       })() && (
         <FloatingButton
           completionPercentage={profileCompletion.percentage}
@@ -2554,6 +2615,7 @@ export const InfluencerDetail: React.FC = () => {
           onEditProfilePic={() => setShowEditProfileImage(true)}
           onEditTags={() => setShowEditTags(true)}
           onEditDescription={() => setShowEditDescription(true)}
+          onEditSocialAccounts={() => setShowEditSocialAccounts(true)}
           isDismissed={isProfileCompletionDismissed}
           onDismiss={handleProfileCompletionDismiss}
         />
