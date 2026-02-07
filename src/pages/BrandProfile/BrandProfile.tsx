@@ -1331,7 +1331,7 @@ export const BrandProfile: React.FC = () => {
 
                 {/* Campaign Name */}
                 <h3
-                  onClick={() => navigate(`/${baseRoute}/campaigns/${campaign.id}`)}
+                  onClick={() => navigate(`/${isInfluencer ? 'influencer' : 'brand'}/campaigns/${campaign.id}`)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = colors.primary.main;
                     e.currentTarget.style.textDecoration = 'underline';

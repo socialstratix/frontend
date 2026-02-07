@@ -7,6 +7,8 @@ import { Button } from '../../atoms/Button';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { influencerService } from '../../../services/influencerService';
 import type { Influencer } from '../../../services/influencerService';
+import { brandService } from '../../../services/brandService';
+import type { Brand } from '../../../services/brandService';
 import { messageService } from '../../../services/messageService';
 import { useSocket } from '../../../contexts/SocketContext';
 
@@ -34,10 +36,12 @@ export const Header: React.FC<HeaderProps> = ({
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Influencer[]>([]);
+  const [brandSearchResults, setBrandSearchResults] = useState<Brand[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const isInfluencer = user?.userType === 'influencer';
   
   // Unread message count
   const [unreadCount, setUnreadCount] = useState(0);
@@ -77,27 +81,45 @@ export const Header: React.FC<HeaderProps> = ({
     const performSearch = async () => {
       if (!debouncedSearchQuery.trim()) {
         setSearchResults([]);
+        setBrandSearchResults([]);
         setIsSearching(false);
         return;
       }
 
       setIsSearching(true);
       try {
-        const response = await influencerService.getAllInfluencers({
-          search: debouncedSearchQuery,
-          limit: 5, // Limit to 5 results for dropdown
-        });
-        setSearchResults(response.influencers);
+        if (isInfluencer) {
+          // For influencers: ONLY search for brands
+          const response = await brandService.getAllBrands({
+            search: debouncedSearchQuery,
+            limit: 5, // Limit to 5 results for dropdown
+          });
+          setBrandSearchResults(response.brands || []);
+          setSearchResults([]); // Clear influencer results
+        } else if (user?.userType === 'brand') {
+          // For brands: ONLY search for influencers
+          const response = await influencerService.getAllInfluencers({
+            search: debouncedSearchQuery,
+            limit: 5, // Limit to 5 results for dropdown
+          });
+          setSearchResults(response.influencers || []);
+          setBrandSearchResults([]); // Clear brand results
+        } else {
+          // For unauthenticated or unknown user types: no search
+          setSearchResults([]);
+          setBrandSearchResults([]);
+        }
       } catch (error) {
-        console.error('Error searching influencers:', error);
+        console.error(`Error searching ${isInfluencer ? 'brands' : 'influencers'}:`, error);
         setSearchResults([]);
+        setBrandSearchResults([]);
       } finally {
         setIsSearching(false);
       }
     };
 
     performSearch();
-  }, [debouncedSearchQuery]);
+  }, [debouncedSearchQuery, isInfluencer]);
 
   // Close search results when clicking outside
   useEffect(() => {
@@ -186,8 +208,25 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  // Get brand detail path based on base route
+  const getBrandPath = (brandId: string) => {
+    if (baseRoute === 'brand') {
+      return `/brand/brand/${brandId}`;
+    } else if (baseRoute === 'influencer') {
+      return `/influencer/brand/${brandId}`;
+    } else {
+      return `/home/brand/${brandId}`;
+    }
+  };
+
   const handleInfluencerClick = (influencerId: string) => {
     navigate(getInfluencerPath(influencerId));
+    setShowSearchResults(false);
+    setSearchQuery('');
+  };
+
+  const handleBrandClick = (brandId: string) => {
+    navigate(getBrandPath(brandId));
     setShowSearchResults(false);
     setSearchQuery('');
   };
@@ -241,14 +280,15 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <input
                 type="text"
-                placeholder="Search influencers"
+                placeholder={isInfluencer ? "Search brands" : (user?.userType === 'brand' ? "Search influencers" : "Search")}
+                disabled={!isInfluencer && user?.userType !== 'brand'}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setShowSearchResults(true);
                 }}
                 onFocus={() => {
-                  if (searchResults.length > 0 || isSearching) {
+                  if (searchResults.length > 0 || brandSearchResults.length > 0 || isSearching) {
                     setShowSearchResults(true);
                   }
                 }}
@@ -288,7 +328,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
 
               {/* Search Results Dropdown */}
-              {showSearchResults && (searchResults.length > 0 || isSearching || (debouncedSearchQuery && !isSearching)) && (
+              {showSearchResults && ((isInfluencer ? brandSearchResults.length > 0 : searchResults.length > 0) || isSearching || (debouncedSearchQuery && !isSearching)) && (
                 <div
                   style={{
                     position: 'absolute',
@@ -310,125 +350,248 @@ export const Header: React.FC<HeaderProps> = ({
                     <div style={{ padding: '16px', textAlign: 'center', color: '#666' }}>
                       Searching...
                     </div>
-                  ) : searchResults.length > 0 ? (
-                    <>
-                      {searchResults.map((influencer) => (
-                        <div
-                          key={influencer._id}
-                          onClick={() => handleInfluencerClick(influencer._id)}
-                          style={{
-                            padding: '12px 16px',
-                            cursor: 'pointer',
-                            borderBottom: '1px solid #F0F0F0',
-                            transition: 'background-color 0.2s',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#F8F8F8';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#FFFFFF';
-                          }}
-                        >
+                  ) : isInfluencer ? (
+                    // Brand search results for influencers
+                    brandSearchResults.length > 0 ? (
+                      <>
+                        {brandSearchResults.map((brand) => (
                           <div
+                            key={brand._id}
+                            onClick={() => handleBrandClick(brand._id)}
                             style={{
-                              fontSize: '14px',
-                              fontWeight: 600,
-                              color: '#1E002B',
-                              marginBottom: '4px',
+                              padding: '12px 16px',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #F0F0F0',
+                              transition: 'background-color 0.2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#F8F8F8';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#FFFFFF';
                             }}
                           >
-                            {influencer.user?.name || 'Influencer'}
-                          </div>
-                          {(influencer.description || influencer.bio) && (
                             <div
                               style={{
-                                fontSize: '12px',
-                                color: '#666',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                color: '#1E002B',
+                                marginBottom: '4px',
                               }}
                             >
-                              {influencer.description || influencer.bio}
+                              {brand.user?.name || 'Brand'}
                             </div>
-                          )}
-                        </div>
-                      ))}
-                      {debouncedSearchQuery && (
-                        <div
-                          style={{
-                            padding: '12px 16px',
-                            borderTop: '1px solid #F0F0F0',
-                            fontSize: '12px',
-                            color: '#666',
-                          }}
-                        >
-                          <div style={{ marginBottom: '8px', fontWeight: 600, color: '#1E002B' }}>
-                            Try searching for
+                            {brand.description && (
+                              <div
+                                style={{
+                                  fontSize: '12px',
+                                  color: '#666',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {brand.description}
+                              </div>
+                            )}
                           </div>
+                        ))}
+                        {debouncedSearchQuery && (
                           <div
-                            onClick={() => {
-                              setSearchQuery('Fashion influencers');
-                              setShowSearchResults(true);
-                            }}
                             style={{
-                              padding: '4px 0',
-                              cursor: 'pointer',
-                              color: '#783C91',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.textDecoration = 'underline';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.textDecoration = 'none';
+                              padding: '12px 16px',
+                              borderTop: '1px solid #F0F0F0',
+                              fontSize: '12px',
+                              color: '#666',
                             }}
                           >
-                            Fashion influencers
+                            <div style={{ marginBottom: '8px', fontWeight: 600, color: '#1E002B' }}>
+                              Try searching for
+                            </div>
+                            <div
+                              onClick={() => {
+                                setSearchQuery('Fashion brands');
+                                setShowSearchResults(true);
+                              }}
+                              style={{
+                                padding: '4px 0',
+                                cursor: 'pointer',
+                                color: '#783C91',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none';
+                              }}
+                            >
+                              Fashion brands
+                            </div>
+                            <div
+                              onClick={() => {
+                                setSearchQuery('Tech brands');
+                                setShowSearchResults(true);
+                              }}
+                              style={{
+                                padding: '4px 0',
+                                cursor: 'pointer',
+                                color: '#783C91',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none';
+                              }}
+                            >
+                              Tech brands
+                            </div>
+                            <div
+                              onClick={() => {
+                                setSearchQuery('Beauty brands');
+                                setShowSearchResults(true);
+                              }}
+                              style={{
+                                padding: '4px 0',
+                                cursor: 'pointer',
+                                color: '#783C91',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none';
+                              }}
+                            >
+                              Beauty brands
+                            </div>
                           </div>
+                        )}
+                      </>
+                    ) : null
+                  ) : (
+                    // Influencer search results for brands
+                    searchResults.length > 0 ? (
+                      <>
+                        {searchResults.map((influencer) => (
                           <div
-                            onClick={() => {
-                              setSearchQuery('Travel Influencers');
-                              setShowSearchResults(true);
-                            }}
+                            key={influencer._id}
+                            onClick={() => handleInfluencerClick(influencer._id)}
                             style={{
-                              padding: '4px 0',
+                              padding: '12px 16px',
                               cursor: 'pointer',
-                              color: '#783C91',
+                              borderBottom: '1px solid #F0F0F0',
+                              transition: 'background-color 0.2s',
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.textDecoration = 'underline';
+                              e.currentTarget.style.backgroundColor = '#F8F8F8';
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.textDecoration = 'none';
+                              e.currentTarget.style.backgroundColor = '#FFFFFF';
                             }}
                           >
-                            Travel Influencers
+                            <div
+                              style={{
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                color: '#1E002B',
+                                marginBottom: '4px',
+                              }}
+                            >
+                              {influencer.user?.name || 'Influencer'}
+                            </div>
+                            {(influencer.description || influencer.bio) && (
+                              <div
+                                style={{
+                                  fontSize: '12px',
+                                  color: '#666',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {influencer.description || influencer.bio}
+                              </div>
+                            )}
                           </div>
+                        ))}
+                        {debouncedSearchQuery && (
                           <div
-                            onClick={() => {
-                              setSearchQuery('Fitness Influencers');
-                              setShowSearchResults(true);
-                            }}
                             style={{
-                              padding: '4px 0',
-                              cursor: 'pointer',
-                              color: '#783C91',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.textDecoration = 'underline';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.textDecoration = 'none';
+                              padding: '12px 16px',
+                              borderTop: '1px solid #F0F0F0',
+                              fontSize: '12px',
+                              color: '#666',
                             }}
                           >
-                            Fitness Influencers
+                            <div style={{ marginBottom: '8px', fontWeight: 600, color: '#1E002B' }}>
+                              Try searching for
+                            </div>
+                            <div
+                              onClick={() => {
+                                setSearchQuery('Fashion influencers');
+                                setShowSearchResults(true);
+                              }}
+                              style={{
+                                padding: '4px 0',
+                                cursor: 'pointer',
+                                color: '#783C91',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none';
+                              }}
+                            >
+                              Fashion influencers
+                            </div>
+                            <div
+                              onClick={() => {
+                                setSearchQuery('Travel Influencers');
+                                setShowSearchResults(true);
+                              }}
+                              style={{
+                                padding: '4px 0',
+                                cursor: 'pointer',
+                                color: '#783C91',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none';
+                              }}
+                            >
+                              Travel Influencers
+                            </div>
+                            <div
+                              onClick={() => {
+                                setSearchQuery('Fitness Influencers');
+                                setShowSearchResults(true);
+                              }}
+                              style={{
+                                padding: '4px 0',
+                                cursor: 'pointer',
+                                color: '#783C91',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none';
+                              }}
+                            >
+                              Fitness Influencers
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </>
-                  ) : debouncedSearchQuery ? (
+                        )}
+                      </>
+                    ) : null
+                  )}
+                  {debouncedSearchQuery && (isInfluencer ? brandSearchResults.length === 0 : searchResults.length === 0) && (
                     <div style={{ padding: '16px', textAlign: 'center', color: '#666' }}>
-                      No influencers found
+                      {isInfluencer ? 'No brands found' : 'No influencers found'}
                       <div
                         style={{
                           marginTop: '12px',
@@ -439,66 +602,130 @@ export const Header: React.FC<HeaderProps> = ({
                         <div style={{ marginBottom: '8px', fontWeight: 600, color: '#1E002B' }}>
                           Try searching for
                         </div>
-                        <div
-                          onClick={() => {
-                            setSearchQuery('Fashion influencers');
-                            setShowSearchResults(true);
-                          }}
-                          style={{
-                            padding: '4px 0',
-                            cursor: 'pointer',
-                            color: '#783C91',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.textDecoration = 'underline';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.textDecoration = 'none';
-                          }}
-                        >
-                          Fashion influencers
-                        </div>
-                        <div
-                          onClick={() => {
-                            setSearchQuery('Travel Influencers');
-                            setShowSearchResults(true);
-                          }}
-                          style={{
-                            padding: '4px 0',
-                            cursor: 'pointer',
-                            color: '#783C91',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.textDecoration = 'underline';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.textDecoration = 'none';
-                          }}
-                        >
-                          Travel Influencers
-                        </div>
-                        <div
-                          onClick={() => {
-                            setSearchQuery('Fitness Influencers');
-                            setShowSearchResults(true);
-                          }}
-                          style={{
-                            padding: '4px 0',
-                            cursor: 'pointer',
-                            color: '#783C91',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.textDecoration = 'underline';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.textDecoration = 'none';
-                          }}
-                        >
-                          Fitness Influencers
-                        </div>
+                        {isInfluencer ? (
+                          <>
+                            <div
+                              onClick={() => {
+                                setSearchQuery('Fashion brands');
+                                setShowSearchResults(true);
+                              }}
+                              style={{
+                                padding: '4px 0',
+                                cursor: 'pointer',
+                                color: '#783C91',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none';
+                              }}
+                            >
+                              Fashion brands
+                            </div>
+                            <div
+                              onClick={() => {
+                                setSearchQuery('Tech brands');
+                                setShowSearchResults(true);
+                              }}
+                              style={{
+                                padding: '4px 0',
+                                cursor: 'pointer',
+                                color: '#783C91',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none';
+                              }}
+                            >
+                              Tech brands
+                            </div>
+                            <div
+                              onClick={() => {
+                                setSearchQuery('Beauty brands');
+                                setShowSearchResults(true);
+                              }}
+                              style={{
+                                padding: '4px 0',
+                                cursor: 'pointer',
+                                color: '#783C91',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none';
+                              }}
+                            >
+                              Beauty brands
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div
+                              onClick={() => {
+                                setSearchQuery('Fashion influencers');
+                                setShowSearchResults(true);
+                              }}
+                              style={{
+                                padding: '4px 0',
+                                cursor: 'pointer',
+                                color: '#783C91',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none';
+                              }}
+                            >
+                              Fashion influencers
+                            </div>
+                            <div
+                              onClick={() => {
+                                setSearchQuery('Travel Influencers');
+                                setShowSearchResults(true);
+                              }}
+                              style={{
+                                padding: '4px 0',
+                                cursor: 'pointer',
+                                color: '#783C91',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none';
+                              }}
+                            >
+                              Travel Influencers
+                            </div>
+                            <div
+                              onClick={() => {
+                                setSearchQuery('Fitness Influencers');
+                                setShowSearchResults(true);
+                              }}
+                              style={{
+                                padding: '4px 0',
+                                cursor: 'pointer',
+                                color: '#783C91',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none';
+                              }}
+                            >
+                              Fitness Influencers
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
-                  ) : null}
+                  )}
                 </div>
               )}
             </div>

@@ -280,17 +280,17 @@ export const InfluencerDetail: React.FC = () => {
 
     return {
       id: influencer._id,
-      name: influencer.user?.name || 'Influencer',
+      name: influencer.user?.name || 'Influencer Name',
       image: influencer.coverImage || undefined, // Use URL directly as-is
       profileImage: influencer.profileImage || influencer.user?.avatar || undefined, // Use URL directly as-is
       rating: influencer.rating,
       description: influencer.description || influencer.bio || '',
-      location: locationStr,
+      location: locationStr || 'Location not specified',
       isTopCreator: influencer.isTopCreator,
       hasVerifiedPayment: influencer.hasVerifiedPayment,
       platformFollowers: influencer.platformFollowers || {},
       platforms,
-      tags: influencer.tags || [],
+      tags: influencer.tags && influencer.tags.length > 0 ? influencer.tags : ['Tag 1', 'Tag 2', 'Tag 3'],
     };
   }, [influencer]);
 
@@ -902,57 +902,57 @@ export const InfluencerDetail: React.FC = () => {
          
 
             {/* Platform Followers Section - Left Aligned */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                <h3 style={{ fontFamily: 'Poppins, sans-serif', fontSize: '20px', fontWeight: 600, color: '#1E002B', margin: 0 }}>
-                  Followers
-                </h3>
-                {isOwnProfile && <EditButton onClick={() => setShowEditSocialAccounts(true)} />}
-                <div style={{ position: 'relative', display: 'inline-block' }}>
-                  <select
-                    style={{
-                      padding: '8px 32px 8px 12px',
-                      fontFamily: 'Poppins, sans-serif',
-                      fontSize: '14px',
-                      fontWeight: 400,
-                      color: '#1E002B',
-                      backgroundColor: '#FFFFFF',
-                      border: 'none',
-                      outline: 'none',
-                      appearance: 'none',
-                      cursor: 'pointer'
-                    }}
-                    value={followersPeriod === '7d' ? '7days' : '30days'}
-                    onChange={(e) => {
-                      const newPeriod = e.target.value === '7days' ? '7d' : '30d';
-                      setFollowersPeriod(newPeriod);
-                    }}
-                  >
-                    <option value="7days">Last 7 days</option>
-                    <option value="30days">Last 30 days</option>
-                  </select>
-                  <img
-                    src={ArrowDropDownIcon}
-                    alt="Dropdown"
-                    style={{
-                      position: 'absolute',
-                      right: '8px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      width: '16px',
-                      height: '16px',
-                      pointerEvents: 'none',
-                      zIndex: 1
-                    }}
-                  />
+            {(followers || isLoadingFollowers || isOwnProfile) && (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <h3 style={{ fontFamily: 'Poppins, sans-serif', fontSize: '20px', fontWeight: 600, color: '#1E002B', margin: 0 }}>
+                    Followers
+                  </h3>
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <select
+                      style={{
+                        padding: '8px 32px 8px 12px',
+                        fontFamily: 'Poppins, sans-serif',
+                        fontSize: '14px',
+                        fontWeight: 400,
+                        color: '#1E002B',
+                        backgroundColor: '#FFFFFF',
+                        border: 'none',
+                        outline: 'none',
+                        appearance: 'none',
+                        cursor: 'pointer'
+                      }}
+                      value={followersPeriod === '7d' ? '7days' : '30days'}
+                      onChange={(e) => {
+                        const newPeriod = e.target.value === '7days' ? '7d' : '30d';
+                        setFollowersPeriod(newPeriod);
+                      }}
+                    >
+                      <option value="7days">Last 7 days</option>
+                      <option value="30days">Last 30 days</option>
+                    </select>
+                    <img
+                      src={ArrowDropDownIcon}
+                      alt="Dropdown"
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '16px',
+                        height: '16px',
+                        pointerEvents: 'none',
+                        zIndex: 1
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-              {isLoadingFollowers ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                  <span style={{ color: '#1E002B' }}>Loading followers...</span>
-                </div>
-              ) : followers ? (
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                {isLoadingFollowers ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', minHeight: '60px' }}>
+                    <span style={{ color: '#1E002B' }}>Loading followers...</span>
+                  </div>
+                ) : followers && (followers.platformFollowers?.x !== undefined || followers.platformFollowers?.youtube !== undefined || followers.platformFollowers?.facebook !== undefined || followers.platformFollowers?.instagram !== undefined || followers.platformFollowers?.tiktok !== undefined) ? (
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', minHeight: '44px' }}>
                   {followers.platformFollowers.x !== undefined && (
                   <a
                     href={socialProfilesMap['x'] || '#'}
@@ -1168,17 +1168,22 @@ export const InfluencerDetail: React.FC = () => {
                     </span>
                   </a>
                   )}
-                </div>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                  <span style={{ color: '#1E002B' }}>No followers data available</span>
-                </div>
-              )}
-            </div>
+                  {isOwnProfile && <EditButton onClick={() => setShowEditSocialAccounts(true)} />}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', minHeight: '44px' }}>
+                    <span style={{ color: '#999', fontStyle: 'italic' }}>
+                      {isOwnProfile ? 'No followers data yet. Add social media accounts to see follower counts.' : 'No followers data available'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
           {/* Verified Payment and Top Creator Badges - Left Aligned */}
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
-            {influencerData.hasVerifiedPayment && (
+          {(influencerData.hasVerifiedPayment || influencerData.isTopCreator) && (
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
+              {influencerData.hasVerifiedPayment && (
               <div
                 style={{
                   width: '388px',
@@ -1270,123 +1275,80 @@ export const InfluencerDetail: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Description Section */}
-          <div style={{ marginBottom: '32px' }}>
-            {/* Description Heading */}
-            <h2
-              style={{
-                fontFamily: 'Poppins, sans-serif',
-                fontSize: '24px',
-                fontWeight: 600,
-                color: '#1E002B',
-                marginBottom: '16px',
-                textAlign: 'left'
-              }}
-            >
-              Description
-            </h2>
-            
-            {/* Description Body Text with Edit Button */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '8px',
-                marginBottom: '32px',
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: 'Poppins',
-                  fontSize: '14px',
-                  fontWeight: 400,
-                  fontStyle: 'normal',
-                  color: '#1E002B',
-                  lineHeight: '100%',
-                  letterSpacing: '0%',
-                  verticalAlign: 'middle',
-                  textAlign: 'left',
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word',
-                  wordBreak: 'break-word',
-                  flex: 1,
-                  margin: 0,
-                }}
-              >
-                {influencerData?.description || 'No description available'}
-              </p>
-              {isOwnProfile && <EditButton onClick={() => setShowEditDescription(true)} />}
             </div>
+          )}
 
-          
-
-            {/* Social Media Dropdown */}
-            <div style={{ marginTop: '32px', marginBottom: '24px' }}>
-              <label
+          {/* Description Section - Only show if description exists or user can edit */}
+          {(influencerData?.description || isOwnProfile) && (
+            <div style={{ marginBottom: '32px' }}>
+              {/* Description Heading */}
+              <h2
                 style={{
-                  display: 'block',
                   fontFamily: 'Poppins, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 400,
+                  fontSize: '24px',
+                  fontWeight: 600,
                   color: '#1E002B',
-                  marginBottom: '10px'
+                  marginBottom: '16px',
+                  textAlign: 'left'
                 }}
               >
-                Social media
-              </label>
+                Description
+              </h2>
+              
+              {/* Description Body Text with Edit Button */}
               <div
                 style={{
-                  position: 'relative',
-                  display: 'inline-block',
-                  width: '232px'
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '8px',
+                  marginBottom: influencerData?.description ? '32px' : '0',
                 }}
               >
-                <select
-                  style={{
-                    width: '100%',
-                    height: '56px',
-                    opacity: 1,
-                    padding: '12px 16px',
-                    paddingRight: '40px',
-                    fontFamily: 'Poppins, sans-serif',
-                    fontSize: '14px',
-                    fontWeight: 400,
-                    color: '#1E002B',
-                    backgroundColor: '#FFFFFF',
-                    border: '2px solid #783C91',
-                    borderWidth: '2px',
-                    borderRadius: '4px',
-                    outline: 'none',
-                    appearance: 'none',
-                    cursor: 'pointer'
-                  }}
-                  defaultValue="instagram"
-                >
-                  <option value="instagram">Instagram</option>
-                  <option value="youtube">YouTube</option>
-                  <option value="facebook">Facebook</option>
-                  <option value="x">X (Twitter)</option>
-                  <option value="tiktok">TikTok</option>
-                </select>
-                <img
-                  src={ArrowDropDownIcon}
-                  alt="Dropdown"
-                  style={{
-                    position: 'absolute',
-                    right: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: '20px',
-                    height: '20px',
-                    pointerEvents: 'none',
-                    zIndex: 1
-                  }}
-                />
+                {influencerData?.description ? (
+                  <p
+                    style={{
+                      fontFamily: 'Poppins',
+                      fontSize: '14px',
+                      fontWeight: 400,
+                      fontStyle: 'normal',
+                      color: '#1E002B',
+                      lineHeight: '100%',
+                      letterSpacing: '0%',
+                      verticalAlign: 'middle',
+                      textAlign: 'left',
+                      wordWrap: 'break-word',
+                      overflowWrap: 'break-word',
+                      wordBreak: 'break-word',
+                      flex: 1,
+                      margin: 0,
+                    }}
+                  >
+                    {influencerData.description}
+                  </p>
+                ) : isOwnProfile ? (
+                  <p
+                    style={{
+                      fontFamily: 'Poppins',
+                      fontSize: '14px',
+                      fontWeight: 400,
+                      fontStyle: 'normal',
+                      color: '#999',
+                      lineHeight: '100%',
+                      letterSpacing: '0%',
+                      verticalAlign: 'middle',
+                      textAlign: 'left',
+                      flex: 1,
+                      margin: 0,
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    No description yet. Click edit to add one.
+                  </p>
+                ) : null}
+                {isOwnProfile && <EditButton onClick={() => setShowEditDescription(true)} />}
               </div>
             </div>
-          </div>
+          )}
 
           {/* Content Grid - Second Half */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>

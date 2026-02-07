@@ -280,20 +280,23 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
         {/* Spacer for profile image */}
         <div style={{ width: '200px', flexShrink: 0 }} />
 
-        {/* Name, Location, Description */}
+        {/* Name, Location, Tags */}
         <div
           style={{
             marginTop: '0px',
-            flex: 1
+            flex: 1,
+            minHeight: 0
           }}
         >
           {/* Name and Location - Horizontal Layout */}
           <div
             style={{
               display: 'flex',
-            
-              gap: '0px',
-              marginBottom: '16px'
+              alignItems: 'center',
+              gap: location ? '0px' : '8px',
+              marginBottom: ((tags && tags.length > 0) || onEditTags) ? '16px' : '0px',
+              flexWrap: 'wrap',
+              minHeight: '32px'
             }}
           >
             {/* Name */}
@@ -301,7 +304,8 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                flexShrink: 0
               }}
             >
               <div
@@ -314,29 +318,32 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
                   letterSpacing: '0%',
                   textAlign: 'center',
                   verticalAlign: 'middle',
-                  color: '#1E002B'
+                  color: name && name !== 'Influencer Name' ? '#1E002B' : '#999',
                 }}
               >
-                {name}
+                {name || 'Influencer Name'}
               </div>
               {onEditName && <EditButton onClick={onEditName} />}
             </div>
             
-            {/* Separator */}
-            {location && (
+            {/* Separator and Location */}
+            {(location || onEditLocation) && (
               <>
-                <span
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: 1
-                  }}
-                >
-                  |
-                </span>
+                {name && (
+                  <span
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: 1,
+                      flexShrink: 0
+                    }}
+                  >
+                    |
+                  </span>
+                )}
                 
                 {/* Location */}
                 <div
@@ -344,7 +351,8 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    opacity: 1
+                    opacity: 1,
+                    flexShrink: 0
                   }}
                 >
                   <div
@@ -352,11 +360,11 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
-                      width: '106px',
+                      minWidth: '106px',
                       height: '24px'
                     }}
                   >
-                    <img src={LocationIcon} alt="Location" style={{ width: '16px', height: '16px' }} />
+                    <img src={LocationIcon} alt="Location" style={{ width: '16px', height: '16px', flexShrink: 0 }} />
                     <span
                       style={{
                         fontFamily: 'Poppins, sans-serif',
@@ -366,10 +374,11 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
                         lineHeight: '100%',
                         letterSpacing: '0%',
                         verticalAlign: 'middle',
-                        color: '#1E002B'
+                        color: location && location !== 'Location not specified' ? '#1E002B' : '#999',
+                        whiteSpace: 'nowrap'
                       }}
                     >
-                      {location}
+                      {location || 'Location not specified'}
                     </span>
                   </div>
                   {onEditLocation && <EditButton onClick={onEditLocation} />}
@@ -379,15 +388,17 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
           </div>
 
           {/* Tags - Comma Separated */}
-          {tags && tags.length > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '8px'
-              }}
-            >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '0px',
+              flexWrap: 'wrap',
+              minHeight: '28px'
+            }}
+          >
+            {tags && tags.length > 0 ? (
               <span
                 style={{
                   fontFamily: 'Poppins',
@@ -398,14 +409,30 @@ export const InfluencerDetailFrame: React.FC<InfluencerDetailFrameProps> = ({
                   letterSpacing: '0%',
                   textAlign: 'center',
                   verticalAlign: 'middle',
-                  color: '#676767',
+                  color: tags.some(tag => !tag.startsWith('Tag ')) ? '#676767' : '#999',
                 }}
               >
                 {Array.from(new Set(tags)).join(', ')}
               </span>
-              {onEditTags && <EditButton onClick={onEditTags} />}
-            </div>
-          )}
+            ) : (
+              <span
+                style={{
+                  fontFamily: 'Poppins',
+                  fontWeight: 400,
+                  fontStyle: 'normal',
+                  fontSize: '18px',
+                  lineHeight: '100%',
+                  letterSpacing: '0%',
+                  textAlign: 'center',
+                  verticalAlign: 'middle',
+                  color: '#999',
+                }}
+              >
+                Tag 1, Tag 2, Tag 3
+              </span>
+            )}
+            {onEditTags && <EditButton onClick={onEditTags} />}
+          </div>
 
         </div>
 

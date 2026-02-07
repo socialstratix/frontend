@@ -26,6 +26,368 @@ import { EditDescription } from '../../components/molecules/EditDescription';
 import { EditTags } from '../../components/molecules/EditTags';
 import { toastService } from '../../utils/toast';
 
+// Edit Attachments Modal Component
+const EditAttachmentsModal: React.FC<{
+  campaign: CampaignType;
+  onClose: () => void;
+  onSave: (updatedAttachments: string[], newFiles?: File[]) => Promise<void>;
+}> = ({ campaign, onClose, onSave }) => {
+  const [currentAttachments, setCurrentAttachments] = useState<string[]>(campaign.attachments || []);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const maxFiles = 5;
+  const totalCount = currentAttachments.length + newFiles.length;
+
+  const handleRemoveAttachment = (index: number) => {
+    setCurrentAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveNewFile = (index: number) => {
+    setNewFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const remainingSlots = maxFiles - totalCount;
+    if (remainingSlots <= 0) {
+      setError(`Maximum ${maxFiles} attachments allowed. Please remove some files first.`);
+      e.target.value = '';
+      return;
+    }
+
+    const validFiles: File[] = [];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+    ];
+
+    const filesToProcess = Array.from(files).slice(0, remainingSlots);
+    
+    filesToProcess.forEach((file) => {
+      if (!allowedTypes.includes(file.type)) {
+        setError(`File "${file.name}" is not a valid format.`);
+        return;
+      }
+      if (file.size > maxSize) {
+        setError(`File "${file.name}" exceeds 5MB.`);
+        return;
+      }
+      validFiles.push(file);
+    });
+
+    if (validFiles.length > 0) {
+      setNewFiles((prev) => {
+        const combined = [...prev, ...validFiles];
+        if (combined.length > remainingSlots) {
+          setError(`Maximum ${maxFiles} attachments allowed. Only the first ${remainingSlots} files were added.`);
+          return combined.slice(0, remainingSlots);
+        }
+        return combined;
+      });
+      setError(null);
+    }
+
+    e.target.value = '';
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const getFileName = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+      const fileName = pathname.split('/').pop() || pathname;
+      return decodeURIComponent(fileName);
+    } catch {
+      const parts = url.split('/');
+      const fileName = parts[parts.length - 1].split('?')[0];
+      return decodeURIComponent(fileName);
+    }
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setError(null);
+    try {
+      await onSave(currentAttachments, newFiles.length > 0 ? newFiles : undefined);
+    } catch (err: any) {
+      setError(err.message || 'Failed to save attachments');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          backgroundColor: colors.primary.white,
+          borderRadius: '8px',
+          padding: '32px',
+          maxWidth: '600px',
+          width: '90%',
+          maxHeight: '80vh',
+          overflow: 'auto',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2
+          style={{
+            fontFamily: 'Poppins',
+            fontSize: '20px',
+            fontWeight: 600,
+            marginBottom: '8px',
+          }}
+        >
+          Edit Attachments
+        </h2>
+        <p style={{ 
+          fontFamily: 'Poppins', 
+          fontSize: '14px', 
+          color: colors.text.secondary, 
+          marginBottom: '24px' 
+        }}>
+          {totalCount}/{maxFiles} attachments
+        </p>
+
+        {/* Current Attachments */}
+        {currentAttachments.length > 0 && (
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ 
+              fontFamily: 'Poppins', 
+              fontSize: '16px', 
+              fontWeight: 600, 
+              marginBottom: '12px' 
+            }}>
+              Current Attachments
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {currentAttachments.map((url, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    backgroundColor: colors.background.light,
+                    border: `1px solid ${colors.border.light}`,
+                    borderRadius: '4px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                    <img src={AttachFileIcon} alt="File" style={{ width: '16px', height: '16px', flexShrink: 0 }} />
+                    <span style={{ 
+                      fontSize: '14px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {getFileName(url)}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAttachment(index)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      color: colors.red.main,
+                      fontSize: '18px',
+                      lineHeight: 1,
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Add New Files */}
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ 
+            fontFamily: 'Poppins', 
+            fontSize: '16px', 
+            fontWeight: 600, 
+            marginBottom: '12px' 
+          }}>
+            Add New Files
+          </h3>
+          <input
+            type="file"
+            id="edit-file-upload"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp"
+            multiple
+            onChange={handleFileChange}
+            disabled={totalCount >= maxFiles}
+            style={{ display: 'none' }}
+          />
+          <label htmlFor="edit-file-upload">
+            <div
+              style={{
+                width: '100%',
+                height: '56px',
+                border: `1px solid ${colors.border.light}`,
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '0 16px',
+                backgroundColor: colors.primary.white,
+                cursor: totalCount >= maxFiles ? 'not-allowed' : 'pointer',
+                opacity: totalCount >= maxFiles ? 0.6 : 1,
+                fontFamily: 'Poppins',
+                fontSize: '14px',
+              }}
+            >
+              <img src={AttachFileIcon} alt="Attach" style={{ width: '20px', height: '20px' }} />
+              {totalCount >= maxFiles 
+                ? 'Maximum 5 attachments reached' 
+                : 'Attach files (PDF, Word, Images)'}
+            </div>
+          </label>
+
+          {/* New Files List */}
+          {newFiles.length > 0 && (
+            <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {newFiles.map((file, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    backgroundColor: colors.background.light,
+                    border: `1px solid ${colors.border.light}`,
+                    borderRadius: '4px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                    <img src={AttachFileIcon} alt="File" style={{ width: '16px', height: '16px', flexShrink: 0 }} />
+                    <span style={{ 
+                      fontSize: '14px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {file.name}
+                    </span>
+                    <span style={{ fontSize: '12px', color: colors.text.secondary }}>
+                      ({formatFileSize(file.size)})
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveNewFile(index)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      color: colors.red.main,
+                      fontSize: '18px',
+                      lineHeight: 1,
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div style={{
+            padding: '12px',
+            backgroundColor: '#fee',
+            border: `1px solid ${colors.red.main}`,
+            borderRadius: '4px',
+            color: colors.red.main,
+            fontSize: '14px',
+            marginBottom: '16px',
+          }}>
+            {error}
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: colors.background.light,
+              color: colors.text.primary,
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontFamily: 'Poppins',
+              fontSize: '14px',
+              fontWeight: 600,
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: colors.primary.main,
+              color: colors.primary.white,
+              border: 'none',
+              borderRadius: '8px',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              opacity: isSaving ? 0.6 : 1,
+              fontFamily: 'Poppins',
+              fontSize: '14px',
+              fontWeight: 600,
+            }}
+          >
+            {isSaving ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const CampaignDetailInfluencer: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -252,6 +614,7 @@ export const CampaignDetailInfluencer: React.FC = () => {
 
   // Similar campaigns state
   const [similarCampaigns, setSimilarCampaigns] = useState<CampaignType[]>([]);
+  const [savedSimilarCampaigns, setSavedSimilarCampaigns] = useState<Set<string>>(new Set());
   const [isLoadingSimilar, setIsLoadingSimilar] = useState(false);
 
   // Brand campaigns state (for brands viewing their own campaigns)
@@ -281,6 +644,20 @@ export const CampaignDetailInfluencer: React.FC = () => {
         try {
           const response = await campaignService.getSimilarCampaigns(id, 3);
           setSimilarCampaigns(response.campaigns);
+          
+          // Check which campaigns are saved
+          const savedIds = new Set<string>();
+          for (const campaign of response.campaigns) {
+            try {
+              const isSaved = await savedCampaignService.checkIfSaved(campaign._id);
+              if (isSaved) {
+                savedIds.add(campaign._id);
+              }
+            } catch (error) {
+              console.error(`Error checking saved status for campaign ${campaign._id}:`, error);
+            }
+          }
+          setSavedSimilarCampaigns(savedIds);
         } catch (error) {
           console.error('Error fetching similar campaigns:', error);
           setSimilarCampaigns([]);
@@ -694,36 +1071,87 @@ export const CampaignDetailInfluencer: React.FC = () => {
             </div>
             {campaign.attachments && campaign.attachments.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {campaign.attachments.map((url, index) => (
-                  <a
-                    key={index}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      fontFamily: 'Poppins',
-                      fontSize: '14px',
-                      color: colors.primary.main,
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      wordWrap: 'break-word',
-                      overflowWrap: 'break-word',
-                      wordBreak: 'break-all',
-                      maxWidth: '100%',
-                    }}
-                  >
-                    <img src={AttachFileIcon} alt="Attachment" style={{ width: '16px', height: '16px', flexShrink: 0 }} />
-                    <span style={{ 
-                      wordWrap: 'break-word',
-                      overflowWrap: 'break-word',
-                      wordBreak: 'break-all',
-                    }}>
-                      {url}
-                    </span>
-                  </a>
-                ))}
+                {campaign.attachments.map((url, index) => {
+                  // Extract filename from URL
+                  const getFileName = (url: string): string => {
+                    try {
+                      const urlObj = new URL(url);
+                      const pathname = urlObj.pathname;
+                      const fileName = pathname.split('/').pop() || pathname;
+                      // Decode URL-encoded characters
+                      return decodeURIComponent(fileName);
+                    } catch {
+                      // If URL parsing fails, try to extract from path
+                      const parts = url.split('/');
+                      const fileName = parts[parts.length - 1].split('?')[0];
+                      return decodeURIComponent(fileName);
+                    }
+                  };
+
+                  const getFileType = (url: string): string => {
+                    const fileName = getFileName(url).toLowerCase();
+                    if (fileName.endsWith('.pdf')) return 'PDF';
+                    if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) return 'Word';
+                    if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png') || fileName.endsWith('.gif') || fileName.endsWith('.webp')) return 'Image';
+                    return 'File';
+                  };
+
+                  const fileName = getFileName(url);
+                  const fileType = getFileType(url);
+
+                  return (
+                    <a
+                      key={index}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontFamily: 'Poppins',
+                        fontSize: '14px',
+                        color: colors.primary.main,
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        backgroundColor: colors.primary.white,
+                        border: `1px solid ${colors.border.light}`,
+                        borderRadius: '4px',
+                        transition: 'background-color 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.background.light;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.primary.white;
+                      }}
+                    >
+                      <img src={AttachFileIcon} alt="Attachment" style={{ width: '16px', height: '16px', flexShrink: 0 }} />
+                      <div style={{ 
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flex: 1,
+                        minWidth: 0,
+                      }}>
+                        <span style={{ 
+                          fontWeight: 500,
+                          color: colors.text.primary,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {fileName}
+                        </span>
+                        <span style={{
+                          fontSize: '12px',
+                          color: colors.text.secondary,
+                        }}>
+                          {fileType}
+                        </span>
+                      </div>
+                    </a>
+                  );
+                })}
               </div>
             ) : (
               <p style={{ fontFamily: 'Poppins', fontSize: '14px', color: colors.text.secondary, margin: 0 }}>
@@ -1035,21 +1463,29 @@ export const CampaignDetailInfluencer: React.FC = () => {
             </div>
           )}
 
-          {/* Pricing Section - For brands */}
-          {isBrand && (
-            <div style={{ paddingRight: '16px', marginBottom: '16px' }}>
-              <h3
-                style={{
-                  fontFamily: 'Poppins',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: colors.text.primary,
-                  marginBottom: '12px',
-                }}
-              >
-                Pricing
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {/* Pricing Section */}
+          <div style={{ paddingRight: '16px', marginBottom: '16px' }}>
+            <h3
+              style={{
+                fontFamily: 'Poppins',
+                fontSize: '16px',
+                fontWeight: 600,
+                color: colors.text.primary,
+                marginBottom: '12px',
+              }}
+            >
+              Pricing
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: 'Poppins', fontSize: '14px', color: colors.text.secondary }}>
+                  Costs per view:
+                </span>
+                <span style={{ fontFamily: 'Poppins', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
+                  ₹0.25
+                </span>
+              </div>
+              {isBrand && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontFamily: 'Poppins', fontSize: '14px', color: colors.text.secondary }}>
                     Campaign Budget
@@ -1058,28 +1494,26 @@ export const CampaignDetailInfluencer: React.FC = () => {
                     ₹ {campaign.budget.toLocaleString()}
                   </span>
                 </div>
-              </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Location and Budget */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', paddingRight: '16px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', paddingRight: '16px', flexWrap: 'nowrap', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
               <img src={LocationIcon} alt="Location" style={{ width: '16px', height: '16px', flexShrink: 0 }} />
               <span style={{ 
                 fontFamily: 'Poppins', 
                 fontSize: '14px', 
                 color: colors.text.secondary,
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word',
-                wordBreak: 'break-word',
+                whiteSpace: 'nowrap',
               }}>
-                {campaign.location}
+                {campaign.location || 'Not specified'}
               </span>
             </div>
-            <span style={{ color: colors.text.secondary }}>|</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'Poppins', fontSize: '14px', fontWeight: 600 }}>Budget: </span>
+            <span style={{ color: colors.text.secondary, flexShrink: 0 }}>|</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+              <span style={{ fontFamily: 'Poppins', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Budget: </span>
               <span style={{ fontFamily: 'Poppins', fontSize: '14px', color: colors.text.secondary }}>
                 ₹ {campaign.budget.toLocaleString()}
               </span>
@@ -1115,31 +1549,52 @@ export const CampaignDetailInfluencer: React.FC = () => {
            )}
 
           {/* Requirements Section */}
-          {campaign.requirement && campaign.requirement !== 'Not specified' && (
-            <div style={{ paddingRight: '16px' }}>
-              <h3
-                style={{
-                  fontFamily: 'Poppins',
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  color: colors.text.primary,
-                  marginBottom: '8px',
-                }}
-              >
-                Requirements
-              </h3>
-              <p style={{ 
-                fontFamily: 'Poppins', 
-                fontSize: '14px', 
-                color: colors.text.secondary,
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word',
-                wordBreak: 'break-word',
-              }}>
-                {campaign.requirement}
-              </p>
+          <div style={{ paddingRight: '16px', marginBottom: '16px' }}>
+            <h3
+              style={{
+                fontFamily: 'Poppins',
+                fontSize: '16px',
+                fontWeight: 600,
+                color: colors.text.primary,
+                marginBottom: '12px',
+              }}
+            >
+              Requirements
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: 'Poppins', fontSize: '14px', color: colors.text.secondary }}>
+                  Min number of followers:
+                </span>
+                <span style={{ fontFamily: 'Poppins', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
+                  1,000
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: 'Poppins', fontSize: '14px', color: colors.text.secondary }}>
+                  Duration:
+                </span>
+                <span style={{ fontFamily: 'Poppins', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
+                  60 days
+                </span>
+              </div>
             </div>
-          )}
+            {campaign.requirement && campaign.requirement !== 'Not specified' && (
+              <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${colors.border.light}` }}>
+                <p style={{ 
+                  fontFamily: 'Poppins', 
+                  fontSize: '14px', 
+                  color: colors.text.secondary,
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  wordBreak: 'break-word',
+                  margin: 0,
+                }}>
+                  {campaign.requirement}
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Duration Section */}
           {campaign.duration && campaign.duration !== 'Not specified' && (
@@ -1460,7 +1915,10 @@ export const CampaignDetailInfluencer: React.FC = () => {
                         gap: '16px',
                         cursor: 'pointer',
                       }}
-                      onClick={() => navigate(`/${baseRoute}/campaigns/${simCampaign._id}`)}
+                      onClick={() => {
+                        const route = location.pathname.split('/')[1] || 'influencer';
+                        navigate(`/${route}/campaigns/${simCampaign._id}`);
+                      }}
                     >
                       {/* Avatar */}
                       <div
@@ -1601,28 +2059,79 @@ export const CampaignDetailInfluencer: React.FC = () => {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+                      <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'center', justifyContent: 'flex-end' }}>
                         <button
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            // Handle save functionality
+                            const campaignId = simCampaign._id;
+                            const isCurrentlySaved = savedSimilarCampaigns.has(campaignId);
+                            
+                            try {
+                              // Optimistic update
+                              setSavedSimilarCampaigns((prev) => {
+                                const newSet = new Set(prev);
+                                if (isCurrentlySaved) {
+                                  newSet.delete(campaignId);
+                                } else {
+                                  newSet.add(campaignId);
+                                }
+                                return newSet;
+                              });
+                              
+                              // Make API call
+                              if (isCurrentlySaved) {
+                                await savedCampaignService.unsaveCampaign(campaignId);
+                                toastService.success('Campaign removed from saved');
+                              } else {
+                                await savedCampaignService.saveCampaign(campaignId);
+                                toastService.success('Campaign saved');
+                              }
+                            } catch (error: any) {
+                              console.error('Failed to toggle save:', error);
+                              // Revert on error
+                              setSavedSimilarCampaigns((prev) => {
+                                const newSet = new Set(prev);
+                                if (isCurrentlySaved) {
+                                  newSet.add(campaignId);
+                                } else {
+                                  newSet.delete(campaignId);
+                                }
+                                return newSet;
+                              });
+                              toastService.error(error.message || 'Failed to save campaign');
+                            }
                           }}
                           style={{
                             width: '40px',
                             height: '40px',
                             borderRadius: '50%',
-                            border: `1px solid ${colors.border.light}`,
+                            border: `1px solid ${savedSimilarCampaigns.has(simCampaign._id) ? colors.red.main : colors.border.light}`,
                             backgroundColor: colors.primary.white,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
+                            flexShrink: 0,
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = colors.red.main;
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!savedSimilarCampaigns.has(simCampaign._id)) {
+                              e.currentTarget.style.borderColor = colors.border.light;
+                            }
                           }}
                         >
                           <img
                             src={FavoriteIcon}
                             alt="Save"
-                            style={{ width: '20px', height: '20px', filter: 'grayscale(100%)' }}
+                            style={{ 
+                              width: '20px', 
+                              height: '20px', 
+                              filter: savedSimilarCampaigns.has(simCampaign._id) ? 'none' : 'grayscale(100%)',
+                              opacity: savedSimilarCampaigns.has(simCampaign._id) ? 1 : 0.6,
+                            }}
                           />
                         </button>
 
@@ -1630,6 +2139,7 @@ export const CampaignDetailInfluencer: React.FC = () => {
                           variant="filled"
                           onClick={(e) => {
                             e.stopPropagation();
+                            const baseRoute = location.pathname.split('/')[1] || 'influencer';
                             navigate(`/${baseRoute}/campaigns/${simCampaign._id}`);
                           }}
                           style={{
@@ -1746,68 +2256,29 @@ export const CampaignDetailInfluencer: React.FC = () => {
             </div>
           )}
 
-          {/* Simple Edit Attachments Modal */}
-          {showEditAttachments && (
-            <div
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1000,
+          {/* Edit Attachments Modal */}
+          {showEditAttachments && campaign && (
+            <EditAttachmentsModal
+              campaign={campaign}
+              onClose={() => setShowEditAttachments(false)}
+              onSave={async (updatedAttachments, newFiles) => {
+                try {
+                  await campaignService.updateCampaign(campaign._id, {
+                    attachments: updatedAttachments,
+                  }, newFiles && newFiles.length > 0 ? newFiles : undefined);
+                  toastService.success('Attachments updated successfully');
+                  setShowEditAttachments(false);
+                  // Refetch campaign data
+                  if (id) {
+                    const updated = await campaignService.getCampaignById(id);
+                    // Update local campaign state if needed
+                    window.location.reload(); // Simple refresh to show updated data
+                  }
+                } catch (error: any) {
+                  toastService.error(error.message || 'Failed to update attachments');
+                }
               }}
-              onClick={() => setShowEditAttachments(false)}
-            >
-              <div
-                style={{
-                  backgroundColor: colors.primary.white,
-                  borderRadius: '8px',
-                  padding: '32px',
-                  maxWidth: '500px',
-                  width: '90%',
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h2
-                  style={{
-                    fontFamily: 'Poppins',
-                    fontSize: '20px',
-                    fontWeight: 600,
-                    marginBottom: '16px',
-                  }}
-                >
-                  Edit Attachments
-                </h2>
-                <p style={{ fontFamily: 'Poppins', fontSize: '14px', color: colors.text.secondary, marginBottom: '16px' }}>
-                  Please edit attachments on the full edit page.
-                </p>
-                <button
-                  onClick={() => {
-                    setShowEditAttachments(false);
-                    navigate(`/${baseRoute}/campaigns/create?edit=${id}`);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    backgroundColor: colors.primary.main,
-                    color: colors.primary.white,
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontFamily: 'Poppins',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                  }}
-                >
-                  Go to Edit Page
-                </button>
-              </div>
-            </div>
+            />
           )}
         </>
       )}
