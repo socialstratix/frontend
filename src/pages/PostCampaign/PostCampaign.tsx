@@ -132,6 +132,16 @@ export const PostCampaign: React.FC = () => {
         const files = e.target.files;
         if (!files) return;
 
+        const maxFiles = 5;
+        const currentCount = attachments.length;
+        const remainingSlots = maxFiles - currentCount;
+
+        if (remainingSlots <= 0) {
+            setError(`Maximum ${maxFiles} attachments allowed. Please remove some files first.`);
+            e.target.value = '';
+            return;
+        }
+
         const validFiles: File[] = [];
         const maxSize = 5 * 1024 * 1024; // 5MB in bytes
         const allowedTypes = [
@@ -145,7 +155,9 @@ export const PostCampaign: React.FC = () => {
             'image/webp',
         ];
 
-        Array.from(files).forEach((file) => {
+        const filesToProcess = Array.from(files).slice(0, remainingSlots);
+        
+        filesToProcess.forEach((file) => {
             // Check file type
             if (!allowedTypes.includes(file.type)) {
                 setError(`File "${file.name}" is not a valid format. Please upload PDF, Word, or Image files.`);
@@ -162,12 +174,30 @@ export const PostCampaign: React.FC = () => {
         });
 
         if (validFiles.length > 0) {
-            setAttachments((prev) => [...prev, ...validFiles]);
+            setAttachments((prev) => {
+                const newAttachments = [...prev, ...validFiles];
+                if (newAttachments.length > maxFiles) {
+                    setError(`Maximum ${maxFiles} attachments allowed. Only the first ${maxFiles} files were added.`);
+                    return newAttachments.slice(0, maxFiles);
+                }
+                return newAttachments;
+            });
             setError(null);
         }
 
         // Reset input
         e.target.value = '';
+    };
+
+    const handleRemoveAttachment = (index: number) => {
+        setAttachments((prev) => prev.filter((_, i) => i !== index));
+        setError(null);
+    };
+
+    const formatFileSize = (bytes: number): string => {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     };
 
     const onSubmit = async (data: PostCampaignFormData) => {
@@ -192,7 +222,7 @@ export const PostCampaign: React.FC = () => {
                     tags: tags.filter(tag => tag.trim() !== ''),
                 };
 
-                await updateCampaign(editCampaignId, updateData);
+                await updateCampaign(editCampaignId, updateData, attachments.length > 0 ? attachments : undefined);
 
                 // Navigate to brand profile to see the updated campaign
                 if (brand && brand._id) {
@@ -213,7 +243,7 @@ export const PostCampaign: React.FC = () => {
                     tags: tags.filter(tag => tag.trim() !== ''),
                 };
 
-                await createCampaign(campaignData);
+                await createCampaign(campaignData, attachments.length > 0 ? attachments : undefined);
 
                 // Navigate to brand profile to see the newly created campaign
                 if (brand && brand._id) {
@@ -569,64 +599,125 @@ export const PostCampaign: React.FC = () => {
 
                     {/* Attachments */}
                     <div>
-                        <h3
-                            style={{
-                                width: '800px',
-                                ...typography.heading,
-                                margin: 0,
-                                marginBottom: '12px',
-                            }}
-                        >
-                            Add Attachments
-                        </h3>
-                        <div
-                            style={{
-                                width: '800px',
-                                display: 'flex',
-                                gap: '8px',
-                                opacity: 1,
-                            }}
-                        >
-                            {[1, 2, 3].map((index) => (
-                                <React.Fragment key={index}>
-                                    <input
-                                        type="file"
-                                        id={`file-upload-${index}`}
-                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp"
-                                        onChange={handleFileChange}
-                                        style={{ display: 'none' }}
-                                    />
-                                    <label htmlFor={`file-upload-${index}`}>
-                                        <div
-                                            style={{
-                                                width: '261.33px',
-                                                height: '56px',
-                                                borderWidth: '1px',
-                                                border: '1px solid rgba(117, 80, 2, 1)',
-                                                borderRadius: '4px',
-                                                opacity: 1,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '10px',
-                                                padding: '0 16px',
-                                                backgroundColor: colors.primary.white,
-                                                cursor: 'pointer',
-                                                fontFamily: 'Poppins, sans-serif',
-                                                fontSize: '14px',
-                                                color: colors.text.primary,
-                                            }}
-                                        >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                            <h3
+                                style={{
+                                    width: 'auto',
+                                    ...typography.heading,
+                                    margin: 0,
+                                }}
+                            >
+                                Add Attachments
+                            </h3>
+                            <span style={{ 
+                                fontFamily: 'Poppins, sans-serif',
+                                fontSize: '14px',
+                                color: colors.text.secondary,
+                            }}>
+                                {attachments.length}/5 attachments
+                            </span>
+                        </div>
+                        <input
+                            type="file"
+                            id="file-upload"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp"
+                            multiple
+                            onChange={handleFileChange}
+                            disabled={attachments.length >= 5}
+                            style={{ display: 'none' }}
+                        />
+                        <label htmlFor="file-upload">
+                            <div
+                                style={{
+                                    width: '800px',
+                                    height: '56px',
+                                    borderWidth: '1px',
+                                    border: '1px solid rgba(117, 80, 2, 1)',
+                                    borderRadius: '4px',
+                                    opacity: attachments.length >= 5 ? 0.6 : 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    padding: '0 16px',
+                                    backgroundColor: colors.primary.white,
+                                    cursor: attachments.length >= 5 ? 'not-allowed' : 'pointer',
+                                    fontFamily: 'Poppins, sans-serif',
+                                    fontSize: '14px',
+                                    color: colors.text.primary,
+                                }}
+                            >
+                                <img
+                                    src={AttachFileIcon}
+                                    alt="Attach"
+                                    style={{ width: '20px', height: '20px' }}
+                                />
+                                {attachments.length >= 5 
+                                    ? 'Maximum 5 attachments reached' 
+                                    : 'Attach files (PDF, Word, Images)'}
+                            </div>
+                        </label>
+                        
+                        {/* Selected Files List */}
+                        {attachments.length > 0 && (
+                            <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {attachments.map((file, index) => (
+                                    <div
+                                        key={index}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: '8px 12px',
+                                            backgroundColor: colors.primary.white,
+                                            border: `1px solid ${colors.border.light}`,
+                                            borderRadius: '4px',
+                                            fontFamily: 'Poppins, sans-serif',
+                                            fontSize: '14px',
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
                                             <img
                                                 src={AttachFileIcon}
-                                                alt="Attach"
-                                                style={{ width: '20px', height: '20px' }}
+                                                alt="File"
+                                                style={{ width: '16px', height: '16px', flexShrink: 0 }}
                                             />
-                                            {attachments[index - 1] ? attachments[index - 1].name.substring(0, 15) + (attachments[index - 1].name.length > 15 ? '...' : '') : 'Attach files'}
+                                            <span style={{ 
+                                                color: colors.text.primary,
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                            }}>
+                                                {file.name}
+                                            </span>
+                                            <span style={{ 
+                                                color: colors.text.secondary,
+                                                fontSize: '12px',
+                                                flexShrink: 0,
+                                            }}>
+                                                ({formatFileSize(file.size)})
+                                            </span>
                                         </div>
-                                    </label>
-                                </React.Fragment>
-                            ))}
-                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveAttachment(index)}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                padding: '4px',
+                                                color: colors.red.main,
+                                                fontSize: '18px',
+                                                lineHeight: 1,
+                                                flexShrink: 0,
+                                            }}
+                                            aria-label="Remove file"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Error Message */}

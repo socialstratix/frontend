@@ -81,8 +81,8 @@ interface UseCampaignReturn {
   isLoading: boolean;
   error: string | null;
   fetchCampaign: (id: string) => Promise<void>;
-  createCampaign: (data: CreateCampaignData) => Promise<Campaign>;
-  updateCampaign: (id: string, data: UpdateCampaignData) => Promise<Campaign>;
+  createCampaign: (data: CreateCampaignData, files?: File[]) => Promise<Campaign>;
+  updateCampaign: (id: string, data: UpdateCampaignData, files?: File[]) => Promise<Campaign>;
   deleteCampaign: (id: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
@@ -110,11 +110,11 @@ export const useCampaign = (options: UseCampaignOptions = {}): UseCampaignReturn
     }
   }, []);
 
-  const createCampaign = useCallback(async (data: CreateCampaignData): Promise<Campaign> => {
+  const createCampaign = useCallback(async (data: CreateCampaignData, files?: File[]): Promise<Campaign> => {
     try {
       setIsLoading(true);
       setError(null);
-      const newCampaign = await campaignService.createCampaign(data);
+      const newCampaign = await campaignService.createCampaign(data, files);
       setCampaign(newCampaign);
       return newCampaign;
     } catch (err: any) {
@@ -125,11 +125,11 @@ export const useCampaign = (options: UseCampaignOptions = {}): UseCampaignReturn
     }
   }, []);
 
-  const updateCampaign = useCallback(async (id: string, data: UpdateCampaignData): Promise<Campaign> => {
+  const updateCampaign = useCallback(async (id: string, data: UpdateCampaignData, files?: File[]): Promise<Campaign> => {
     try {
       setIsLoading(true);
       setError(null);
-      const updatedCampaign = await campaignService.updateCampaign(id, data);
+      const updatedCampaign = await campaignService.updateCampaign(id, data, files);
       setCampaign(updatedCampaign);
       return updatedCampaign;
     } catch (err: any) {

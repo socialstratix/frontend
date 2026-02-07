@@ -171,8 +171,42 @@ class CampaignService {
   /**
    * Create a new campaign
    */
-  async createCampaign(data: CreateCampaignData): Promise<Campaign> {
-    const response = await apiService.post<{ campaign: Campaign }>('/campaign', data);
+  async createCampaign(data: CreateCampaignData, files?: File[]): Promise<Campaign> {
+    const formData = new FormData();
+    
+    // Add all campaign data fields to FormData
+    formData.append('name', data.name);
+    formData.append('description', data.description);
+    formData.append('budget', data.budget.toString());
+    formData.append('platforms', JSON.stringify(data.platforms));
+    
+    if (data.tags && data.tags.length > 0) {
+      formData.append('tags', JSON.stringify(data.tags));
+    }
+    if (data.location) {
+      formData.append('location', data.location);
+    }
+    if (data.publishDate) {
+      formData.append('publishDate', data.publishDate);
+    }
+    if (data.publishTime) {
+      formData.append('publishTime', data.publishTime);
+    }
+    if (data.deadline) {
+      formData.append('deadline', data.deadline);
+    }
+    if (data.requirements) {
+      formData.append('requirements', data.requirements);
+    }
+    
+    // Add files if provided
+    if (files && files.length > 0) {
+      files.forEach((file) => {
+        formData.append('attachments', file);
+      });
+    }
+    
+    const response = await apiService.post<{ campaign: Campaign }>('/campaign', formData);
     
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to create campaign');
@@ -184,8 +218,60 @@ class CampaignService {
   /**
    * Update campaign
    */
-  async updateCampaign(campaignId: string, data: UpdateCampaignData): Promise<Campaign> {
-    const response = await apiService.put<{ campaign: Campaign }>(`/campaign/${campaignId}`, data);
+  async updateCampaign(campaignId: string, data: UpdateCampaignData, files?: File[]): Promise<Campaign> {
+    const formData = new FormData();
+    
+    // Add all campaign data fields to FormData
+    if (data.name !== undefined) {
+      formData.append('name', data.name);
+    }
+    if (data.description !== undefined) {
+      formData.append('description', data.description);
+    }
+    if (data.budget !== undefined) {
+      formData.append('budget', data.budget.toString());
+    }
+    if (data.platforms !== undefined) {
+      formData.append('platforms', JSON.stringify(data.platforms));
+    }
+    if (data.tags !== undefined) {
+      formData.append('tags', JSON.stringify(data.tags));
+    }
+    if (data.location !== undefined) {
+      formData.append('location', data.location || '');
+    }
+    if (data.publishDate !== undefined) {
+      formData.append('publishDate', data.publishDate || '');
+    }
+    if (data.publishTime !== undefined) {
+      formData.append('publishTime', data.publishTime || '');
+    }
+    if (data.deadline !== undefined) {
+      formData.append('deadline', data.deadline || '');
+    }
+    if (data.requirements !== undefined) {
+      formData.append('requirements', data.requirements || '');
+    }
+    if (data.status !== undefined) {
+      formData.append('status', data.status);
+    }
+    if (data.isClosed !== undefined) {
+      formData.append('isClosed', data.isClosed.toString());
+    }
+    
+    // Add existing attachment URLs if provided (for keeping/removing attachments)
+    if (data.attachments !== undefined) {
+      formData.append('attachments', JSON.stringify(data.attachments));
+    }
+    
+    // Add new files if provided
+    if (files && files.length > 0) {
+      files.forEach((file) => {
+        formData.append('attachments', file);
+      });
+    }
+    
+    const response = await apiService.put<{ campaign: Campaign }>(`/campaign/${campaignId}`, formData);
     
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to update campaign');
