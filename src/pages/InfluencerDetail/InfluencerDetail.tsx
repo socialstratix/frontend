@@ -1331,7 +1331,7 @@ export const InfluencerDetail: React.FC = () => {
                       fontFamily: 'Poppins',
                       fontSize: '14px',
                       fontWeight: 400,
-                      fontStyle: 'normal',
+                      fontStyle: 'italic',
                       color: '#999',
                       lineHeight: '100%',
                       letterSpacing: '0%',
@@ -1339,7 +1339,6 @@ export const InfluencerDetail: React.FC = () => {
                       textAlign: 'left',
                       flex: 1,
                       margin: 0,
-                      fontStyle: 'italic',
                     }}
                   >
                     No description yet. Click edit to add one.

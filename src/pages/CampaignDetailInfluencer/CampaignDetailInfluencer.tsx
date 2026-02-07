@@ -199,7 +199,7 @@ const EditAttachmentsModal: React.FC<{
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '8px 12px',
-                    backgroundColor: colors.background.light,
+                    backgroundColor: colors.elevated.background,
                     border: `1px solid ${colors.border.light}`,
                     borderRadius: '4px',
                   }}
@@ -291,7 +291,7 @@ const EditAttachmentsModal: React.FC<{
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '8px 12px',
-                    backgroundColor: colors.background.light,
+                    backgroundColor: colors.elevated.background,
                     border: `1px solid ${colors.border.light}`,
                     borderRadius: '4px',
                   }}
@@ -352,7 +352,7 @@ const EditAttachmentsModal: React.FC<{
             onClick={onClose}
             style={{
               padding: '12px 24px',
-              backgroundColor: colors.background.light,
+              backgroundColor: colors.elevated.background,
               color: colors.text.primary,
               border: 'none',
               borderRadius: '8px',
@@ -1120,7 +1120,7 @@ export const CampaignDetailInfluencer: React.FC = () => {
                         transition: 'background-color 0.2s',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = colors.background.light;
+                        e.currentTarget.style.backgroundColor = colors.elevated.background;
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = colors.primary.white;
@@ -2257,20 +2257,20 @@ export const CampaignDetailInfluencer: React.FC = () => {
           )}
 
           {/* Edit Attachments Modal */}
-          {showEditAttachments && campaign && (
+          {showEditAttachments && campaign && apiCampaign && (
             <EditAttachmentsModal
-              campaign={campaign}
+              campaign={apiCampaign}
               onClose={() => setShowEditAttachments(false)}
               onSave={async (updatedAttachments, newFiles) => {
                 try {
-                  await campaignService.updateCampaign(campaign._id, {
+                  await campaignService.updateCampaign(apiCampaign._id, {
                     attachments: updatedAttachments,
                   }, newFiles && newFiles.length > 0 ? newFiles : undefined);
                   toastService.success('Attachments updated successfully');
                   setShowEditAttachments(false);
                   // Refetch campaign data
                   if (id) {
-                    const updated = await campaignService.getCampaignById(id);
+                    await campaignService.getCampaignById(id);
                     // Update local campaign state if needed
                     window.location.reload(); // Simple refresh to show updated data
                   }
