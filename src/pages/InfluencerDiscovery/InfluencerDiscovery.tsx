@@ -4,7 +4,7 @@ import { Typography, RangeSlider } from '../../components';
 import { InfluencerGrid } from '../../components';
 import { useInfluencerList } from '../../hooks';
 import { INFLUENCER_TAGS } from '../../constants/tags';
-import { ArrowDropDownIcon, SearchIcon } from '../../assets/icons';
+import { ArrowDropDownIcon, SearchIcon, CloseIcon, FilterIcon } from '../../assets/icons';
 import { colors } from '../../constants/colors';
 import { influencerService, type Influencer } from '../../services/influencerService';
 
@@ -32,6 +32,9 @@ export const InfluencerDiscovery: React.FC = () => {
   const [minHighestView, setMinHighestView] = useState(0);
   const [minAvgLikes, setMinAvgLikes] = useState(0);
   const [minHighestLikes, setMinHighestLikes] = useState(0);
+  
+  // Mobile drawer state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Fetch influencers from API with filters
   const { influencers, isLoading, error } = useInfluencerList({
@@ -95,6 +98,24 @@ export const InfluencerDiscovery: React.FC = () => {
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   }, []);
+
+  // Handle backdrop click for mobile drawer
+  const handleBackdropClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      setIsFilterOpen(false);
+    }
+  }, []);
+
+  // Handle Escape key to close drawer
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFilterOpen) {
+        setIsFilterOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isFilterOpen]);
 
   // Fetch followers data to get engagement metrics
   useEffect(() => {
@@ -325,135 +346,66 @@ export const InfluencerDiscovery: React.FC = () => {
     });
   }, [filteredInfluencers]);
 
-  return (
-    <div 
-      className="w-full py-4 sm:py-6 md:py-8"
+  // Render filter panel content (reusable for desktop and mobile)
+  const renderFilterPanel = () => (
+    <div
       style={{
-        background: 'linear-gradient(135deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%)',
-        minHeight: 'calc(100vh - 200px)',
+        backgroundColor: '#FFFFFF',
+        borderRadius: '8px',
+        padding: '24px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
       }}
     >
-      <style>
-        {`
-          @keyframes spin {
-            from {
-              transform: rotate(0deg);
-            }
-            to {
-              transform: rotate(360deg);
-            }
-          }
-        `}
-      </style>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="mb-8 text-center">
-          <h1
-            className="mb-2 font-bold mx-auto"
-            style={{
-              background: 'linear-gradient(90deg, #DD8AFF 0%, #783C91 20%, #DB9400 95%, #FFC244 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              color: 'transparent',
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: '48px',
-              fontWeight: 700,
-              lineHeight: '1.2',
-              textAlign: 'center',
-            }}
-          >
-            Right Voices to Amplify Your Brand!
-          </h1>
-          <Typography variant="p" className="text-gray-600 mb-6 text-center">
-            Find the perfect influencers for Instagram, YouTube, TikTok, and more
-          </Typography>
-        </div>
+      {/* Header */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '24px',
+        }}
+      >
+        <h2
+          style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '20px',
+            fontWeight: 600,
+            color: '#1E002B',
+            margin: 0,
+          }}
+        >
+          Filters
+        </h2>
+        <button
+          onClick={handleClearAll}
+          style={{
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '14px',
+            fontWeight: 500,
+            color: colors.primary.main,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        >
+          CLEAR ALL
+        </button>
+      </div>
 
-        {/* Loading Metrics Indicator */}
-        {isLoadingMetrics && (
-          <div className="mb-6 flex justify-center items-center gap-4">
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontFamily: 'Poppins, sans-serif',
-                fontSize: '14px',
-                color: colors.primary.main,
-              }}
-            >
-              <div
-                style={{
-                  width: '16px',
-                  height: '16px',
-                  border: `2px solid ${colors.primary.main}`,
-                  borderTop: '2px solid transparent',
-                  borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite',
-                }}
-              />
-              <span>Fetching engagement metrics...</span>
-            </div>
-          </div>
-        )}
-
-        {/* Advanced Filters Panel */}
-        <div>
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '8px',
-              padding: '24px',
-              marginBottom: '24px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            }}
-          >
-            {/* Header */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '24px',
-              }}
-            >
-              <h2
-                style={{
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: '20px',
-                  fontWeight: 600,
-                  color: '#1E002B',
-                  margin: 0,
-                }}
-              >
-                Filters
-              </h2>
-              <button
-                onClick={handleClearAll}
-                style={{
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: colors.primary.main,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: 0,
-                }}
-              >
-                CLEAR ALL
-              </button>
-            </div>
-
-            {/* Top Row Filters */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '16px',
-                marginBottom: '24px',
-              }}
-            >
+      {/* Filters - Vertical Stack */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
+          overflowY: 'auto',
+          flex: 1,
+        }}
+      >
               {/* Platform Dropdown */}
               <div style={{ position: 'relative' }}>
                 <label
@@ -703,64 +655,63 @@ export const InfluencerDiscovery: React.FC = () => {
                 </div>
               </div>
 
-              {/* Advanced Filters Toggle */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-end',
-                  gap: '12px',
-                }}
-              >
-                <label
-                  style={{
-                    fontFamily: 'Poppins, sans-serif',
-                    fontSize: '14px',
-                    fontWeight: 400,
-                    color: '#1E002B',
-                  }}
-                >
-                  Advanced Filters
-                </label>
-                <button
-                  onClick={() => setAdvancedFiltersEnabled(!advancedFiltersEnabled)}
-                  style={{
-                    width: '48px',
-                    height: '24px',
-                    borderRadius: '12px',
-                    backgroundColor: advancedFiltersEnabled ? colors.primary.main : '#E0E0E0',
-                    border: 'none',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    transition: 'background-color 0.2s',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      borderRadius: '50%',
-                      backgroundColor: '#FFFFFF',
-                      position: 'absolute',
-                      top: '2px',
-                      left: advancedFiltersEnabled ? '26px' : '2px',
-                      transition: 'left 0.2s',
-                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                    }}
-                  />
-                </button>
-              </div>
-            </div>
+        {/* Advanced Filters Toggle */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+          }}
+        >
+          <label
+            style={{
+              fontFamily: 'Poppins, sans-serif',
+              fontSize: '14px',
+              fontWeight: 400,
+              color: '#1E002B',
+            }}
+          >
+            Advanced Filters
+          </label>
+          <button
+            onClick={() => setAdvancedFiltersEnabled(!advancedFiltersEnabled)}
+            style={{
+              width: '48px',
+              height: '24px',
+              borderRadius: '12px',
+              backgroundColor: advancedFiltersEnabled ? colors.primary.main : '#E0E0E0',
+              border: 'none',
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'background-color 0.2s',
+            }}
+          >
+            <div
+              style={{
+                width: '20px',
+                height: '20px',
+                borderRadius: '50%',
+                backgroundColor: '#FFFFFF',
+                position: 'absolute',
+                top: '2px',
+                left: advancedFiltersEnabled ? '26px' : '2px',
+                transition: 'left 0.2s',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+              }}
+            />
+          </button>
+        </div>
 
-            {/* Bottom Row - Range Sliders */}
-            {advancedFiltersEnabled && (
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '24px',
-                }}
-              >
+        {/* Range Sliders - Vertical Stack */}
+        {advancedFiltersEnabled && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '24px',
+            }}
+          >
                 <RangeSlider
                   label="Followers/Subscribers"
                   min={0}
@@ -789,71 +740,268 @@ export const InfluencerDiscovery: React.FC = () => {
                   value={minAvgLikes}
                   onChange={setMinAvgLikes}
                 />
-                <RangeSlider
-                  label="Highest likes"
-                  min={0}
-                  max={1000000}
-                  value={minHighestLikes}
-                  onChange={setMinHighestLikes}
-                />
-              </div>
-            )}
+            <RangeSlider
+              label="Highest likes"
+              min={0}
+              max={1000000}
+              value={minHighestLikes}
+              onChange={setMinHighestLikes}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div 
+      className="w-full py-4 sm:py-6 md:py-8"
+      style={{
+        background: 'linear-gradient(135deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%)',
+        minHeight: 'calc(100vh - 200px)',
+      }}
+    >
+      <style>
+        {`
+          @keyframes spin {
+            from {
+              transform: rotate(0deg);
+            }
+            to {
+              transform: rotate(360deg);
+            }
+          }
+          @keyframes slideIn {
+            from {
+              transform: translateX(100%);
+            }
+            to {
+              transform: translateX(0);
+            }
+          }
+          @media (min-width: 1024px) {
+            .filter-layout {
+              grid-template-columns: 1fr 320px !important;
+            }
+          }
+        `}
+      </style>
+      
+      {/* Mobile Filter Button */}
+      <div className="lg:hidden mb-4 px-4 sm:px-6">
+        <button
+          onClick={() => setIsFilterOpen(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            backgroundColor: '#FFFFFF',
+            border: `1px solid ${colors.primary.main}`,
+            borderRadius: '8px',
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '14px',
+            fontWeight: 500,
+            color: colors.primary.main,
+            cursor: 'pointer',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+          }}
+        >
+          <img src={FilterIcon} alt="Filter" style={{ width: '16px', height: '16px' }} />
+          Filters
+        </button>
+      </div>
+
+      {/* Mobile Drawer Backdrop */}
+      {isFilterOpen && (
+        <div
+          onClick={handleBackdropClick}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'flex-end',
+            padding: '16px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '90%',
+              maxWidth: '400px',
+              maxHeight: '90vh',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '8px',
+              padding: '24px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              overflow: 'auto',
+              animation: 'slideIn 0.3s ease-out',
+              position: 'relative',
+            }}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsFilterOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 10,
+              }}
+            >
+              <img src={CloseIcon} alt="Close" style={{ width: '20px', height: '20px' }} />
+            </button>
+            {renderFilterPanel()}
           </div>
         </div>
+      )}
 
-        {isLoading ? (
-          <div
-            style={{
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            padding: '40px',
-            flexDirection: 'column',
-              gap: '16px',
-            }}
-          >
+      {/* Main Content Layout */}
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div
+          className="filter-layout"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr',
+            gap: '24px',
+            maxWidth: '100%',
+          }}
+        >
+          {/* Content Column */}
+          <div style={{ minWidth: 0 }}>
+            <div className="mb-8 text-center">
+              <h1
+                className="mb-2 font-bold mx-auto"
+                style={{
+                  background: 'linear-gradient(90deg, #DD8AFF 0%, #783C91 20%, #DB9400 95%, #FFC244 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontSize: '48px',
+                  fontWeight: 700,
+                  lineHeight: '1.2',
+                  textAlign: 'center',
+                }}
+              >
+                Right Voices to Amplify Your Brand!
+              </h1>
+              <Typography variant="p" className="text-gray-600 mb-6 text-center">
+                Find the perfect influencers for Instagram, YouTube, TikTok, and more
+              </Typography>
+            </div>
+
+            {/* Loading Metrics Indicator */}
+            {isLoadingMetrics && (
+              <div className="mb-6 flex justify-center items-center gap-4">
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontSize: '14px',
+                    color: colors.primary.main,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      border: `2px solid ${colors.primary.main}`,
+                      borderTop: '2px solid transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 0.8s linear infinite',
+                    }}
+                  />
+                  <span>Fetching engagement metrics...</span>
+                </div>
+              </div>
+            )}
+
+            {isLoading ? (
+              <div
+                style={{
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  padding: '40px',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}
+              >
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '4px solid #783C91',
+                    borderTop: '4px solid transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                  }}
+                ></div>
+                <p style={{ fontFamily: 'Poppins', color: '#666' }}>Loading influencers...</p>
+              </div>
+            ) : error ? (
+              <div
+                style={{
+                  textAlign: 'center', 
+                  padding: '40px',
+                  color: '#d32f2f',
+                  fontFamily: 'Poppins',
+                }}
+              >
+                <p>Error loading influencers: {error}</p>
+              </div>
+            ) : mappedInfluencers.length === 0 ? (
+              <div
+                style={{
+                  textAlign: 'center', 
+                  padding: '40px',
+                  color: '#666',
+                  fontFamily: 'Poppins',
+                }}
+              >
+                <p>No influencers found.</p>
+              </div>
+            ) : (
+              <InfluencerGrid
+                influencers={mappedInfluencers}
+                onInfluencerClick={(influencer) => {
+                  navigate(`${getBasePath()}/influencer/${influencer.id}`);
+                }}
+              />
+            )}
+          </div>
+
+          {/* Desktop Filter Panel - Right Side */}
+          <div className="hidden lg:block" style={{ position: 'relative' }}>
             <div
               style={{
-              width: '40px',
-              height: '40px',
-              border: '4px solid #783C91',
-              borderTop: '4px solid transparent',
-              borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
+                position: 'sticky',
+                top: '24px',
+                maxHeight: 'calc(100vh - 48px)',
+                overflowY: 'auto',
               }}
-            ></div>
-            <p style={{ fontFamily: 'Poppins', color: '#666' }}>Loading influencers...</p>
+            >
+              {renderFilterPanel()}
+            </div>
           </div>
-        ) : error ? (
-          <div
-            style={{
-            textAlign: 'center', 
-            padding: '40px',
-            color: '#d32f2f',
-              fontFamily: 'Poppins',
-            }}
-          >
-            <p>Error loading influencers: {error}</p>
-          </div>
-        ) : mappedInfluencers.length === 0 ? (
-          <div
-            style={{
-            textAlign: 'center', 
-            padding: '40px',
-            color: '#666',
-              fontFamily: 'Poppins',
-            }}
-          >
-            <p>No influencers found.</p>
-          </div>
-        ) : (
-          <InfluencerGrid
-            influencers={mappedInfluencers}
-            onInfluencerClick={(influencer) => {
-              navigate(`${getBasePath()}/influencer/${influencer.id}`);
-            }}
-          />
-        )}
+        </div>
       </div>
     </div>
   );
