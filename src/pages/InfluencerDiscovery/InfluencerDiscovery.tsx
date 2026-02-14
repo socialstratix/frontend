@@ -36,11 +36,12 @@ export const InfluencerDiscovery: React.FC = () => {
   // Mobile drawer state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Fetch influencers from API with filters
+  // Fetch influencers from API with filters (platform filter is applied in backend by linked SocialMediaProfile)
   const { influencers, isLoading, error } = useInfluencerList({
     limit: 50,
     tags: selectedTags.length > 0 ? selectedTags : undefined,
     location: locationFilter || undefined,
+    platforms: selectedPlatforms.length > 0 ? selectedPlatforms : undefined,
   });
 
   // State for enriched influencers with engagement metrics
@@ -234,20 +235,7 @@ export const InfluencerDiscovery: React.FC = () => {
       : influencers;
     
     return influencersToFilter.filter((influencer) => {
-      // Platform filter
-      if (selectedPlatforms.length > 0) {
-        const influencerPlatforms: Platform[] = [];
-        if (influencer.platformFollowers?.x) influencerPlatforms.push('x');
-        if (influencer.platformFollowers?.youtube) influencerPlatforms.push('youtube');
-        if (influencer.platformFollowers?.facebook) influencerPlatforms.push('facebook');
-        if (influencer.platformFollowers?.instagram) influencerPlatforms.push('instagram');
-        if (influencer.platformFollowers?.tiktok) influencerPlatforms.push('tiktok');
-
-        const hasSelectedPlatform = selectedPlatforms.some((platform) =>
-          influencerPlatforms.includes(platform)
-        );
-        if (!hasSelectedPlatform) return false;
-      }
+      // Platform filter is applied by the API (influencers with linked social profiles for selected platforms)
 
       // Followers filter (using data from followers API)
       if (advancedFiltersEnabled && minFollowers > 0) {

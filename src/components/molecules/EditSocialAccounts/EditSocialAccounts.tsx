@@ -13,6 +13,7 @@ import {
   YouTubeIcon 
 } from '../../../assets/icons';
 import { onboardingStep4Schema } from '../../../utils/validationSchemas';
+import { normalizeSocialInput } from '../../../utils/socialMediaUtils';
 
 interface SocialProfile {
   platform: 'youtube' | 'facebook' | 'instagram' | 'tiktok' | 'x';
@@ -92,44 +93,21 @@ export const EditSocialAccounts: React.FC<EditSocialAccountsProps> = ({
     youtube?: string;
   }) => {
     const socialMedia: Array<{ platform: string; username: string; profileUrl: string }> = [];
-
-    // Build profile URLs based on platform
-    if (data.instagram?.trim()) {
-      socialMedia.push({
-        platform: 'instagram',
-        username: data.instagram.trim(),
-        profileUrl: `https://instagram.com/${data.instagram.trim()}`,
-      });
+    const platforms = [
+      { key: 'instagram' as const, platform: 'instagram' as const },
+      { key: 'facebook' as const, platform: 'facebook' as const },
+      { key: 'tiktok' as const, platform: 'tiktok' as const },
+      { key: 'x' as const, platform: 'x' as const },
+      { key: 'youtube' as const, platform: 'youtube' as const },
+    ] as const;
+    for (const { key, platform } of platforms) {
+      const value = data[key]?.trim();
+      if (!value) continue;
+      const normalized = normalizeSocialInput(platform, value);
+      if (normalized) {
+        socialMedia.push({ platform, username: normalized.username, profileUrl: normalized.profileUrl });
+      }
     }
-    if (data.facebook?.trim()) {
-      socialMedia.push({
-        platform: 'facebook',
-        username: data.facebook.trim(),
-        profileUrl: `https://facebook.com/${data.facebook.trim()}`,
-      });
-    }
-    if (data.tiktok?.trim()) {
-      socialMedia.push({
-        platform: 'tiktok',
-        username: data.tiktok.trim(),
-        profileUrl: `https://tiktok.com/@${data.tiktok.trim()}`,
-      });
-    }
-    if (data.x?.trim()) {
-      socialMedia.push({
-        platform: 'x',
-        username: data.x.trim(),
-        profileUrl: `https://x.com/${data.x.trim()}`,
-      });
-    }
-    if (data.youtube?.trim()) {
-      socialMedia.push({
-        platform: 'youtube',
-        username: data.youtube.trim(),
-        profileUrl: `https://youtube.com/@${data.youtube.trim()}`,
-      });
-    }
-
     onSave(socialMedia);
     onClose();
   };
@@ -145,35 +123,35 @@ export const EditSocialAccounts: React.FC<EditSocialAccountsProps> = ({
       id: 'instagram',
       name: 'Instagram',
       icon: InstagramIcon,
-      placeholder: 'Enter your Instagram username',
+      placeholder: 'Enter username or profile URL',
       field: 'instagram' as const,
     },
     {
       id: 'facebook',
       name: 'Facebook',
       icon: FacebookIcon,
-      placeholder: 'Enter your Facebook username',
+      placeholder: 'Enter username or profile URL',
       field: 'facebook' as const,
     },
     {
       id: 'tiktok',
       name: 'TikTok',
       icon: TikTokIcon,
-      placeholder: 'Enter your TikTok username',
+      placeholder: 'Enter username or profile URL',
       field: 'tiktok' as const,
     },
     {
       id: 'x',
       name: 'X',
       icon: XIcon,
-      placeholder: 'Enter your X username',
+      placeholder: 'Enter username or profile URL',
       field: 'x' as const,
     },
     {
       id: 'youtube',
       name: 'YouTube',
       icon: YouTubeIcon,
-      placeholder: 'Enter your YouTube username',
+      placeholder: 'Enter username or profile URL',
       field: 'youtube' as const,
     },
   ];
@@ -251,7 +229,7 @@ export const EditSocialAccounts: React.FC<EditSocialAccountsProps> = ({
             lineHeight: '1.5',
           }}
         >
-          Add or update your social media account usernames. Leave a field empty to remove that account.
+          Add your username or profile URL for each platform. Leave a field empty to remove that account.
         </p>
 
         {/* Form */}
