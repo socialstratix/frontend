@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizeSocialInput } from './socialMediaUtils';
 
 // Login Validation Schema
 export const loginSchema = z.object({
@@ -131,40 +132,21 @@ export const onboardingStep3Schema = z.object({
 
 export type OnboardingStep3Data = z.infer<typeof onboardingStep3Schema>;
 
-// Onboarding Step 4 - Social Media
-const usernameRegex = /^[a-zA-Z0-9._]+$/;
+// Onboarding Step 4 - Social Media (username or profile URL)
+const socialField = (platform: 'instagram' | 'facebook' | 'tiktok' | 'x' | 'youtube') =>
+  z
+    .string()
+    .refine((val) => !val?.trim() || normalizeSocialInput(platform, val) !== null, {
+      message: `Enter a valid ${platform} username or profile URL`,
+    })
+    .optional();
 
 export const onboardingStep4Schema = z.object({
-  instagram: z
-    .string()
-    .refine((val) => val === '' || usernameRegex.test(val), {
-      message: 'Username can only contain letters, numbers, dots, and underscores',
-    })
-    .optional(),
-  facebook: z
-    .string()
-    .refine((val) => val === '' || usernameRegex.test(val), {
-      message: 'Username can only contain letters, numbers, dots, and underscores',
-    })
-    .optional(),
-  tiktok: z
-    .string()
-    .refine((val) => val === '' || usernameRegex.test(val), {
-      message: 'Username can only contain letters, numbers, dots, and underscores',
-    })
-    .optional(),
-  x: z
-    .string()
-    .refine((val) => val === '' || usernameRegex.test(val), {
-      message: 'Username can only contain letters, numbers, dots, and underscores',
-    })
-    .optional(),
-  youtube: z
-    .string()
-    .refine((val) => val === '' || usernameRegex.test(val), {
-      message: 'Username can only contain letters, numbers, dots, and underscores',
-    })
-    .optional(),
+  instagram: socialField('instagram'),
+  facebook: socialField('facebook'),
+  tiktok: socialField('tiktok'),
+  x: socialField('x'),
+  youtube: socialField('youtube'),
 });
 
 export type OnboardingStep4Data = z.infer<typeof onboardingStep4Schema>;

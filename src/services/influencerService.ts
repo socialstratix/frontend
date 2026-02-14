@@ -118,6 +118,7 @@ export interface InfluencerListParams {
   tags?: string | string[];
   location?: string;
   isTopCreator?: boolean;
+  platforms?: string[];
 }
 
 export interface InfluencerListResponse {
@@ -226,7 +227,10 @@ class InfluencerService {
       const tags = Array.isArray(params.tags) ? params.tags.join(',') : params.tags;
       queryParams.append('tags', tags);
     }
-    
+    if (params?.platforms && params.platforms.length > 0) {
+      queryParams.append('platforms', params.platforms.join(','));
+    }
+
     const queryString = queryParams.toString();
     const endpoint = `/influencer${queryString ? `?${queryString}` : ''}`;
     

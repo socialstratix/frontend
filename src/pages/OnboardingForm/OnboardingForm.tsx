@@ -23,6 +23,7 @@ import {
   onboardingStep3Schema,
   onboardingStep4Schema,
 } from '../../utils/validationSchemas';
+import { normalizeSocialInput } from '../../utils/socialMediaUtils';
 import type {
   OnboardingStep1Data,
   OnboardingStep2Data,
@@ -133,42 +134,22 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
       const step2Data = step2Form.getValues();
       const step4Data = step4Form.getValues();
 
-      // Prepare social media data
-      const socialMedia = [];
-      if (step4Data.instagram) {
-        socialMedia.push({
-          platform: 'instagram' as const,
-          username: step4Data.instagram,
-          profileUrl: `https://instagram.com/${step4Data.instagram}`,
-        });
-      }
-      if (step4Data.facebook) {
-        socialMedia.push({
-          platform: 'facebook' as const,
-          username: step4Data.facebook,
-          profileUrl: `https://facebook.com/${step4Data.facebook}`,
-        });
-      }
-      if (step4Data.tiktok) {
-        socialMedia.push({
-          platform: 'tiktok' as const,
-          username: step4Data.tiktok,
-          profileUrl: `https://tiktok.com/@${step4Data.tiktok}`,
-        });
-      }
-      if (step4Data.x) {
-        socialMedia.push({
-          platform: 'x' as const,
-          username: step4Data.x,
-          profileUrl: `https://x.com/${step4Data.x}`,
-        });
-      }
-      if (step4Data.youtube) {
-        socialMedia.push({
-          platform: 'youtube' as const,
-          username: step4Data.youtube,
-          profileUrl: `https://youtube.com/@${step4Data.youtube}`,
-        });
+      // Prepare social media data (extract username from URL if user pasted profile URL)
+      const socialMedia: Array<{ platform: string; username: string; profileUrl: string }> = [];
+      const platforms = [
+        { key: 'instagram' as const, platform: 'instagram' as const },
+        { key: 'facebook' as const, platform: 'facebook' as const },
+        { key: 'tiktok' as const, platform: 'tiktok' as const },
+        { key: 'x' as const, platform: 'x' as const },
+        { key: 'youtube' as const, platform: 'youtube' as const },
+      ] as const;
+      for (const { key, platform } of platforms) {
+        const value = step4Data[key]?.trim();
+        if (!value) continue;
+        const normalized = normalizeSocialInput(platform, value);
+        if (normalized) {
+          socialMedia.push({ platform, username: normalized.username, profileUrl: normalized.profileUrl });
+        }
       }
 
       // Prepare onboarding data
@@ -690,7 +671,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 </label>
                 <Input
                   type="text"
-                  placeholder="Enter your Instagram username"
+                  placeholder="Enter username or profile URL"
                   variant="default"
                   style={{
                     fontFamily: 'Poppins, sans-serif',
@@ -721,7 +702,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 </label>
                 <Input
                   type="text"
-                  placeholder="Enter your Facebook username"
+                  placeholder="Enter username or profile URL"
                   variant="default"
                   style={{
                     fontFamily: 'Poppins, sans-serif',
@@ -752,7 +733,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 </label>
                 <Input
                   type="text"
-                  placeholder="Enter your TikTok username"
+                  placeholder="Enter username or profile URL"
                   variant="default"
                   style={{
                     fontFamily: 'Poppins, sans-serif',
@@ -783,7 +764,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 </label>
                 <Input
                   type="text"
-                  placeholder="Enter your X (Twitter) username"
+                  placeholder="Enter username or profile URL"
                   variant="default"
                   style={{
                     fontFamily: 'Poppins, sans-serif',
@@ -814,7 +795,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                 </label>
                 <Input
                   type="text"
-                  placeholder="Enter your YouTube channel name"
+                  placeholder="Enter username or profile URL"
                   variant="default"
                   style={{
                     fontFamily: 'Poppins, sans-serif',
