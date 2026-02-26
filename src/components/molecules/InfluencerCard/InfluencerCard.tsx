@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { XIcon, YouTubeIcon, FacebookIcon, InstagramIcon, TikTokIcon, StarIcon, BadgeIcon } from '../../../assets/icons';
 import { PLACEHOLDER_IMAGE } from '../../../constants';
 import { influencerService, type FollowersResponse } from '../../../services/influencerService';
+import { toTitleCase } from '../../../utils/stringUtils';
 
 interface InfluencerCardProps {
   name: string;
@@ -82,7 +83,7 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
 
   const PlatformIcon = ({ platform, size = 16 }: { platform: string; size?: number }) => {
     const iconStyle = { width: size, height: size };
-    
+
     switch (platform) {
       case 'x':
         return <img src={XIcon} alt="X" style={iconStyle} />;
@@ -122,7 +123,7 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
       }}
     >
       {/* Background Image Section */}
-      <div 
+      <div
         className="relative"
         style={{
           width: '100%',
@@ -145,18 +146,18 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
             onError={() => setBackgroundImageError(true)}
           />
         ) : (
-          <div 
+          <div
             className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center"
             style={{
               borderRadius: '4px'
             }}
           >
             <span className="text-white text-4xl font-bold">
-              {name.charAt(0)}
+              {toTitleCase(name).charAt(0)}
             </span>
           </div>
         )}
-        
+
         {/* Top Creator Badge - Top Left Corner */}
         {isTopCreator && (
           <div
@@ -187,7 +188,7 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
             </span>
           </div>
         )}
-        
+
         {/* Rating Badge - Top Right Corner */}
         {rating !== undefined && rating !== null && (
           <div
@@ -219,10 +220,10 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
       </div>
 
       {/* Content Section */}
-      <div 
-        style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
           gap: '8px',
           flex: 1
         }}
@@ -260,11 +261,11 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
                   fontFamily: 'Poppins, sans-serif'
                 }}
               >
-                {name ? name.charAt(0).toUpperCase() : '?'}
+                {name ? toTitleCase(name).charAt(0) : '?'}
               </span>
             )}
           </div>
-          <h3 
+          <h3
             className="font-semibold text-gray-900"
             style={{
               fontFamily: 'Poppins, sans-serif',
@@ -273,13 +274,13 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
               margin: 0
             }}
           >
-            {name}
+            {toTitleCase(name)}
           </h3>
         </div>
 
         {/* Description */}
         {description && (
-          <p 
+          <p
             className="text-sm text-gray-600"
             style={{
               fontFamily: 'Poppins, sans-serif',
@@ -294,7 +295,7 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
 
         {/* Platform Followers - Bottom Row */}
         {platformFollowers && (
-          <div 
+          <div
             style={{
               display: 'flex',
               gap: '8px',
@@ -383,7 +384,7 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
                   <PlatformIcon platform="instagram" size={16} />
                 </div>
                 <span style={{ fontFamily: 'Poppins, sans-serif', color: '#333' }}>
-                  {formatFollowers(platformFollowers.instagram)} 
+                  {formatFollowers(platformFollowers.instagram)}
                 </span>
               </div>
             )}

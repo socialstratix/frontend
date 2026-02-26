@@ -18,6 +18,7 @@ import { influencerService, type ContentItem, type FollowersResponse, type Influ
 import { apiService } from '../../services/api';
 import { INFLUENCER_TAGS } from '../../constants/tags';
 import { useConversations } from '../../hooks/useConversations';
+import { toTitleCase } from '../../utils/stringUtils';
 import {
   XIcon,
   YouTubeIcon,
@@ -305,7 +306,7 @@ export const InfluencerDetail: React.FC = () => {
 
     return {
       id: influencer._id,
-      name: influencer.user?.name || 'Influencer Name',
+      name: toTitleCase(influencer.user?.name || 'Influencer Name'),
       image: influencer.coverImage || undefined, // Use URL directly as-is
       profileImage: influencer.profileImage || influencer.user?.avatar || undefined, // Use URL directly as-is
       rating: influencer.rating,

@@ -40,46 +40,54 @@ export const EditTags: React.FC<EditTagsProps> = ({
 
   const handleAddTag = (tag?: string) => {
     const tagToAdd = tag || inputValue;
-    // Parse comma-separated tags from input
-    const inputTags = tagToAdd.split(',').map(t => t.trim()).filter(t => t && !tags.includes(t));
-    if (inputTags.length > 0) {
-      const newTags = [...tags, ...inputTags].slice(0, maxTags);
-      setTags(newTags);
-      setInputValue(newTags.join(', '));
-    } else {
-      const trimmedTag = tagToAdd.trim();
-      if (trimmedTag && !tags.includes(trimmedTag) && tags.length < maxTags) {
-        const newTags = [...tags, trimmedTag];
-        setTags(newTags);
-        setInputValue(newTags.join(', '));
+    if (!tagToAdd.trim()) return;
+
+    // Split input by comma and handle each tag independently
+    const inputTags = tagToAdd.split(',').map(t => t.trim()).filter(t => t);
+
+    const newTags = [...tags];
+
+    inputTags.forEach(t => {
+      // Check for case-insensitive duplicate
+      const isDuplicate = newTags.some(existingTag =>
+        existingTag.toLowerCase() === t.toLowerCase()
+      );
+
+      if (!isDuplicate && newTags.length < maxTags) {
+        newTags.push(t);
       }
+    });
+
+    if (newTags.length !== tags.length) {
+      setTags(newTags);
+      setInputValue(''); // Clear input after successful addition
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
     const newTags = tags.filter((tag) => tag !== tagToRemove);
     setTags(newTags);
-    setInputValue(newTags.join(', '));
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && inputValue.trim()) {
+    if (e.key === 'Enter') {
       e.preventDefault();
       handleAddTag(inputValue);
     }
   };
 
   const handleSuggestedTagClick = (tag: string) => {
-    if (tags.includes(tag)) {
-      // Remove tag if already selected
-      const newTags = tags.filter((t) => t !== tag);
+    // Check for case-insensitive match in current tags
+    const existingIndex = tags.findIndex(t => t.toLowerCase() === tag.toLowerCase());
+
+    if (existingIndex !== -1) {
+      // Remove tag if already selected (case-insensitive)
+      const newTags = [...tags];
+      newTags.splice(existingIndex, 1);
       setTags(newTags);
-      setInputValue(newTags.join(', '));
     } else if (tags.length < maxTags) {
       // Add tag if not selected and under max limit
-      const newTags = [...tags, tag];
-      setTags(newTags);
-      setInputValue(newTags.join(', '));
+      setTags([...tags, tag]);
     }
   };
 
@@ -177,13 +185,12 @@ export const EditTags: React.FC<EditTagsProps> = ({
         <div style={{ marginBottom: '16px' }}>
           <Input
             type="text"
-            value={tags.length > 0 ? tags.join(', ') : inputValue}
+            value={inputValue}
             onChange={(e) => {
-              // Allow manual editing, but sync with tags when user types
               setInputValue(e.target.value);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Selected tags will appear here"
+            placeholder="Add a tag..."
             disabled={tags.length >= maxTags}
             style={{
               width: '100%',
@@ -296,14 +303,14 @@ export const EditTags: React.FC<EditTagsProps> = ({
                       disabled={!isSelected && tags.length >= maxTags}
                       style={{
                         padding: '8px 16px',
-                        backgroundColor: isSelected 
+                        backgroundColor: isSelected
                           ? (colors.primary.main || '#783C91')
                           : (colors.grey.light || '#E0E0E0'),
                         borderRadius: '20px',
                         border: 'none',
                         fontFamily: 'Poppins, sans-serif',
                         fontSize: '14px',
-                        color: isSelected 
+                        color: isSelected
                           ? '#FFFFFF'
                           : (colors.text.secondary || '#676767'),
                         cursor: (!isSelected && tags.length >= maxTags) ? 'not-allowed' : 'pointer',
@@ -333,14 +340,14 @@ export const EditTags: React.FC<EditTagsProps> = ({
                       }}
                     >
                       {isSelected && (
-                        <img 
-                          src={CheckIcon} 
-                          alt="Selected" 
-                          style={{ 
-                            width: '14px', 
+                        <img
+                          src={CheckIcon}
+                          alt="Selected"
+                          style={{
+                            width: '14px',
                             height: '14px',
                             filter: 'brightness(0) invert(1)'
-                          }} 
+                          }}
                         />
                       )}
                       {tag}
