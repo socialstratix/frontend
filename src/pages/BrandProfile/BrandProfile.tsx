@@ -563,14 +563,7 @@ export const BrandProfile: React.FC = () => {
                     zIndex: 1,
                   }}
                 >
-                  <EditButton 
-                    onClick={() => setShowEditPhoto(true)}
-                    style={{ 
-                      width: '28px', 
-                      height: '28px',
-                      borderRadius: '50%',
-                    }}
-                  />
+                  <EditButton onClick={() => setShowEditPhoto(true)} />
                 </div>
               )}
             </div>

@@ -237,7 +237,10 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center justify-between h-full gap-2 md:gap-2.5">
           {/* Left Section - Logo */}
           <div className="flex items-center gap-1.5 md:gap-2.5">
-            <Link to="/" className="flex items-center gap-1.5 md:gap-2.5">
+            <Link
+              to={user ? (user.userType === 'influencer' ? '/influencer' : '/brand') : '/'}
+              className="flex items-center gap-1.5 md:gap-2.5"
+            >
               {/* Logo Icon */}
               <span
                 style={{

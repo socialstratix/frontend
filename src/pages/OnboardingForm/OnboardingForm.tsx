@@ -666,7 +666,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                     marginBottom: '8px'
                   }}
                 >
-                  <img src={InstagramIcon} alt="Instagram" style={{ width: '20px', height: '20px' }} />
+                  <img src={InstagramIcon} alt="Instagram" style={{ width: '24px', height: '24px' }} />
                   Instagram Account
                 </label>
                 <Input
@@ -697,7 +697,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                     marginBottom: '8px'
                   }}
                 >
-                  <img src={FacebookIcon} alt="Facebook" style={{ width: '20px', height: '20px' }} />
+                  <img src={FacebookIcon} alt="Facebook" style={{ width: '24px', height: '24px' }} />
                   Facebook Account
                 </label>
                 <Input
@@ -728,7 +728,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                     marginBottom: '8px'
                   }}
                 >
-                  <img src={TikTokIcon} alt="TikTok" style={{ width: '20px', height: '20px' }} />
+                  <img src={TikTokIcon} alt="TikTok" style={{ width: '24px', height: '24px' }} />
                   TikTok Account
                 </label>
                 <Input
@@ -759,7 +759,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                     marginBottom: '8px'
                   }}
                 >
-                  <img src={XIcon} alt="X" style={{ width: '20px', height: '20px' }} />
+                  <img src={XIcon} alt="X" style={{ width: '24px', height: '24px' }} />
                   X Account
                 </label>
                 <Input
@@ -790,7 +790,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                     marginBottom: '8px'
                   }}
                 >
-                  <img src={YouTubeIcon} alt="YouTube" style={{ width: '20px', height: '20px' }} />
+                  <img src={YouTubeIcon} alt="YouTube" style={{ width: '24px', height: '24px' }} />
                   YouTube Account
                 </label>
                 <Input

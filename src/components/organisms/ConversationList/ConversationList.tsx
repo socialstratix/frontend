@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { colors } from '../../../constants/colors';
-import { SearchIcon, FilterIcon } from '../../../assets/icons';
+import { SearchIcon } from '../../../assets/icons';
 import type { IConversation } from '../../../services/messageService';
 import { useAuth } from '../../../contexts/AuthContext';
 
@@ -83,55 +83,38 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         </h1>
 
         {/* Search Box */}
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <img
-              src={SearchIcon}
-              alt="Search"
-              style={{
-                position: 'absolute',
-                left: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '20px',
-                height: '20px',
-                opacity: 0.5,
-              }}
-            />
-            <input
-              type="text"
-              placeholder="Search messages..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                height: '40px',
-                paddingLeft: '40px',
-                paddingRight: '12px',
-                border: `1px solid ${colors.border.light}`,
-                borderRadius: '4px',
-                fontFamily: 'Poppins',
-                fontSize: '14px',
-                outline: 'none',
-                backgroundColor: colors.primary.white,
-              }}
-            />
-          </div>
-          <button
+        <div style={{ position: 'relative' }}>
+          <img
+            src={SearchIcon}
+            alt="Search"
             style={{
-              width: '40px',
+              position: 'absolute',
+              left: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '20px',
+              height: '20px',
+              opacity: 0.5,
+            }}
+          />
+          <input
+            type="text"
+            placeholder="Search messages..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
               height: '40px',
+              paddingLeft: '40px',
+              paddingRight: '12px',
               border: `1px solid ${colors.border.light}`,
               borderRadius: '4px',
+              fontFamily: 'Poppins',
+              fontSize: '14px',
+              outline: 'none',
               backgroundColor: colors.primary.white,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
             }}
-          >
-            <img src={FilterIcon} alt="Filter" style={{ width: '20px', height: '20px' }} />
-          </button>
+          />
         </div>
       </div>
 
@@ -215,17 +198,39 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                       marginBottom: '4px',
                     }}
                   >
-                    <h3
-                      style={{
-                        fontFamily: 'Poppins',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: colors.text.primary,
-                        margin: 0,
-                      }}
-                    >
-                      {otherParticipant.name}
-                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}>
+                      <h3
+                        style={{
+                          fontFamily: 'Poppins',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: colors.text.primary,
+                          margin: 0,
+                          flex: 1,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {otherParticipant.name}
+                      </h3>
+                      {(conversation.unreadForUser ?? 0) > 0 && (
+                        <span
+                          style={{
+                            fontFamily: 'Poppins',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: colors.primary.white,
+                            backgroundColor: colors.primary.main,
+                            padding: '2px 6px',
+                            borderRadius: '10px',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {conversation.unreadForUser! > 99 ? '99+' : conversation.unreadForUser}
+                        </span>
+                      )}
+                    </div>
                     {conversation.lastMessage && (
                       <span
                         style={{

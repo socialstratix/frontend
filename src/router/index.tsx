@@ -16,6 +16,7 @@ const Signup = lazy(() => import('../pages/Signup/Signup').then(module => ({ def
 const UserTypeSelection = lazy(() => import('../pages/UserTypeSelection/UserTypeSelection').then(module => ({ default: module.UserTypeSelection })));
 const PostCampaign = lazy(() => import('../pages/PostCampaign/PostCampaign').then(module => ({ default: module.PostCampaign })));
 const BrandProfile = lazy(() => import('../pages/BrandProfile/BrandProfile').then(module => ({ default: module.BrandProfile })));
+const ContentUnavailable = lazy(() => import('../pages/ContentUnavailable/ContentUnavailable').then(module => ({ default: module.ContentUnavailable })));
 
 // Loading component
 const PageLoader = () => (
@@ -253,6 +254,11 @@ export const router = createBrowserRouter([
         element: <LazyPage><Messages /></LazyPage>,
       },
     ],
+  },
+  // Catch-all for footer and other links that have no content yet
+  {
+    path: '*',
+    element: <LazyPage><ContentUnavailable /></LazyPage>,
   },
 ]);
 

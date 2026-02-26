@@ -104,8 +104,8 @@ export const InfluencerCard: React.FC<InfluencerCardProps> = ({
       onClick={onClick}
       className="cursor-pointer hover:opacity-90 transition-opacity"
       style={{
-        width: '376px',
-        maxWidth: '100%',
+        width: '100%',
+        maxWidth: '376px',
         height: 'auto',
         minHeight: '376px',
         gap: '8px',

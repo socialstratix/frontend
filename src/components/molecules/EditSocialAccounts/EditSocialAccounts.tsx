@@ -249,7 +249,7 @@ export const EditSocialAccounts: React.FC<EditSocialAccountsProps> = ({
                     marginBottom: '8px',
                   }}
                 >
-                  <img src={platform.icon} alt={platform.name} style={{ width: '20px', height: '20px' }} />
+                  <img src={platform.icon} alt={platform.name} style={{ width: '24px', height: '24px' }} />
                   {platform.name} Account
                 </label>
                 <Input
