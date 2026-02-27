@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSocket } from '../contexts/SocketContext';
+import { useAuth } from '../contexts/AuthContext';
 import { messageService } from '../services/messageService';
 import type { IMessage } from '../services/messageService';
 
@@ -15,6 +16,7 @@ interface UseMessagesReturn {
 
 export const useMessages = (conversationId: string | null): UseMessagesReturn => {
   const { socket, isConnected } = useSocket();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,9 +38,20 @@ export const useMessages = (conversationId: string | null): UseMessagesReturn =>
         const response = await messageService.getMessages(conversationId, 1, 50);
         console.log('useMessages - Response:', response);
         console.log('useMessages - Messages:', response.data.messages);
-        setMessages(response.data.messages);
+        const loadedMessages = response.data.messages;
+        setMessages(loadedMessages);
         setHasMore(response.data.pagination.page < response.data.pagination.pages);
         setPage(1);
+        // Mark all unread messages from the other participant as read when viewing the conversation
+        const currentUserId = user?.id;
+        if (currentUserId) {
+          loadedMessages.forEach((msg) => {
+            const senderId = typeof msg.senderId === 'object' && msg.senderId !== null && '_id' in msg.senderId ? msg.senderId._id : msg.senderId;
+            if (!msg.isRead && senderId !== currentUserId) {
+              messageService.markAsRead(msg._id).catch((err) => console.error('Failed to mark message as read:', err));
+            }
+          });
+        }
       } catch (err) {
         console.error('useMessages - Error loading messages:', err);
         setError(err instanceof Error ? err.message : 'Failed to load messages');

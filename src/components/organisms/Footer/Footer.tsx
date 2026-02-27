@@ -5,6 +5,7 @@ interface FooterProps {
   className?: string;
 }
 
+// Footer content: Placeholder links (ABOUT, STRATIX, bottom row) await data to be shared by Ankit.
 export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
   return (
     <footer
@@ -33,7 +34,7 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
               ABOUT
             </h3>
             <div className="flex flex-col gap-3">
-              {['Company', 'Careers', 'Blog', 'Placeholder'].map((link) => (
+              {['Company', 'Careers', 'Blog', 'Press'].map((link) => (
                 <Link
                   key={link}
                   to={`/${link.toLowerCase()}`}
@@ -99,7 +100,7 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
               STRATIX
             </h3>
             <div className="flex flex-col gap-3">
-              {['Pricing', 'Placeholder', 'Placeholder'].map((link, index) => (
+              {['Pricing', 'Enterprise', 'Solutions'].map((link, index) => (
                 <Link
                   key={`${link}-${index}`}
                   to={`/${link.toLowerCase()}`}
@@ -170,7 +171,7 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
             >
               © Stratix Inc.
             </span>
-            {['Terms and Services', 'Privacy', 'Placeholder', 'Placeholder'].map(
+            {['Terms and Services', 'Privacy', 'Cookie Policy', 'Security'].map(
               (link, index) => (
                 <Link
                   key={`${link}-${index}`}
@@ -198,8 +199,8 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
               className="hover:opacity-80 transition-opacity"
             >
               <svg
-                width="24"
-                height="24"
+                width="28"
+                height="28"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -227,8 +228,8 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
               className="hover:opacity-80 transition-opacity"
             >
               <svg
-                width="24"
-                height="24"
+                width="28"
+                height="28"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -258,8 +259,8 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
               className="hover:opacity-80 transition-opacity"
             >
               <svg
-                width="24"
-                height="24"
+                width="28"
+                height="28"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -285,8 +286,8 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
               className="hover:opacity-80 transition-opacity"
             >
               <svg
-                width="24"
-                height="24"
+                width="28"
+                height="28"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"

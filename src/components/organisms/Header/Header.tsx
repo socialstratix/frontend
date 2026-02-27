@@ -11,6 +11,7 @@ import { brandService } from '../../../services/brandService';
 import type { Brand } from '../../../services/brandService';
 import { messageService } from '../../../services/messageService';
 import { useSocket } from '../../../contexts/SocketContext';
+import { toTitleCase } from '../../../utils/stringUtils';
 
 interface HeaderProps {
   userAvatar?: string;
@@ -32,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({
   const { user, logout } = useAuth();
   const { socket } = useSocket();
   const baseRoute = location.pathname.split('/')[1]; // Get 'home', 'brand', or 'influencer'
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Influencer[]>([]);
@@ -42,13 +43,13 @@ export const Header: React.FC<HeaderProps> = ({
   const searchRef = useRef<HTMLDivElement>(null);
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const isInfluencer = user?.userType === 'influencer';
-  
+
   // Unread message count
   const [unreadCount, setUnreadCount] = useState(0);
-  
+
   // Get the actual user ID from auth context or props
   const actualUserId = userId || user?.id || '';
-  
+
   // Construct profile path based on route structure
   // For brand routes, MUST use brandId (MongoDB _id), do NOT fall back to userId
   // For influencer routes, MUST use influencerId (MongoDB _id), do NOT fall back to userId
@@ -237,7 +238,10 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center justify-between h-full gap-2 md:gap-2.5">
           {/* Left Section - Logo */}
           <div className="flex items-center gap-1.5 md:gap-2.5">
-            <Link to="/" className="flex items-center gap-1.5 md:gap-2.5">
+            <Link
+              to={user ? (user.userType === 'influencer' ? '/influencer' : '/brand') : '/'}
+              className="flex items-center gap-1.5 md:gap-2.5"
+            >
               {/* Logo Icon */}
               <span
                 style={{
@@ -253,7 +257,7 @@ export const Header: React.FC<HeaderProps> = ({
                 ツ
               </span>
               {/* Logo Text */}
-              <span 
+              <span
                 className="uppercase hidden sm:inline"
                 style={{
                   fontFamily: 'Poppins, sans-serif',
@@ -273,9 +277,9 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Right Section - Search Bar, Navigation and User Controls */}
           <div className="flex items-center gap-1 md:gap-2.5">
             {/* Search Bar */}
-            <div 
+            <div
               ref={searchRef}
-              className="relative hidden md:block" 
+              className="relative hidden md:block"
               style={{ width: 'clamp(200px, 20vw, 272px)' }}
             >
               <input
@@ -379,7 +383,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 marginBottom: '4px',
                               }}
                             >
-                              {brand.user?.name || 'Brand'}
+                              {toTitleCase(brand.user?.name || 'Brand')}
                             </div>
                             {brand.description && (
                               <div
@@ -498,7 +502,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 marginBottom: '4px',
                               }}
                             >
-                              {influencer.user?.name || 'Influencer'}
+                              {toTitleCase(influencer.user?.name || 'Influencer')}
                             </div>
                             {(influencer.description || influencer.bio) && (
                               <div
@@ -782,13 +786,13 @@ export const Header: React.FC<HeaderProps> = ({
             </Link>
 
             {/* Notification Bell */}
-            <button 
+            <button
               className="relative p-1.5 md:p-2 hover:opacity-80 transition-colors"
               style={{ color: '#1E002B' }}
             >
-              <img 
-                src={NotificationsIcon} 
-                alt="Notifications" 
+              <img
+                src={NotificationsIcon}
+                alt="Notifications"
                 className="w-5 h-5 md:w-6 md:h-6"
               />
             </button>

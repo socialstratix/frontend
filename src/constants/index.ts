@@ -36,7 +36,7 @@ export * from './typography';
 export * from './tags';
 
 // Placeholder/Dummy image URL
-export const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/400x400/783C91/FFFFFF?text=No+Image';
+export const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=1000&auto=format&fit=crop';
 
 
 

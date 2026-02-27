@@ -24,6 +24,15 @@ export const Messages: React.FC = () => {
     }
   }, [conversationId]);
 
+  // Refresh conversation list after opening a conversation so per-conversation unread badges update
+  useEffect(() => {
+    if (!selectedConversationId) return;
+    const timeoutId = setTimeout(() => {
+      refreshConversations();
+    }, 1500);
+    return () => clearTimeout(timeoutId);
+  }, [selectedConversationId, refreshConversations]);
+
   // Fetch specific conversation if it's not in the list
   useEffect(() => {
     let cancelled = false;

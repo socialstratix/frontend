@@ -36,6 +36,7 @@ const EditAttachmentsModal: React.FC<{
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<number | null>(null);
 
   const maxFiles = 5;
   const totalCount = currentAttachments.length + newFiles.length;
@@ -191,17 +192,29 @@ const EditAttachmentsModal: React.FC<{
               Current Attachments
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {currentAttachments.map((url, index) => (
+              {currentAttachments.map((url, index) => {
+                const isSelected = selectedAttachmentIndex === index;
+                return (
                 <div
                   key={index}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedAttachmentIndex(isSelected ? null : index)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedAttachmentIndex(isSelected ? null : index);
+                    }
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '8px 12px',
-                    backgroundColor: colors.elevated.background,
-                    border: `1px solid ${colors.border.light}`,
+                    backgroundColor: isSelected ? colors.primary.light : colors.elevated.background,
+                    border: `2px solid ${isSelected ? colors.primary.main : colors.border.light}`,
                     borderRadius: '4px',
+                    cursor: 'pointer',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
@@ -217,7 +230,12 @@ const EditAttachmentsModal: React.FC<{
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleRemoveAttachment(index)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveAttachment(index);
+                      if (selectedAttachmentIndex === index) setSelectedAttachmentIndex(null);
+                      else if (selectedAttachmentIndex !== null && selectedAttachmentIndex > index) setSelectedAttachmentIndex(selectedAttachmentIndex - 1);
+                    }}
                     style={{
                       background: 'none',
                       border: 'none',
@@ -231,7 +249,8 @@ const EditAttachmentsModal: React.FC<{
                     ×
                   </button>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </div>
         )}
@@ -407,6 +426,7 @@ export const CampaignDetailInfluencer: React.FC = () => {
   const [showEditPlatforms, setShowEditPlatforms] = useState(false);
   const [showEditTags, setShowEditTags] = useState(false);
   const [showEditAttachments, setShowEditAttachments] = useState(false);
+  const [lightboxImageUrl, setLightboxImageUrl] = useState<string | null>(null);
 
   // Fetch campaign data using the hook
   const { campaign: apiCampaign, isLoading, error, updateCampaign, deleteCampaign } = useCampaign({
@@ -1098,34 +1118,10 @@ export const CampaignDetailInfluencer: React.FC = () => {
 
                   const fileName = getFileName(url);
                   const fileType = getFileType(url);
+                  const isImage = fileType === 'Image';
 
-                  return (
-                    <a
-                      key={index}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        fontFamily: 'Poppins',
-                        fontSize: '14px',
-                        color: colors.primary.main,
-                        textDecoration: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '8px 12px',
-                        backgroundColor: colors.primary.white,
-                        border: `1px solid ${colors.border.light}`,
-                        borderRadius: '4px',
-                        transition: 'background-color 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = colors.elevated.background;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = colors.primary.white;
-                      }}
-                    >
+                  const content = (
+                    <>
                       <img src={AttachFileIcon} alt="Attachment" style={{ width: '16px', height: '16px', flexShrink: 0 }} />
                       <div style={{ 
                         display: 'flex',
@@ -1149,6 +1145,55 @@ export const CampaignDetailInfluencer: React.FC = () => {
                           {fileType}
                         </span>
                       </div>
+                    </>
+                  );
+
+                  const rowStyle: React.CSSProperties = {
+                    fontFamily: 'Poppins',
+                    fontSize: '14px',
+                    color: colors.primary.main,
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    backgroundColor: colors.primary.white,
+                    border: `1px solid ${colors.border.light}`,
+                    borderRadius: '4px',
+                    transition: 'background-color 0.2s',
+                    cursor: 'pointer',
+                  };
+
+                  return isImage ? (
+                    <button
+                      key={index}
+                      type="button"
+                      style={{ ...rowStyle, textAlign: 'left', width: '100%' }}
+                      onClick={() => setLightboxImageUrl(url)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.elevated.background;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.primary.white;
+                      }}
+                    >
+                      {content}
+                    </button>
+                  ) : (
+                    <a
+                      key={index}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={rowStyle}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.elevated.background;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = colors.primary.white;
+                      }}
+                    >
+                      {content}
                     </a>
                   );
                 })}
@@ -2281,6 +2326,59 @@ export const CampaignDetailInfluencer: React.FC = () => {
             />
           )}
         </>
+      )}
+
+      {/* Lightbox for individual image/video attachment */}
+      {lightboxImageUrl && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setLightboxImageUrl(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxImageUrl(null)}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              background: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              cursor: 'pointer',
+              fontSize: '24px',
+              lineHeight: 1,
+              zIndex: 1,
+            }}
+            aria-label="Close"
+          >
+            ×
+          </button>
+          <img
+            src={lightboxImageUrl}
+            alt="Attachment"
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              objectFit: 'contain',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
       )}
     </div>
   );

@@ -14,4 +14,4 @@ export { EditSocialAccounts } from './EditSocialAccounts';
 export { ProfileCompletionCard } from './ProfileCompletionCard';
 export { FloatingButton } from './FloatingButton';
 export { RangeSlider } from './RangeSlider';
-
+export { MediaSelectionModal } from './MediaSelectionModal/MediaSelectionModal';

@@ -32,6 +32,8 @@ export interface IConversation {
     timestamp: Date;
   };
   unreadCount?: Record<string, number>;
+  /** Unread message count for the current user in this conversation */
+  unreadForUser?: number;
   createdAt: Date;
   updatedAt: Date;
 }
