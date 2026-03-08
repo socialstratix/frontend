@@ -8,7 +8,6 @@ import { BackwardIcon, CheckIcon } from '../../assets/icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiService } from '../../services/api';
 import OnboardingBrandStep2 from '../../assets/images/illustrations/OnbiardingBrandstep2.png';
-import TagsInfluencerImg from '../../assets/images/illustrations/TagsInfuencer.png';
 
 interface BrandOnboardingFormProps {
   onComplete?: () => void;
@@ -24,16 +23,20 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
   // Step 1 - Brand description
   const [brandDescription, setBrandDescription] = useState('');
   
-  // Step 2 - Company logo
+  // Step 1 - Email OTP verify (static for now)
+  const [otp, setOtp] = useState('');
+  const OTP_LENGTH = 6;
+  
+  // Step 3 - Company logo
   const [, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
   
-  // Step 3 - Tags
+  // Step 4 - Tags
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
 
   const handleNext = async () => {
-    if (currentStep < 3) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     } else {
       // Submit onboarding data to backend
@@ -77,17 +80,15 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
   };
 
   const handleAddTag = () => {
-    // Parse comma-separated tags from input
-    const inputTags = tagInput.split(',').map(tag => tag.trim()).filter(tag => tag && !tags.includes(tag));
-    if (inputTags.length > 0) {
-      const newTags = [...tags, ...inputTags].slice(0, 6); // Limit to 6 tags
-      setTags(newTags);
-      setTagInput(newTags.join(', '));
-    } else if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      const newTags = [...tags, tagInput.trim()];
-      setTags(newTags);
-      setTagInput(newTags.join(', '));
+    const trimmed = tagInput.trim();
+    if (!trimmed) return;
+    if (tags.includes(trimmed)) {
+      setTagInput('');
+      return;
     }
+    if (tags.length >= 6) return;
+    setTags([...tags, trimmed]);
+    setTagInput('');
   };
 
   const handleAddTagFromSuggestion = (tag: string) => {
@@ -101,7 +102,27 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
   const handleRemoveTag = (tagToRemove: string) => {
     const newTags = tags.filter(tag => tag !== tagToRemove);
     setTags(newTags);
-    setTagInput(newTags.join(', '));
+    setTagInput('');
+  };
+
+  // RESEND: static for now. VERIFY: validate OTP length then advance
+  const handleOtpAction = () => {
+    const value = otp.trim();
+    if (!value) {
+      setError('');
+      return; // RESEND - no action for now
+    }
+    // VERIFY - validate OTP
+    setError('');
+    if (value.length !== OTP_LENGTH) {
+      setError(`Please enter a valid ${OTP_LENGTH}-digit OTP.`);
+      return;
+    }
+    if (!/^\d+$/.test(value)) {
+      setError('OTP must contain only numbers.');
+      return;
+    }
+    handleNext();
   };
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,6 +152,58 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
   const renderStep = () => {
     switch (currentStep) {
       case 1:
+        return (
+          <>
+            <h2 
+              style={{
+                fontFamily: 'Poppins',
+                fontWeight: 600,
+                fontSize: '24px',
+                lineHeight: '100%',
+                color: 'rgba(30, 0, 43, 1)',
+                marginBottom: '8px',
+                opacity: 1
+              }}
+            >
+              Verify your email
+            </h2>
+            <p 
+              style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontSize: '14px',
+                color: colors.text.secondary,
+                marginBottom: '24px'
+              }}
+            >
+              We have sent an OTP to your email, please enter it below.
+            </p>
+
+            <div style={{ marginBottom: '24px' }}>
+              <Input
+                type="text"
+                label="One Time Password"
+                placeholder={`Enter ${OTP_LENGTH}-digit OTP`}
+                value={otp}
+                onChange={(e) => {
+                  setOtp(e.target.value.replace(/\D/g, '').slice(0, OTP_LENGTH));
+                  if (error) setError('');
+                }}
+                variant="login"
+                error={currentStep === 1 ? error : undefined}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <Button
+              variant="filled"
+              onClick={handleOtpAction}
+              style={{ width: '100%', height: '44px' }}
+            >
+              {otp.trim() ? 'VERIFY' : 'RESEND'}
+            </Button>
+          </>
+        );
+
+      case 2:
         return (
           <>
             <h2 
@@ -202,7 +275,7 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
           </>
         );
 
-      case 2:
+      case 3:
         return (
           <>
             <h2 
@@ -345,21 +418,17 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
           </>
         );
 
-      case 3:
+      case 4:
         return (
           <>
             <h2 
               style={{
-                width: '394px',
-                height: 'auto',
                 fontFamily: 'Poppins',
                 fontWeight: 600,
-                fontSize: '24px',
-                lineHeight: '100%',
-                letterSpacing: '0%',
-                verticalAlign: 'middle',
+                fontSize: '22px',
+                lineHeight: 1.3,
                 color: 'rgba(30, 0, 43, 1)',
-                marginBottom: '8px',
+                marginBottom: '6px',
                 opacity: 1
               }}
             >
@@ -368,9 +437,19 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
             <p 
               style={{
                 fontFamily: 'Poppins, sans-serif',
+                fontSize: '13px',
+                color: colors.text.secondary,
+                marginBottom: '20px'
+              }}
+            >
+              Select up to 6 tags. Click a tag below to add it, or add your own.
+            </p>
+            <p 
+              style={{
+                fontFamily: 'Poppins, sans-serif',
                 fontSize: '14px',
                 color: colors.primary.main,
-                marginBottom: '24px',
+                marginBottom: '16px',
                 cursor: 'pointer',
                 textDecoration: 'underline'
               }}
@@ -378,16 +457,68 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
               View Example
             </p>
 
-            {/* Tag Input */}
-            <div style={{ marginBottom: '16px', display: 'flex', gap: '8px' }}>
+            {/* Selected tags - clear display of what's chosen */}
+            {tags.length > 0 && (
+              <div style={{ marginBottom: '16px' }}>
+                <span 
+                  style={{
+                    fontFamily: 'Poppins, sans-serif',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: colors.text.secondary,
+                    display: 'block',
+                    marginBottom: '8px'
+                  }}
+                >
+                  Selected ({tags.length}/6)
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px 12px',
+                        backgroundColor: colors.primary.main || '#783C91',
+                        color: '#FFFFFF',
+                        borderRadius: '16px',
+                        fontFamily: 'Poppins, sans-serif',
+                        fontSize: '13px'
+                      }}
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'inherit',
+                          cursor: 'pointer',
+                          padding: 0,
+                          marginLeft: '2px',
+                          fontSize: '16px',
+                          lineHeight: 1
+                        }}
+                        aria-label={`Remove ${tag}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add custom tag */}
+            <div style={{ marginBottom: '20px', display: 'flex', gap: '8px' }}>
               <Input
                 type="text"
-                placeholder="Selected tags will appear here"
-                value={tags.length > 0 ? tags.join(', ') : tagInput}
-                onChange={(e) => {
-                  // Allow manual editing, but sync with tags when user types
-                  setTagInput(e.target.value);
-                }}
+                placeholder="Add a custom tag"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -404,85 +535,88 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
               <Button
                 onClick={handleAddTag}
                 variant="filled"
-                style={{ height: '48px', padding: '0 24px' }}
+                disabled={tags.length >= 6}
+                style={{ height: '44px', padding: '0 20px', minWidth: '72px' }}
               >
                 Add
               </Button>
             </div>
 
-            {/* Tags Display - Scrollable with all tags */}
+            {/* Suggested tags label */}
+            <span 
+              style={{
+                fontFamily: 'Poppins, sans-serif',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: colors.text.secondary,
+                display: 'block',
+                marginBottom: '10px'
+              }}
+            >
+              Suggested tags
+            </span>
+
+            {/* Scrollable tag list - subtler scrollbar, clearer chips */}
             <div 
+              className="brand-onboarding-tags-scroll"
               style={{ 
                 maxHeight: '200px',
                 overflowY: 'auto',
                 overflowX: 'hidden',
-                marginBottom: '24px',
-                padding: '4px',
-                scrollbarWidth: 'thin',
-                scrollbarColor: `${colors.primary?.main || '#783C91'} ${colors.secondary?.light || '#F5F0F8'}`,
+                marginBottom: '8px',
+                padding: '8px 4px 8px 0',
               }}
             >
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                 {INFLUENCER_TAGS.map((tag, index) => {
                   const isSelected = tags.includes(tag);
+                  const disabled = !isSelected && tags.length >= 6;
                   return (
                     <button
                       key={index}
+                      type="button"
                       onClick={() => {
-                        if (isSelected) {
-                          handleRemoveTag(tag);
-                        } else {
-                          handleAddTagFromSuggestion(tag);
-                        }
+                        if (isSelected) handleRemoveTag(tag);
+                        else handleAddTagFromSuggestion(tag);
                       }}
-                      disabled={!isSelected && tags.length >= 6}
+                      disabled={disabled}
                       style={{
-                        padding: '8px 16px',
+                        padding: '10px 18px',
                         backgroundColor: isSelected 
                           ? (colors.primary?.main || '#783C91')
-                          : (colors.grey?.light || '#E0E0E0'),
-                        borderRadius: '20px',
-                        border: 'none',
-                        fontFamily: 'Poppins, sans-serif',
-                        fontSize: '14px',
+                          : '#FFFFFF',
                         color: isSelected 
                           ? '#FFFFFF'
                           : (colors.text?.secondary || '#676767'),
-                        cursor: (!isSelected && tags.length >= 6) ? 'not-allowed' : 'pointer',
+                        border: `1px solid ${isSelected ? (colors.primary?.main || '#783C91') : colors.border.light}`,
+                        borderRadius: '20px',
+                        fontFamily: 'Poppins, sans-serif',
+                        fontSize: '14px',
+                        cursor: disabled ? 'not-allowed' : 'pointer',
                         transition: 'all 0.2s ease',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
-                        opacity: (!isSelected && tags.length >= 6) ? 0.5 : 1,
+                        opacity: disabled ? 0.5 : 1,
                       }}
                       onMouseEnter={(e) => {
-                        if (!(!isSelected && tags.length >= 6)) {
-                          e.currentTarget.style.backgroundColor = isSelected
-                            ? (colors.primary?.dark || '#3F214C')
-                            : (colors.primary?.main || '#783C91');
-                          e.currentTarget.style.color = '#FFFFFF';
-                        }
+                        if (disabled) return;
+                        e.currentTarget.style.backgroundColor = isSelected ? (colors.primary?.dark || '#3F214C') : (colors.primary?.main || '#783C91');
+                        e.currentTarget.style.color = '#FFFFFF';
+                        e.currentTarget.style.borderColor = isSelected ? (colors.primary?.dark || '#3F214C') : (colors.primary?.main || '#783C91');
                       }}
                       onMouseLeave={(e) => {
-                        if (!(!isSelected && tags.length >= 6)) {
-                          e.currentTarget.style.backgroundColor = isSelected
-                            ? (colors.primary?.main || '#783C91')
-                            : (colors.grey?.light || '#E0E0E0');
-                          e.currentTarget.style.color = isSelected
-                            ? '#FFFFFF'
-                            : (colors.text?.secondary || '#676767');
-                        }
+                        if (disabled) return;
+                        e.currentTarget.style.backgroundColor = isSelected ? (colors.primary?.main || '#783C91') : '#FFFFFF';
+                        e.currentTarget.style.color = isSelected ? '#FFFFFF' : (colors.text?.secondary || '#676767');
+                        e.currentTarget.style.borderColor = isSelected ? (colors.primary?.main || '#783C91') : colors.border.light;
                       }}
                     >
                       {isSelected && (
                         <img 
                           src={CheckIcon} 
-                          alt="Selected" 
-                          style={{ 
-                            width: '14px', 
-                            height: '14px',
-                            filter: 'brightness(0) invert(1)'
-                          }} 
+                          alt="" 
+                          style={{ width: '14px', height: '14px', filter: 'brightness(0) invert(1)' }} 
                         />
                       )}
                       {tag}
@@ -491,7 +625,6 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
                 })}
               </div>
             </div>
-
           </>
         );
 
@@ -501,24 +634,31 @@ export const BrandOnboardingForm: React.FC<BrandOnboardingFormProps> = ({ onComp
   };
 
   return (
-    <div 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: `background: linear-gradient(0deg, #FFFFFF, #FFFFFF),
-linear-gradient(106.35deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%),
-linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7));`,
-
-        zIndex: 1000,
-        backdropFilter: 'blur(10px)'
-      }}
-    >
+    <>
+      <style>{`
+        .brand-onboarding-tags-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #c4b5d0 #f0eaf4;
+        }
+        .brand-onboarding-tags-scroll::-webkit-scrollbar { width: 6px; }
+        .brand-onboarding-tags-scroll::-webkit-scrollbar-track { background: #f0eaf4; border-radius: 3px; }
+        .brand-onboarding-tags-scroll::-webkit-scrollbar-thumb { background: #c4b5d0; border-radius: 3px; }
+      `}</style>
+    <div
+  style={{
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background:
+      "linear-gradient(135deg, rgb(235,188,254) 0%, rgb(240,196,105) 100%)",
+    zIndex: 1000,
+  }}
+>
       <div 
         style={{
           width: '550px',
@@ -566,7 +706,7 @@ linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7));`,
               color: colors.text.secondary
             }}
           >
-            Question {currentStep}/3
+            Question {currentStep}/4
           </div>
         </div>
 
@@ -576,7 +716,7 @@ linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7));`,
         </div>
 
         {/* Error Message */}
-        {error && (
+        {error && currentStep !== 1 && (
           <div
             style={{
               padding: '12px',
@@ -604,7 +744,7 @@ linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7));`,
               height: '44px'
             }}
           >
-            {isLoading ? 'Submitting...' : currentStep === 3 ? 'COMPLETE' : 'NEXT'}
+            {isLoading ? 'Submitting...' : currentStep === 4 ? 'COMPLETE' : 'NEXT'}
           </Button>
 
           <button
@@ -624,29 +764,9 @@ linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7));`,
           </button>
         </div>
 
-        {/* Illustration - Show only in step 3 */}
-        {currentStep === 3 && (
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            marginTop: '16px',
-            width: '100%'
-          }}>
-            <img 
-              src={TagsInfluencerImg} 
-              alt="Tags illustration" 
-              style={{ 
-                maxWidth: '100%', 
-                height: 'auto', 
-                maxHeight: '120px',
-                display: 'block'
-              }}
-            />
-          </div>
-        )}
       </div>
     </div>
+    </>
   );
 };
 

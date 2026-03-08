@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../../components/atoms/Input';
 import { Button } from '../../components/atoms/Button';
+import { TestimonialCarousel } from '../../components/molecules/TestimonialCarousel';
 import { colors } from '../../constants/colors';
 import { useAuth } from '../../contexts/AuthContext';
 import { loginSchema } from '../../utils/validationSchemas';
@@ -139,77 +140,8 @@ export const Login: React.FC = () => {
                 Join the best influencer finding site
               </p>
               
-              <div className="max-w-lg " style={{ flex: 1 }}>
-               <div className="flex gap-1 height-450px width-105px">
-               <div 
-                  className="mb-4"
-                  style={{ 
-                    color: colors.grey.light,
-                    fontSize: '64px',
-                    lineHeight: '1',
-                    fontFamily: 'serif',
-                    fontWeight: 900
-                  }}
-                >
-                  “
-                </div>
-                <p
-                  style={{
-                    width: '388px',
-                    height: '105px',
-                    fontFamily: 'Poppins',
-                    fontWeight: 400,
-                    fontStyle: 'normal',
-                    fontSize: '14px',
-                    lineHeight: '100%',
-                    letterSpacing: '0%',
-                    color: colors.text.primary,
-                    opacity: 1,
-                    transform: 'rotate(0deg)',
-                    marginBottom: '24px'
-                  }}
-                >
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                </p>
-               </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gray-300 overflow-hidden">
-                    <img 
-                      src="https://i.pravatar.cc/150?img=12" 
-                      alt="Elon Musk" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p 
-                      style={{
-                        fontFamily: 'Poppins',
-                        fontWeight: 700,
-                        color: colors.text.primary
-                      }}
-                    >
-                      Elon Musk
-                    </p>
-                    <p 
-                      style={{
-                        fontFamily: 'Poppins',
-                        fontSize: '14px',
-                        color: colors.text.secondary
-                      }}
-                    >
-                      Tesla founder
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <TestimonialCarousel />
             </div>
-          </div>
-
-          {/* Pagination Dots */}
-          <div className="flex gap-2 justify-center">
-            <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-            <div className="w-2 h-2 rounded-full bg-purple-600"></div>
-            <div className="w-2 h-2 rounded-full bg-gray-400"></div>
           </div>
         </div>
       </div>

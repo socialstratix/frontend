@@ -15,4 +15,5 @@ export { BrandOnboardingForm } from './BrandOnboardingForm';
 export { PostCampaign } from './PostCampaign';
 export { BrandProfile } from './BrandProfile';
 export { ContentUnavailable } from './ContentUnavailable';
+export { Pricing } from './Pricing';
 

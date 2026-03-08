@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Header, Footer } from '../../organisms';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useBrand } from '../../../hooks/useBrand';
 import { useInfluencer } from '../../../hooks/useInfluencer';
+import { Pricing } from '../../../pages/Pricing';
 
 interface BaseLayoutProps {
   headerProps?: React.ComponentProps<typeof Header>;
@@ -16,6 +17,7 @@ export const BaseLayout: React.FC<BaseLayoutProps> = ({
 }) => {
   const location = useLocation();
   const { user } = useAuth();
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
   const isMessagesPage = location.pathname.includes('/messages');
 
   // Fetch brand data if user is a brand
@@ -55,6 +57,11 @@ export const BaseLayout: React.FC<BaseLayoutProps> = ({
     influencerId: influencerId,
   };
 
+  const mergedFooterProps = {
+    ...footerProps,
+    onPricingClick: () => setPricingModalOpen(true),
+  };
+
   return (
     <div 
       className="flex flex-col min-h-screen w-full"
@@ -64,7 +71,64 @@ export const BaseLayout: React.FC<BaseLayoutProps> = ({
       <main className="flex-grow">
         <Outlet />
       </main>
-      {!isMessagesPage && <Footer {...footerProps} />}
+      {!isMessagesPage && <Footer {...mergedFooterProps} />}
+      {pricingModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'auto',
+            padding: '48px 24px',
+          }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: '960px',
+              maxHeight: 'calc(100vh - 96px)',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '12px',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+              overflow: 'auto',
+              paddingTop: '48px',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setPricingModalOpen(false)}
+              aria-label="Close pricing"
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                width: '32px',
+                height: '32px',
+                padding: 0,
+                border: 'none',
+                borderRadius: '4px',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'Poppins, sans-serif',
+                fontSize: '20px',
+                lineHeight: 1,
+                color: '#1E002B',
+              }}
+            >
+              ×
+            </button>
+            <Pricing />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

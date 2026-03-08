@@ -1,12 +1,22 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 interface FooterProps {
   className?: string;
+  onPricingClick?: () => void;
 }
 
+// Resolve pricing path from current route (pricing exists under /home, /influencer, /brand).
+const usePricingPath = () => {
+  const { pathname } = useLocation();
+  if (pathname.startsWith('/influencer')) return '/influencer/pricing';
+  if (pathname.startsWith('/brand')) return '/brand/pricing';
+  return '/home/pricing';
+};
+
 // Footer content: Placeholder links (ABOUT, STRATIX, bottom row) await data to be shared by Ankit.
-export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
+export const Footer: React.FC<FooterProps> = ({ className = '', onPricingClick }) => {
+  const pricingPath = usePricingPath();
   return (
     <footer
       className={`bg-white ${className}`}
@@ -100,7 +110,33 @@ export const Footer: React.FC<FooterProps> = ({ className = '' }) => {
               STRATIX
             </h3>
             <div className="flex flex-col gap-3">
-              {['Pricing', 'Enterprise', 'Solutions'].map((link, index) => (
+              {onPricingClick ? (
+                <button
+                  type="button"
+                  onClick={onPricingClick}
+                  className="hover:opacity-80 transition-opacity text-left bg-transparent border-0 p-0 cursor-pointer"
+                  style={{
+                    fontSize: '14px',
+                    color: '#666699',
+                    fontWeight: 400
+                  }}
+                >
+                  Pricing
+                </button>
+              ) : (
+                <Link
+                  to={pricingPath}
+                  className="hover:opacity-80 transition-opacity"
+                  style={{
+                    fontSize: '14px',
+                    color: '#666699',
+                    fontWeight: 400
+                  }}
+                >
+                  Pricing
+                </Link>
+              )}
+              {['Enterprise', 'Solutions'].map((link, index) => (
                 <Link
                   key={`${link}-${index}`}
                   to={`/${link.toLowerCase()}`}

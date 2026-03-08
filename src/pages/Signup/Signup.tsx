@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '../../components/atoms/Input';
 import { Button } from '../../components/atoms/Button';
+import { TestimonialCarousel } from '../../components/molecules/TestimonialCarousel';
 import { colors } from '../../constants/colors';
 import { OnboardingForm } from '../OnboardingForm';
 import { BrandOnboardingForm } from '../BrandOnboardingForm';
@@ -24,6 +25,7 @@ export const Signup: React.FC = () => {
     register,
     handleSubmit,
     watch,
+    setError: setFieldError,
     formState: { errors, touchedFields },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -55,10 +57,32 @@ export const Signup: React.FC = () => {
       return;
     }
 
+    // For brand we use brandName as fullName; for influencer we use fullName. Full name is not used for brand (display only for now).
+    const fullNameToSend =
+      userType === 'brand'
+        ? (data.brandName?.trim() ?? '')
+        : (data.fullName?.trim() ?? '');
+    if (!fullNameToSend) {
+      if (userType === 'brand') {
+        setFieldError('brandName', { type: 'manual', message: 'Brand name is required.' });
+      } else {
+        setFieldError('fullName', { type: 'manual', message: 'Full name is required.' });
+      }
+      return;
+    }
+    if (fullNameToSend.length < 2) {
+      if (userType === 'brand') {
+        setFieldError('brandName', { type: 'manual', message: 'Brand name must be at least 2 characters.' });
+      } else {
+        setFieldError('fullName', { type: 'manual', message: 'Full name must be at least 2 characters.' });
+      }
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await signup(data.email, data.password, data.fullName, userType as 'brand' | 'influencer');
+      await signup(data.email, data.password, fullNameToSend, userType as 'brand' | 'influencer');
       // Show onboarding form after successful signup
       setShowOnboarding(true);
     } catch (err) {
@@ -93,29 +117,23 @@ export const Signup: React.FC = () => {
 
   return (
     <>
-    <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%)' }}>
+    <div className="min-h-screen flex items-start justify-center py-4 px-4 overflow-y-auto" style={{ background: 'linear-gradient(135deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%)' }}>
     <div 
-      className="flex"
-      style={{
-        width: '1114px',
-        height: '728px',
-        opacity: 1,
-        transform: 'rotate(0deg)'
-      }}
+      className="flex max-w-[1114px] w-full items-stretch"
+      style={{ minHeight: 'min(728px, 95vh)' }}
     >
-         {/* Left Column - Promotional Section */}
-      <div className="hidden lg:flex relative overflow-hidden items-center justify-center">
+         {/* Left Column - Promotional Section (top-aligned with right) */}
+      <div className="hidden lg:flex relative overflow-hidden items-stretch">
         <div 
-          className="flex flex-col justify-between p-12"
+          className="flex flex-col p-12 w-full min-h-[500px] lg:min-h-[728px]"
           style={{
             width: '570px',
-            height: '728px',
+            maxWidth: '100%',
             background: 'linear-gradient(0deg, #EAFFC2 0%, #FFD4F6 100%)',
-            opacity: 1,
             gap: '10px'
           }}
         >
-          <div className="flex-1 flex flex-col justify-center">
+          <div className="flex flex-col justify-start">
             <h1 
               style={{
                 width: '442px',
@@ -178,94 +196,30 @@ export const Signup: React.FC = () => {
                 Join the best influencer finding site
               </p>
               
-              <div className="max-w-lg " style={{ flex: 1 }}>
-               <div className="flex gap-1 height-450px width-105px">
-               <div 
-                  className="mb-4"
-                  style={{ 
-                    color: colors.grey.light,
-                    fontSize: '64px',
-                    lineHeight: '1',
-                    fontFamily: 'serif',
-                    fontWeight: 900
-                  }}
-                >
-                  “
-                </div>
-                <p
-                  style={{
-                    width: '388px',
-                    height: '105px',
-                    fontFamily: 'Poppins',
-                    fontWeight: 400,
-                    fontStyle: 'normal',
-                    fontSize: '14px',
-                    lineHeight: '100%',
-                    letterSpacing: '0%',
-                    color: colors.text.primary,
-                    opacity: 1,
-                    transform: 'rotate(0deg)',
-                    marginBottom: '24px'
-                  }}
-                >
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                </p>
-               </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gray-300 overflow-hidden">
-                    <img 
-                      src="https://i.pravatar.cc/150?img=12" 
-                      alt="Elon Musk" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p 
-                      style={{
-                        fontFamily: 'Poppins',
-                        fontWeight: 700,
-                        color: colors.text.primary
-                      }}
-                    >
-                      Elon Musk
-                    </p>
-                    <p 
-                      style={{
-                        fontFamily: 'Poppins',
-                        fontSize: '14px',
-                        color: colors.text.secondary
-                      }}
-                    >
-                      Tesla founder
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <TestimonialCarousel />
             </div>
-          </div>
-
-          {/* Pagination Dots */}
-          <div className="flex gap-2 justify-center">
-            <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-            <div className="w-2 h-2 rounded-full bg-purple-600"></div>
-            <div className="w-2 h-2 rounded-full bg-gray-400"></div>
           </div>
         </div>
       </div>
 
-        {/* Right Column - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center bg-white">
+        {/* Right Column - Signup Form: top-aligned with left, scroll only when content overflows */}
+      <div 
+        className="w-full lg:w-1/2 flex items-start justify-center bg-white box-border min-h-0 flex-1"
+        style={{ 
+          minHeight: 'min(728px, 95vh)',
+          paddingTop: '16px',
+          paddingBottom: '24px',
+          paddingLeft: '24px',
+          paddingRight: '24px',
+          overflowY: 'auto'
+        }}
+      >
         <div 
+          className="flex flex-col w-full max-w-[544px] shrink-0"
           style={{
-            width: '544px',
-            height: '728px',
-            paddingTop: '20px',
-            paddingRight: '40px',
-            paddingBottom: '40px',
-            paddingLeft: '40px',
-            gap: '10px',
-            opacity: 1,
-            transform: 'rotate(0deg)',
+            transform: 'scale(0.92)',
+            transformOrigin: 'top center',
+            padding: '16px 40px 32px',
             borderTopRightRadius: '8px',
             borderBottomRightRadius: '8px',
             borderTopWidth: '1px',
@@ -279,26 +233,18 @@ export const Signup: React.FC = () => {
               linear-gradient(106.35deg, rgba(235, 188, 254, 0.3) 0%, rgba(240, 196, 105, 0.3) 100%),
               linear-gradient(0deg, rgba(250, 249, 246, 0.7), rgba(250, 249, 246, 0.7))
             `,
-            boxSizing: 'border-box',
-            overflow: 'hidden'
+            boxSizing: 'border-box'
           }}
-          className="flex flex-col"
         >
           {/* Logo and Brand Name */}
-          <div className="flex items-center gap-3" style={{ marginBottom: '16px' }}>
+          <div className="flex items-center gap-3" style={{ marginBottom: '12px' }}>
             <div className="w-12 h-12 flex items-center justify-center">
               <span 
                 style={{
-                  width: '33px',
-                  height: '50px',
                   fontFamily: 'Poppins, sans-serif',
                   fontWeight: 700,
                   fontSize: '33px',
                   lineHeight: '100%',
-                  letterSpacing: '0%',
-                  verticalAlign: 'middle',
-                  opacity: 1,
-                  transform: 'rotate(0deg)',
                   color: colors.text.primary
                 }}
               >
@@ -307,16 +253,11 @@ export const Signup: React.FC = () => {
             </div>
             <h2 
               style={{
-                width: '162px',
-                height: '30px',
                 fontFamily: 'Poppins, sans-serif',
                 fontWeight: 700,
                 fontSize: '20px',
                 lineHeight: '100%',
                 letterSpacing: '0%',
-                verticalAlign: 'middle',
-                opacity: 1,
-                transform: 'rotate(0deg)',
                 color: '#1E002B'
               }}
             >
@@ -324,41 +265,23 @@ export const Signup: React.FC = () => {
             </h2>
           </div>
 
-          <div
-            style={{
-              width: '100%',
-              maxWidth: '100%',
-              opacity: 1,
-              transform: 'rotate(0deg)',
-              display: 'flex',
-              flexDirection: 'column',
-              boxSizing: 'border-box'
-            }}
-          >
+          <div className="flex flex-col w-full">
+            {/* Title - Figma: centered, large bold dark purple */}
             <h1 
+              className="text-center"
               style={{
-                width: '100%',
-                maxWidth: '100%',
                 fontFamily: 'Poppins, sans-serif',
                 fontWeight: 600,
                 fontSize: '33px',
-                lineHeight: '100%',
-                letterSpacing: '0%',
-                verticalAlign: 'middle',
-                alignContent: 'center',
-                textAlign: 'center',
-                opacity: 1,
-                transform: 'rotate(0deg)',
+                lineHeight: 1.2,
                 color: '#1E002B',
-                margin: '0 auto 24px auto',
-                alignSelf: 'center',
-                boxSizing: 'border-box'
+                margin: '0 0 14px 0'
               }}
             >
               Create your Account
             </h1>
 
-              {/* Google Signup Button */}
+              {/* Sign Up with Google - Figma: white, grey border, Google G + text */}
               <button
                 onClick={handleGoogleSignup}
                 type="button"
@@ -366,19 +289,18 @@ export const Signup: React.FC = () => {
                   width: '100%',
                   padding: '12px 24px',
                   border: `1px solid ${colors.border.light}`,
-                  borderRadius: '4px',
+                  borderRadius: '8px',
                   backgroundColor: colors.primary.white,
                   fontFamily: 'Poppins, sans-serif',
                   fontWeight: 500,
                   fontSize: '14px',
-                  lineHeight: '100%',
-                  color: colors.text.primary,
+                  color: colors.text.secondary,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  marginBottom: '16px',
+                  marginBottom: '12px',
                   transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
@@ -397,13 +319,13 @@ export const Signup: React.FC = () => {
                 Sign up with Google
               </button>
 
-              {/* Divider */}
+              {/* Or separator - Figma: thin grey line, "Or" centered */}
               <div 
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '16px',
-                  marginBottom: '16px'
+                  gap: '12px',
+                  marginBottom: '12px'
                 }}
               >
                 <div style={{ flex: 1, height: '1px', backgroundColor: colors.border.light }} />
@@ -431,7 +353,7 @@ export const Signup: React.FC = () => {
                     color: '#c33',
                     fontSize: '14px',
                     fontFamily: 'Poppins',
-                    marginBottom: '16px',
+                    marginBottom: '12px',
                     width: '100%',
                     maxWidth: '100%',
                     boxSizing: 'border-box',
@@ -443,67 +365,63 @@ export const Signup: React.FC = () => {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {/* Inputs Container */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {/* Full Name Input */}
-                  <div>
+              {/* Form - Figma: single column, Full Name, Email, Brand name, Password stacked */}
+              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+                <div className="flex flex-col gap-3">
+                  <Input
+                    type="text"
+                    label="Full Name"
+                    placeholder="Full Name"
+                    variant="login"
+                    error={userType === 'influencer' ? errors.fullName?.message : undefined}
+                    {...register('fullName')}
+                  />
+                  <Input
+                    type="email"
+                    label="Email"
+                    placeholder="Email"
+                    variant="login"
+                    error={errors.email?.message}
+                    {...register('email')}
+                  />
+                  {userType === 'brand' && (
                     <Input
                       type="text"
-                      label="Full Name"
-                      placeholder="Enter your full name"
+                      label="Brand name"
+                      placeholder="Brand name"
                       variant="login"
-                      error={errors.fullName?.message}
-                      {...register('fullName')}
+                      error={errors.brandName?.message}
+                      {...register('brandName')}
                     />
-                  </div>
-
-                  {/* Email Input */}
-                  <div>
-                    <Input
-                      type="email"
-                      label="Email"
-                      placeholder="Enter your email"
-                      variant="login"
-                      error={errors.email?.message}
-                      {...register('email')}
-                    />
-                  </div>
-
-                  {/* Password Input */}
-                  <div>
-                    <Input
-                      type="password"
-                      label="Password"
-                      placeholder="Enter your password"
-                      variant="login"
-                      error={formattedPasswordError || errors.password?.message}
-                      {...register('password')}
-                    />
-                  </div>
-
-                  {/* Confirm Password Input */}
-                  <div>
-                    <Input
-                      type="password"
-                      label="Confirm Password"
-                      placeholder="Confirm your password"
-                      variant="login"
-                      error={errors.confirmPassword?.message}
-                      {...register('confirmPassword')}
-                    />
-                  </div>
+                  )}
+                  <Input
+                    type="password"
+                    label="Password"
+                    placeholder="Password"
+                    variant="login"
+                    error={formattedPasswordError || errors.password?.message}
+                    {...register('password')}
+                  />
+                  <Input
+                    type="password"
+                    label="Confirm Password"
+                    placeholder="Confirm your password"
+                    variant="login"
+                    error={errors.confirmPassword?.message}
+                    {...register('confirmPassword')}
+                  />
                 </div>
 
-                {/* Sign Up Button */}
+                {/* SIGN UP - Figma: wide rounded dark purple filled */}
                 <Button
                   type="submit"
                   variant="filled"
                   disabled={isLoading}
                   style={{
                     width: '100%',
-                    height: '41px',
-                    gap: '8px',
+                    height: '44px',
+                    borderRadius: '8px',
+                    marginTop: '14px',
                     opacity: isLoading ? 0.6 : 1
                   }}
                   className="text-white font-semibold"
@@ -513,18 +431,13 @@ export const Signup: React.FC = () => {
               </form>
 
               {/* Already have account */}
-              <div 
-                style={{
-                  textAlign: 'center',
-                  marginTop: '16px'
-                }}
-              >
+              <div className="text-center" style={{ marginTop: '14px' }}>
                 <p 
                   style={{
                     fontFamily: 'Poppins, sans-serif',
                     fontWeight: 400,
                     fontSize: '14px',
-                    color: colors.text.primary,
+                    color: colors.text.secondary,
                     marginBottom: '12px'
                   }}
                 >
@@ -547,32 +460,28 @@ export const Signup: React.FC = () => {
                   </Link>
                 </p>
 
+                {/* LOGIN - Figma: white, light purple border */}
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleLoginClick}
-                  style={{
-                    width: '100%',
-                    height: '41px',
-                    gap: '8px',
-                    opacity: 1
-                  }}
+                  style={{ width: '100%', height: '44px', borderRadius: '8px' }}
                   className="font-semibold"
                 >
                   LOGIN
                 </Button>
               </div>
 
-              {/* Terms and Privacy */}
+              {/* Terms - Figma: small grey, purple links */}
               <p 
+                className="text-center"
                 style={{
                   fontFamily: 'Poppins, sans-serif',
                   fontWeight: 400,
                   fontSize: '12px',
-                  lineHeight: '140%',
+                  lineHeight: 1.4,
                   color: colors.text.secondary,
-                  textAlign: 'center',
-                  marginTop: '16px'
+                  marginTop: '12px'
                 }}
               >
                 By continuing, you agree to Social Stratix{' '}

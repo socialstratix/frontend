@@ -60,10 +60,8 @@ export const formatPasswordErrors = (errors: string[]): string => {
 
 // Signup Validation Schema
 export const signupSchema = z.object({
-  fullName: z
-    .string()
-    .min(1, 'Full name is required')
-    .min(2, 'Full name must be at least 2 characters'),
+  fullName: z.string().optional(),
+  brandName: z.string().optional(),
   email: z
     .string()
     .min(1, 'Email is required')
