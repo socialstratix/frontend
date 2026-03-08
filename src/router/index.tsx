@@ -17,6 +17,7 @@ const UserTypeSelection = lazy(() => import('../pages/UserTypeSelection/UserType
 const PostCampaign = lazy(() => import('../pages/PostCampaign/PostCampaign').then(module => ({ default: module.PostCampaign })));
 const BrandProfile = lazy(() => import('../pages/BrandProfile/BrandProfile').then(module => ({ default: module.BrandProfile })));
 const ContentUnavailable = lazy(() => import('../pages/ContentUnavailable/ContentUnavailable').then(module => ({ default: module.ContentUnavailable })));
+const Pricing = lazy(() => import('../pages/Pricing/Pricing').then(module => ({ default: module.Pricing })));
 
 // Loading component
 const PageLoader = () => (
@@ -149,6 +150,10 @@ export const router = createBrowserRouter([
         path: 'messages/:conversationId',
         element: <LazyPage><Messages /></LazyPage>,
       },
+      {
+        path: 'pricing',
+        element: <LazyPage><Pricing /></LazyPage>,
+      },
     ],
   },
   // Influencer routes
@@ -198,6 +203,10 @@ export const router = createBrowserRouter([
       {
         path: 'messages/:conversationId',
         element: <LazyPage><Messages /></LazyPage>,
+      },
+      {
+        path: 'pricing',
+        element: <LazyPage><Pricing /></LazyPage>,
       },
     ],
   },
@@ -252,6 +261,10 @@ export const router = createBrowserRouter([
       {
         path: 'messages/:conversationId',
         element: <LazyPage><Messages /></LazyPage>,
+      },
+      {
+        path: 'pricing',
+        element: <LazyPage><Pricing /></LazyPage>,
       },
     ],
   },
