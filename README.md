@@ -1,226 +1,398 @@
 # Stratix Frontend (Vite + React)
 
-Frontend application for the Stratix influencer marketing platform, built with React, TypeScript, Vite, and Tailwind CSS. This app consumes the Stratix backend API documented in `backend/README.md`. The production deployment is available at `https://www.socialstratix.com/`.
+Frontend application for the **Stratix Influencer Marketing Platform**, built with **React, TypeScript, Vite, and Tailwind CSS**.
+This application consumes the Stratix backend API documented in `backend/README.md`.
 
-## Tech Stack
+🌐 **Production URL:** https://www.socialstratix.com/
 
-- React 19
-- TypeScript
-- Vite
-- React Router
-- React Hook Form + Zod
-- Tailwind CSS
+---
 
-## Project Structure
+# Tech Stack
 
-```text
+* React 19
+* TypeScript
+* Vite
+* React Router
+* React Hook Form + Zod
+* Tailwind CSS
+
+---
+
+# Project Structure
+
+```
 frontend/
-??? src/
-?   ??? main.tsx               # App entry (Vite)
-?   ??? index.css              # Global styles (incl. Tailwind)
-?   ??? router/                # React Router configuration
-?   ??? pages/                 # Top-level pages (Login, Signup, Pricing, etc.)
-?   ??? components/
-?   ?   ??? atoms/             # Basic UI elements (Input, Button, etc.)
-?   ?   ??? molecules/         # Reusable composed components
-?   ?   ??? organisms/         # Larger layout/feature blocks
-?   ?   ??? templates/         # Layout-level components
-?   ??? contexts/              # React context providers (Auth, Socket, ...)
-?   ??? hooks/                 # Reusable hooks (useCampaign, useMessages, ...)
-?   ??? services/              # API and domain services
-?   ??? utils/                 # Helpers (validation, string utils, toast, ...)
-?   ??? constants/             # Shared constants and config
-??? public/                    # Static assets served as-is
-??? index.html                 # HTML shell
-??? package.json               # Frontend dependencies & scripts
-??? tsconfig.json              # TypeScript configuration
+├── src/
+│   ├── main.tsx               # App entry (Vite)
+│   ├── index.css              # Global styles (Tailwind)
+│   ├── router/                # React Router configuration
+│   ├── pages/                 # Top-level pages (Login, Signup, Pricing)
+│   ├── components/
+│   │   ├── atoms/             # Basic UI elements
+│   │   ├── molecules/         # Reusable components
+│   │   ├── organisms/         # Larger feature components
+│   │   └── templates/         # Layout components
+│   ├── contexts/              # React context providers
+│   ├── hooks/                 # Custom hooks
+│   ├── services/              # API and domain services
+│   ├── utils/                 # Helper functions
+│   └── constants/             # Shared constants
+│
+├── public/                    # Static assets
+├── index.html                 # HTML template
+├── package.json               # Dependencies & scripts
+├── tsconfig.json              # TypeScript config
+└── vercel.json                # Vercel deployment config
 ```
 
-## Getting Started (Local Development)
+---
 
-1. **Install dependencies**
+# Getting Started (Local Development)
 
-   ```bash
-   cd frontend
-   npm install
-   ```
+## 1. Install Dependencies
 
-2. **Configure environment variables**
+```bash
+cd frontend
+npm install
+```
 
-   Create a `.env` file in the `frontend` directory:
+---
 
-   ```bash
-   VITE_API_BASE_URL=https://backend-yhnh.onrender.com
-   VITE_API_VERSION=v1
-   ```
+## 2. Configure Environment Variables
 
-   - `VITE_API_BASE_URL`: Base URL of your backend (without `/api/v1`)
-   - `VITE_API_VERSION`: API version used to build the final URL (e.g. `v1`)
+Create a `.env` file inside the `frontend` directory.
 
-3. **Run the development server**
+```
+VITE_API_BASE_URL=https://backend-yhnh.onrender.com
+VITE_API_VERSION=v1
+```
 
-   ```bash
-   npm run dev
-   ```
+### Variables
 
-   The app will start on the port shown in the terminal (Vite default is `http://localhost:5173`).
+| Variable          | Description                        |
+| ----------------- | ---------------------------------- |
+| VITE_API_BASE_URL | Backend base URL without `/api/v1` |
+| VITE_API_VERSION  | API version                        |
 
-4. **Type checking & linting (optional)**
+The final API URL becomes:
 
-   ```bash
-   npm run lint
-   ```
-
-## Available Scripts
-
-These scripts are defined in `package.json`:
-
-- `npm run dev`  Start Vite dev server
-- `npm run build`  Type-check and build for production
-- `npm run preview`  Preview the production build locally
-- `npm run lint`  Run ESLint on the project
-
-## Environment Variables (Summary)
-
-All frontend runtime config is provided at **build time** via Vite env variables:
-
-- **`VITE_API_BASE_URL`** (required)  
-  Base URL of the backend API, **without** `/api/v1`.  
-  Example: `https://backend-yhnh.onrender.com`
-
-- **`VITE_API_VERSION`** (default: `v1`)  
-  API version used when constructing the final API base URL.  
-  Example: `v1`
-
-The frontend typically builds the final API base URL as:
-
-```text
+```
 ${VITE_API_BASE_URL}/api/${VITE_API_VERSION}
 ```
 
-For common production API URL issues, see the **Verifying production & troubleshooting** section below.
+Example:
 
-## Deployment (Vercel)
+```
+https://backend-yhnh.onrender.com/api/v1
+```
 
-The frontend is set up to deploy to Vercel. A `vercel.json` file is already included with:
+---
 
-- `buildCommand`: `npm run build`
-- `devCommand`: `npm run dev`
-- `installCommand`: `npm ci`
-- `outputDirectory`: `dist`
-- SPA rewrites so all routes go to `index.html`
+## 3. Run Development Server
 
-### 1. Deploy via Git + Vercel Dashboard (Recommended)
+```
+npm run dev
+```
 
-1. **Push your frontend code to a Git repository** (GitHub, GitLab, Bitbucket):
+Default development URL:
 
-   ```bash
-   git add .
-   git commit -m "Prepare frontend for deployment"
-   git push origin main
-   ```
+```
+http://localhost:5173
+```
 
-2. **Create a Vercel project**
+---
 
-   - Go to the Vercel dashboard.
-   - Click **"New Project"** � **"Import"** your repository.
-   - When asked for the **Root Directory**, select `frontend`.
-   - Vercel will auto-detect **Vite** as the framework.
+## 4. Type Checking & Linting
 
-3. **Verify build settings** (usually prefilled from `vercel.json`):
+```
+npm run lint
+```
 
-   - **Framework Preset:** Vite
-   - **Root Directory:** `frontend`
-   - **Install Command:** `npm ci`
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
+---
 
-4. **Set environment variables in Vercel**
+# Available Scripts
 
-   In your project ? **Settings** ? **Environment Variables**:
+| Script          | Description                            |
+| --------------- | -------------------------------------- |
+| npm run dev     | Start development server               |
+| npm run build   | Type check and build production bundle |
+| npm run preview | Preview production build locally       |
+| npm run lint    | Run ESLint                             |
 
-   - `VITE_API_BASE_URL` � your backend URL (e.g. `https://backend-yhnh.onrender.com`)
-   - `VITE_API_VERSION` � `v1`
+---
 
-   Apply them to **Production**, and optionally **Preview** / **Development**.
+# Environment Variables (Summary)
 
-5. **Deploy**
+All configuration is provided **at build time via Vite**.
 
-   - Click **Deploy** in the Vercel dashboard.
-   - Wait for the build to finish.
+Required variables:
 
-6. **Note your production URL**
+### `VITE_API_BASE_URL`
 
-   Vercel will give you a URL like:
+Backend API base URL.
 
-   ```text
-   https://your-stratix-frontend.vercel.app
-   ```
+Example:
 
-   You can use this in your backend CORS configuration and when sharing the app.
+```
+https://backend-yhnh.onrender.com
+```
 
-### 2. Deploy via Vercel CLI
+### `VITE_API_VERSION`
 
-1. **Install Vercel CLI (once)**
+API version.
 
-   ```bash
-   npm install -g vercel
-   ```
+Example:
 
-2. **Login to Vercel**
+```
+v1
+```
 
-   ```bash
-   vercel login
-   ```
+---
 
-3. **Deploy from the `frontend` directory**
+# Frontend Deployment (Vercel)
 
-   ```bash
-   cd frontend
-   vercel
-   ```
+The frontend is deployed using **Vercel with GitHub integration**.
 
-   Follow the prompts to link or create a project. The CLI will use the same settings as described above.
+A `vercel.json` file is already configured with:
 
-4. **Promote to production**
+* installCommand → `npm ci`
+* buildCommand → `npm run build`
+* outputDirectory → `dist`
+* SPA rewrites for React Router
 
-   ```bash
-   vercel --prod
-   ```
+---
 
-5. **Configure environment variables**
+# Deploy via GitHub (Recommended)
 
-   - Either set them via the Vercel dashboard (recommended), or
-   - Use `vercel env` commands.
+## 1. Push Code to GitHub
 
-### 3. After Deployment
+```
+git add .
+git commit -m "Prepare frontend for deployment"
+git push origin main
+```
 
-After your first successful deployment:
+---
 
-1. **Update backend CORS**
+## 2. Import Project in Vercel
 
-   - Ensure your backend allows requests from your Vercel frontend URL.
+1. Go to **Vercel Dashboard**
+2. Click **New Project**
+3. Import your **GitHub repository**
+4. Set **Root Directory → frontend**
 
-2. **Verify environment variables**
+---
 
-   - Open the deployed site (e.g. `https://www.socialstratix.com/`).
-   - Use the browser DevTools (Network/Console) to confirm API calls are hitting the correct `https://backend-yhnh.onrender.com/api/v1/...` endpoints.
+## 3. Verify Build Settings
 
-3. **Custom domain (optional)**
+| Setting          | Value         |
+| ---------------- | ------------- |
+| Framework        | Vite          |
+| Root Directory   | frontend      |
+| Install Command  | npm ci        |
+| Build Command    | npm run build |
+| Output Directory | dist          |
 
-   - In Vercel project ? **Settings** ? **Domains**, add your own domain (e.g. `www.socialstratix.com`).
-   - Follow Vercel�s DNS instructions.
+---
 
-## Production URLs
+## 4. Configure Environment Variables
 
-- **Frontend (Vercel / custom domain)**: `https://www.socialstratix.com/`
-- **Backend API base**: `https://backend-yhnh.onrender.com`
+In **Vercel → Project Settings → Environment Variables**
 
-## Verifying production & troubleshooting
+Add:
 
-- Make sure `VITE_API_BASE_URL` in Vercel is set to `https://backend-yhnh.onrender.com` (no `/api/v1`).
-- After a deploy, open `https://www.socialstratix.com/`, try logging in, and check DevTools ? **Network** to confirm requests go to `https://backend-yhnh.onrender.com/api/v1/...`.
-- If you change env vars in Vercel, always trigger a new deployment so the values are picked up at build time.
+```
+VITE_API_BASE_URL=https://backend-yhnh.onrender.com
+VITE_API_VERSION=v1
+```
 
-> Note: Docker is **not** used for this frontend deployment; all production builds are handled directly by Vercel.
+Apply to:
 
+* Production
+* Preview
+* Development
+
+---
+
+## 5. Deploy
+
+Click **Deploy**.
+
+After build completes, Vercel will provide a URL like:
+
+```
+https://your-stratix-frontend.vercel.app
+```
+
+---
+
+# Deploy via Vercel CLI (Optional)
+
+Install CLI:
+
+```
+npm install -g vercel
+```
+
+Login:
+
+```
+vercel login
+```
+
+Deploy:
+
+```
+cd frontend
+vercel
+```
+
+Production deploy:
+
+```
+vercel --prod
+```
+
+---
+
+# Backend Deployment (Render)
+
+The Stratix backend is deployed on **Render**.
+
+## Steps
+
+### 1. Push Backend to GitHub
+
+```
+git add .
+git commit -m "Prepare backend for deployment"
+git push origin main
+```
+
+---
+
+### 2. Create Render Web Service
+
+1. Go to **Render Dashboard**
+2. Click **New**
+3. Select **Web Service**
+4. Connect your GitHub repository
+
+---
+
+### 3. Configure Service
+
+| Setting       | Value       |
+| ------------- | ----------- |
+| Environment   | Node        |
+| Branch        | main        |
+| Build Command | npm install |
+| Start Command | npm start   |
+
+Example start command:
+
+```
+node server.js
+```
+
+---
+
+### 4. Environment Variables
+
+Add required backend variables:
+
+```
+PORT=10000
+MONGO_URI=your_database_url
+JWT_SECRET=your_secret
+GEMINI_API_KEY=your_key
+```
+
+---
+
+### 5. Deploy Backend
+
+Click **Create Web Service**.
+
+Render will:
+
+* Clone the repository
+* Install dependencies
+* Start the server
+
+Backend URL example:
+
+```
+https://backend-yhnh.onrender.com
+```
+
+---
+
+# Production URLs
+
+| Service     | URL                               |
+| ----------- | --------------------------------- |
+| Frontend    | https://www.socialstratix.com     |
+| Backend API | https://backend-yhnh.onrender.com |
+
+---
+
+# Verifying Production
+
+After deployment:
+
+1. Open
+
+```
+https://www.socialstratix.com
+```
+
+2. Open **Browser DevTools → Network**
+
+3. Confirm requests go to:
+
+```
+https://backend-yhnh.onrender.com/api/v1/...
+```
+
+---
+
+# Troubleshooting
+
+Common issues:
+
+### API not working
+
+Verify:
+
+```
+VITE_API_BASE_URL=https://backend-yhnh.onrender.com
+```
+
+### Env variables not applied
+
+Trigger a **new deployment** in Vercel after changing environment variables.
+
+### CORS error
+
+Ensure backend allows requests from:
+
+```
+https://www.socialstratix.com
+```
+
+---
+
+# Notes
+
+* Docker is **not used** for frontend deployment.
+* All production builds are handled directly by **Vercel**.
+
+---
+
+# Deployment Completed
+
+Frontend → **Vercel**
+Backend → **Render**
+
+Your Stratix platform is now live 🚀
