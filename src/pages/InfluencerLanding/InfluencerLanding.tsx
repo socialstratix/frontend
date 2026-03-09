@@ -116,9 +116,11 @@ export const InfluencerLanding: React.FC = () => {
     return apiCampaigns.map((campaign: CampaignServiceType) => ({
       id: campaign._id,
       brandId: campaign.brandId,
+      // Title case is only applied to brand/influencer names
       brandName: toTitleCase(campaign.brandName || 'Brand'),
       brandAvatar: campaign.brandAvatar || '',
-      campaignName: toTitleCase(campaign.name),
+      // Preserve original campaign name formatting as entered by the user
+      campaignName: campaign.name || '',
       postedTime: formatTimeAgo(campaign.createdAt || new Date()),
       categories: campaign.tags || [],
       description: campaign.description || '',
