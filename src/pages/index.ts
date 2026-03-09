@@ -16,4 +16,6 @@ export { PostCampaign } from './PostCampaign';
 export { BrandProfile } from './BrandProfile';
 export { ContentUnavailable } from './ContentUnavailable';
 export { Pricing } from './Pricing';
+export { TermsOfService } from './TermsOfService';
+export { Privacy } from './Privacy';
 

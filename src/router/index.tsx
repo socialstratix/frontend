@@ -18,6 +18,8 @@ const PostCampaign = lazy(() => import('../pages/PostCampaign/PostCampaign').the
 const BrandProfile = lazy(() => import('../pages/BrandProfile/BrandProfile').then(module => ({ default: module.BrandProfile })));
 const ContentUnavailable = lazy(() => import('../pages/ContentUnavailable/ContentUnavailable').then(module => ({ default: module.ContentUnavailable })));
 const Pricing = lazy(() => import('../pages/Pricing/Pricing').then(module => ({ default: module.Pricing })));
+const TermsOfService = lazy(() => import('../pages/TermsOfService/TermsOfService').then(module => ({ default: module.TermsOfService })));
+const Privacy = lazy(() => import('../pages/Privacy/Privacy').then(module => ({ default: module.Privacy })));
 
 // Loading component
 const PageLoader = () => (
@@ -75,6 +77,14 @@ export const router = createBrowserRouter([
   {
     path: '/signup',
     element: <LazyPage><Signup /></LazyPage>,
+  },
+  {
+    path: '/terms-and-services',
+    element: <LazyPage><TermsOfService /></LazyPage>,
+  },
+  {
+    path: '/privacy',
+    element: <LazyPage><Privacy /></LazyPage>,
   },
   // Shared brand profile route - accessible to all authenticated users
   {
