@@ -73,7 +73,7 @@ After deploying, open your production site and check the browser console. You sh
 3. Click **Add New**
 4. Enter:
    - **Key:** `VITE_API_BASE_URL`
-   - **Value:** `https://backend-stratix.vercel.app`
+   - **Value:** `https://backend-yhnh.onrender.com`
    - **Environment:** Select **Production** (and others if needed)
 5. Click **Save**
 
@@ -104,12 +104,12 @@ git push origin main
 ### Correct API URL Construction:
 
 ```
-VITE_API_BASE_URL = "https://backend-stratix.vercel.app"
+VITE_API_BASE_URL = "https://backend-yhnh.onrender.com"
 API_VERSION = "v1" (default)
 
-Final URL = "https://backend-stratix.vercel.app/api/v1"
+Final URL = "https://backend-yhnh.onrender.com/api/v1"
 Login endpoint = "/auth/login"
-Full URL = "https://backend-stratix.vercel.app/api/v1/auth/login" ✅
+Full URL = "https://backend-yhnh.onrender.com/api/v1/auth/login" ✅
 ```
 
 ### Wrong API URL (if env var includes /api/v1):
